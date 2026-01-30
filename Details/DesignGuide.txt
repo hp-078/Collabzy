@@ -1,0 +1,141 @@
+UI / UX Design Instructions – Collabzy
+1. Overall Design Approach
+
+The user interface must feel professional, modern, and trustworthy.
+The design should clearly reflect that Collabzy is a business collaboration platform, not a casual social media app.
+
+The focus is on:
+
+Clarity over decoration
+
+Functionality over visual noise
+
+Professional appeal over trendy gimmicks
+
+2. Branding & Visual Identity
+
+The platform must follow consistent branding across all screens
+
+Logo usage, typography, spacing, and colors must remain uniform
+
+Branding should feel original and independent, not inspired by popular AI tools or existing influencer platforms
+
+The goal is to make Collabzy instantly recognizable and visually distinct.
+
+3. Color Scheme Guidelines
+
+A unique and balanced color palette should be used
+
+Avoid overused color combinations commonly associated with AI tools or influencer apps
+
+Colors should convey:
+
+Trust
+
+Reliability
+
+Professional collaboration
+
+The same color codes must be used consistently across buttons, headings, icons, and highlights.
+
+4. Typography & Layout
+
+Clean, readable typography must be used
+
+Text hierarchy should be clear:
+
+Headings stand out
+
+Body text remains comfortable to read
+
+Adequate spacing and alignment must be maintained to avoid clutter
+
+Layouts should follow a structured grid system to ensure visual balance.
+
+5. UI Components Consistency
+
+Buttons, input fields, cards, and navigation elements must follow a consistent design pattern
+
+The same component style should be reused across the platform
+
+No screen should feel visually disconnected from the rest of the application
+
+Consistency improves usability and reduces user confusion.
+
+6. User Experience (UX) Principles
+
+The platform should be easy to understand without instructions
+
+Navigation should be simple and intuitive
+
+User actions should require minimal steps
+
+Important actions must be clearly visible
+
+The user should always know:
+
+Where they are
+
+What action to take next
+
+What result to expect
+
+7. Animations & Transitions
+
+Animations should be smooth, subtle, and purposeful
+
+Transitions must enhance user experience, not distract from it
+
+Avoid flashy or unnecessary motion effects
+
+Animations should be used only to:
+
+Indicate state changes
+
+Improve visual flow
+
+Provide feedback on user actions
+
+8. Responsiveness & Accessibility
+
+The interface should adapt well to different screen sizes
+
+Text and interactive elements should remain readable and usable
+
+Color contrast should support easy visibility
+
+The design must prioritize usability for all users.
+
+9. User Attraction Without Gimmicks
+
+The UI should attract users through clarity, elegance, and smooth interaction, not exaggerated visuals
+
+Trust and professionalism should be felt within the first few seconds of use
+
+A clean UI builds confidence faster than flashy design.
+
+10. Final Design Goal
+
+The final UI/UX of Collabzy should:
+
+Look professionally built
+
+Feel consistent and reliable
+
+Support user tasks without friction
+
+Reflect a strong and unique brand identity
+
+Brutally honest check:
+
+If your UI:
+
+Looks different on every screen
+
+Uses random colors
+
+Overuses animation
+
+Tries to “look cool” instead of “work well”
+
+Then it’s not professional, no matter how pretty it is.

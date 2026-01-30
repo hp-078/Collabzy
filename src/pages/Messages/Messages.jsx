@@ -1,0 +1,264 @@
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
+import {
+  Search,
+  Send,
+  MoreVertical,
+  Phone,
+  Video,
+  Image,
+  Paperclip,
+  Smile,
+  ChevronLeft
+} from 'lucide-react';
+import './Messages.css';
+
+const Messages = () => {
+  const { user } = useAuth();
+  const { collaborations, messages, sendMessage, getMessagesByUser } = useData();
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const messagesEndRef = useRef(null);
+
+  // Get unique conversations
+  const userMessages = getMessagesByUser(user?.id);
+  const conversations = [];
+  
+  userMessages.forEach(msg => {
+    const partnerId = msg.senderId === user?.id ? msg.receiverId : msg.senderId;
+    const partnerName = msg.senderId === user?.id ? msg.receiverName : msg.senderName;
+    
+    if (!conversations.find(c => c.partnerId === partnerId)) {
+      conversations.push({
+        partnerId,
+        partnerName,
+        lastMessage: msg.content,
+        timestamp: msg.timestamp,
+        collaborationId: msg.collaborationId,
+      });
+    }
+  });
+
+  // Also add conversations from collaborations without messages
+  collaborations.forEach(collab => {
+    const isUserInfluencer = collab.influencerId === user?.id;
+    const partnerId = isUserInfluencer ? collab.brandId : collab.influencerId;
+    const partnerName = isUserInfluencer ? collab.brandName : collab.influencerName;
+    
+    if (!conversations.find(c => c.partnerId === partnerId)) {
+      conversations.push({
+        partnerId,
+        partnerName,
+        lastMessage: 'No messages yet',
+        timestamp: collab.createdAt,
+        collaborationId: collab.id,
+      });
+    }
+  });
+
+  const filteredConversations = conversations.filter(c =>
+    c.partnerName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const selectedConversation = selectedChat 
+    ? conversations.find(c => c.partnerId === selectedChat)
+    : null;
+
+  const chatMessages = selectedChat
+    ? userMessages.filter(m => 
+        (m.senderId === selectedChat && m.receiverId === user?.id) ||
+        (m.receiverId === selectedChat && m.senderId === user?.id)
+      ).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    : [];
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedChat) return;
+
+    sendMessage({
+      collaborationId: selectedConversation?.collaborationId,
+      senderId: user.id,
+      senderName: user.name,
+      receiverId: selectedChat,
+      receiverName: selectedConversation?.partnerName,
+      content: newMessage,
+    });
+
+    setNewMessage('');
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    }
+    return date.toLocaleDateString();
+  };
+
+  return (
+    <div className="messages-page">
+      <div className="messages-container">
+        {/* Sidebar */}
+        <div className={`messages-sidebar ${selectedChat ? 'hidden-mobile' : ''}`}>
+          <div className="sidebar-header">
+            <h2>Messages</h2>
+          </div>
+
+          <div className="sidebar-search">
+            <Search size={18} />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="conversations-list">
+            {filteredConversations.length > 0 ? (
+              filteredConversations.map((conv) => (
+                <div
+                  key={conv.partnerId}
+                  className={`conversation-item ${selectedChat === conv.partnerId ? 'active' : ''}`}
+                  onClick={() => setSelectedChat(conv.partnerId)}
+                >
+                  <div className="conversation-avatar">
+                    {conv.partnerName.charAt(0)}
+                  </div>
+                  <div className="conversation-info">
+                    <div className="conversation-header">
+                      <h4>{conv.partnerName}</h4>
+                      <span className="conversation-time">
+                        {formatTime(conv.timestamp)}
+                      </span>
+                    </div>
+                    <p className="conversation-preview">{conv.lastMessage}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="no-conversations">
+                <p>No conversations yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Chat Area */}
+        <div className={`messages-chat ${!selectedChat ? 'hidden-mobile' : ''}`}>
+          {selectedChat ? (
+            <>
+              <div className="chat-header">
+                <button 
+                  className="back-btn mobile-only"
+                  onClick={() => setSelectedChat(null)}
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <div className="chat-user">
+                  <div className="chat-avatar">
+                    {selectedConversation?.partnerName.charAt(0)}
+                  </div>
+                  <div className="chat-user-info">
+                    <h3>{selectedConversation?.partnerName}</h3>
+                    <span className="online-status">Online</span>
+                  </div>
+                </div>
+                <div className="chat-actions">
+                  <button className="action-btn">
+                    <Phone size={20} />
+                  </button>
+                  <button className="action-btn">
+                    <Video size={20} />
+                  </button>
+                  <button className="action-btn">
+                    <MoreVertical size={20} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="chat-messages">
+                {chatMessages.length > 0 ? (
+                  chatMessages.map((msg, index) => {
+                    const isOwn = msg.senderId === user?.id;
+                    const showDate = index === 0 || 
+                      formatDate(msg.timestamp) !== formatDate(chatMessages[index - 1].timestamp);
+                    
+                    return (
+                      <div key={msg.id}>
+                        {showDate && (
+                          <div className="message-date">
+                            {formatDate(msg.timestamp)}
+                          </div>
+                        )}
+                        <div className={`message ${isOwn ? 'own' : 'other'}`}>
+                          <div className="message-bubble">
+                            <p>{msg.content}</p>
+                            <span className="message-time">
+                              {formatTime(msg.timestamp)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="no-messages">
+                    <p>No messages yet. Start the conversation!</p>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              <form className="chat-input" onSubmit={handleSendMessage}>
+                <div className="input-actions">
+                  <button type="button" className="input-action">
+                    <Paperclip size={20} />
+                  </button>
+                  <button type="button" className="input-action">
+                    <Image size={20} />
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Type a message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                />
+                <button type="button" className="input-action">
+                  <Smile size={20} />
+                </button>
+                <button type="submit" className="send-btn" disabled={!newMessage.trim()}>
+                  <Send size={20} />
+                </button>
+              </form>
+            </>
+          ) : (
+            <div className="no-chat-selected">
+              <div className="no-chat-content">
+                <div className="no-chat-icon">💬</div>
+                <h3>Select a conversation</h3>
+                <p>Choose a conversation from the sidebar to start messaging</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Messages;
