@@ -48,6 +48,9 @@ const Navbar = () => {
   return (
       <header className={`header ${scrolled ? 'scrolled' : ''}`}>
           <nav className="navbar-floating">
+              <div className="navbar-shimmer-wrapper">
+                  <div className="navbar-shimmer"></div>
+              </div>
               <div className="navbar-inner">
                   {/* Logo */}
                   <Link to="/" className="navbar-logo" onClick={closeMenu}>

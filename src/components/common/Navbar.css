@@ -38,11 +38,20 @@
   animation: navbarSlideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: visible;
+  isolation: isolate;
 }
 
-/* Glassy shimmer effect */
-.navbar-floating::before {
-  content: '';
+/* Glassy shimmer effect - separate wrapper for proper clipping */
+.navbar-shimmer-wrapper {
+  position: absolute;
+  inset: 0;
+  border-radius: 100px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.navbar-shimmer {
   position: absolute;
   top: 0;
   left: -100%;
@@ -51,15 +60,13 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.4) 50%,
     transparent 100%
   );
   transition: left 0.6s ease;
-  pointer-events: none;
-  z-index: -1;
 }
 
-.navbar-floating:hover::before {
+.navbar-floating:hover .navbar-shimmer {
   left: 100%;
 }
 
@@ -80,8 +87,8 @@
     transparent 100%
   );
   pointer-events: none;
-  z-index: -1;
-  pointer-events: none;
+  z-index: 0;
+  border-radius: 100px;
 }
 
 @keyframes navbarSlideDown {
@@ -115,6 +122,8 @@
   justify-content: space-between;
   padding: 0.5rem 0.75rem 0.5rem 1.25rem;
   gap: 1.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 /* Logo Styles */
