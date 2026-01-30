@@ -324,7 +324,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Influencer Showcase */}
+      {/* Influencer Showcase - Instagram Style */}
       <section className="home-showcase-section">
         <div className="home-section-container">
           <div className="home-section-header" data-scroll-animate>
@@ -340,52 +340,78 @@ const Home = () => {
 
           <div className="home-showcase-grid">
             {featuredInfluencers.map((influencer, index) => (
-              <Link
+              <div
                 key={influencer.id}
-                to={`/influencer/${influencer.id}`}
-                className="home-creator-card"
+                className="home-insta-card"
                 data-scroll-animate
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="home-creator-header">
-                  <img src={influencer.avatar} alt={influencer.name} className="home-creator-avatar" />
-                  {influencer.verified && (
-                    <div className="home-creator-verified">
-                      <CheckCircle size={16} />
+                {/* Instagram-style Header */}
+                <div className="home-insta-header">
+                  <div className="home-insta-avatar-wrapper">
+                    <div className="home-insta-avatar-ring">
+                      <img src={influencer.avatar} alt={influencer.name} className="home-insta-avatar" />
                     </div>
-                  )}
-                  <div className="home-creator-glow"></div>
-                </div>
-                <div className="home-creator-body">
-                  <h3 className="home-creator-name">{influencer.name}</h3>
-                  <p className="home-creator-niche">{influencer.niche}</p>
-                  <div className="home-creator-platforms">
-                    <Instagram size={14} />
-                    <Youtube size={14} />
-                    <Video size={14} />
+                    {influencer.verified && (
+                      <div className="home-insta-verified">
+                        <CheckCircle size={20} />
+                      </div>
+                    )}
                   </div>
-                  <div className="home-creator-stats">
-                    <div className="home-creator-stat">
-                      <Users size={14} />
-                      <span>{influencer.followers}</span>
+
+                  <div className="home-insta-stats">
+                    <div className="home-insta-stat">
+                      <div className="home-insta-stat-value">{influencer.followers}</div>
+                      <div className="home-insta-stat-label">Followers</div>
                     </div>
-                    <div className="home-creator-stat">
-                      <TrendingUp size={14} />
-                      <span>{influencer.engagementRate || '4.2%'}</span>
+                    <div className="home-insta-stat">
+                      <div className="home-insta-stat-value">{250 + (index * 50)}</div>
+                      <div className="home-insta-stat-label">Posts</div>
                     </div>
-                  </div>
-                  <div className="home-creator-footer">
-                    <div className="home-creator-rating">
-                      <Star size={14} fill="currentColor" />
-                      <span>{influencer.rating}</span>
-                    </div>
-                    <div className="home-creator-price">
-                      From <strong>${Math.floor(Math.random() * 400) + 100}</strong>
+                    <div className="home-insta-stat">
+                      <div className="home-insta-stat-value">{influencer.engagementRate || '4.2%'}</div>
+                      <div className="home-insta-stat-label">Engagement</div>
                     </div>
                   </div>
                 </div>
-                <div className="home-creator-hover"></div>
-              </Link>
+
+                {/* Profile Info */}
+                <div className="home-insta-info">
+                  <h3 className="home-insta-name">{influencer.name}</h3>
+                  <p className="home-insta-category">{influencer.niche}</p>
+                  <p className="home-insta-bio">
+                    Professional {influencer.niche.toLowerCase()} creator • Collaborations welcome
+                  </p>
+
+                  <div className="home-insta-platforms">
+                    <Instagram size={16} />
+                    <Youtube size={16} />
+                    <Video size={16} />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="home-insta-actions">
+                  <Link to={`/influencer/${influencer.id}`} className="home-insta-btn-primary">
+                    <span>View Profile</span>
+                  </Link>
+                  <button className="home-insta-btn-secondary">
+                    <MessageSquare size={18} />
+                  </button>
+                </div>
+
+                {/* Rating & Price */}
+                <div className="home-insta-footer">
+                  <div className="home-insta-rating">
+                    <Star size={16} fill="currentColor" />
+                    <span>{influencer.rating}</span>
+                    <span className="home-insta-reviews">({100 + (index * 30)} reviews)</span>
+                  </div>
+                  <div className="home-insta-price">
+                    From <strong>${200 + (index * 75)}</strong>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
