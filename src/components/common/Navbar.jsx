@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -11,16 +11,28 @@ import {
   Briefcase,
   Home,
   Users,
-  Bell
+    Bell,
+    ArrowUpRight,
+    Sparkles,
+    LayoutDashboard
 } from 'lucide-react';
 import './Navbar.css';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
   const handleLogout = () => {
     logout();
@@ -34,66 +46,73 @@ const Navbar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        <Link to="/" className="navbar-logo" onClick={closeMenu}>
-          <span className="logo-icon">C</span>
-          <span className="logo-text">Collabzy</span>
-        </Link>
+      <header className={`header ${scrolled ? 'scrolled' : ''}`}>
+          <nav className="navbar-floating">
+              <div className="navbar-inner">
+                  {/* Logo */}
+                  <Link to="/" className="navbar-logo" onClick={closeMenu}>
+                      <span className="logo-icon">
+                          <Sparkles size={20} />
+                      </span>
+                      <span className="logo-text">Collabzy</span>
+                  </Link>
 
-        <button className="mobile-menu-btn" onClick={toggleMenu}>
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+                  {/* Center Navigation */}
+                  <div className={`navbar-center ${isOpen ? 'active' : ''}`}>
+                      <div className="nav-pills">
+                          <Link
+                              to="/" 
+                              className={`nav-pill ${isActive('/') ? 'active' : ''}`}
+                              onClick={closeMenu}
+                          >
+                              <Home size={16} />
+                              <span>Home</span>
+                          </Link>
+                          <Link
+                              to="/influencers" 
+                              className={`nav-pill ${isActive('/influencers') ? 'active' : ''}`}
+                              onClick={closeMenu}
+                          >
+                              <Users size={16} />
+                              <span>Influencers</span>
+                          </Link>
+                          {isAuthenticated && (
+                              <>
+                                  <Link 
+                                      to="/dashboard"
+                                      className={`nav-pill ${isActive('/dashboard') ? 'active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <LayoutDashboard size={16} />
+                                      <span>Dashboard</span>
+                                  </Link>
+                                  <Link 
+                                      to="/collaborations"
+                                      className={`nav-pill ${isActive('/collaborations') ? 'active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <Briefcase size={16} />
+                                      <span>Collaborations</span>
+                                  </Link>
+                              </>
+                          )}
+                      </div>
+                  </div>
 
-        <div className={`navbar-menu ${isOpen ? 'active' : ''}`}>
-          <div className="navbar-links">
-            <Link 
-              to="/" 
-              className={`nav-link ${isActive('/') ? 'active' : ''}`}
-              onClick={closeMenu}
-            >
-              <Home size={18} />
-              <span>Home</span>
-            </Link>
-            <Link 
-              to="/influencers" 
-              className={`nav-link ${isActive('/influencers') ? 'active' : ''}`}
-              onClick={closeMenu}
-            >
-              <Users size={18} />
-              <span>Influencers</span>
-            </Link>
-            {isAuthenticated && (
-              <>
-                <Link 
-                  to="/collaborations" 
-                  className={`nav-link ${isActive('/collaborations') ? 'active' : ''}`}
-                  onClick={closeMenu}
-                >
-                  <Briefcase size={18} />
-                  <span>Collaborations</span>
-                </Link>
-                <Link 
-                  to="/messages" 
-                  className={`nav-link ${isActive('/messages') ? 'active' : ''}`}
-                  onClick={closeMenu}
-                >
-                  <MessageSquare size={18} />
-                  <span>Messages</span>
-                </Link>
-              </>
-            )}
-          </div>
-
+                  {/* Right Actions */}
           <div className="navbar-actions">
             {isAuthenticated ? (
-              <div className="user-menu">
-                <button className="notification-btn">
-                  <Bell size={20} />
-                  <span className="notification-badge">3</span>
+                          <div className="user-section">
+                              <Link to="/messages" className="icon-btn messages-btn">
+                                  <MessageSquare size={18} />
+                                  <span className="badge">2</span>
+                              </Link>
+                              <button className="icon-btn notification-btn">
+                                  <Bell size={18} />
+                                  <span className="badge">3</span>
                 </button>
                 <div 
-                  className="user-avatar-wrapper"
+                                  className="user-avatar-container"
                   onClick={() => setShowDropdown(!showDropdown)}
                 >
                   {user?.avatar ? (
@@ -103,20 +122,27 @@ const Navbar = () => {
                       {user?.name?.charAt(0) || 'U'}
                     </div>
                   )}
+                                  <div className="avatar-ring"></div>
                 </div>
+
                 {showDropdown && (
                   <div className="dropdown-menu">
                     <div className="dropdown-header">
-                      <span className="dropdown-name">{user?.name}</span>
-                      <span className="dropdown-role">{user?.role}</span>
-                    </div>
+                                          <div className="dropdown-avatar">
+                                              {user?.name?.charAt(0) || 'U'}
+                                          </div>
+                                          <div className="dropdown-info">
+                                              <span className="dropdown-name">{user?.name}</span>
+                                              <span className="dropdown-role">{user?.role}</span>
+                                          </div>
+                                      </div>
                     <div className="dropdown-divider"></div>
                     <Link 
                       to="/dashboard" 
                       className="dropdown-item"
                       onClick={() => setShowDropdown(false)}
                     >
-                      <User size={16} />
+                                          <LayoutDashboard size={16} />
                       <span>Dashboard</span>
                     </Link>
                     <Link 
@@ -136,19 +162,91 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <div className="auth-buttons">
-                <Link to="/login" className="btn btn-secondary" onClick={closeMenu}>
+                              <div className="auth-actions">
+                                  <Link to="/login" className="login-link" onClick={closeMenu}>
                   Login
                 </Link>
-                <Link to="/register" className="btn btn-primary" onClick={closeMenu}>
-                  Sign Up
+                                  <Link to="/register" className="cta-button" onClick={closeMenu}>
+                                      <span>Get Started</span>
+                                      <span className="cta-arrow">
+                                          <ArrowUpRight size={16} />
+                                      </span>
                 </Link>
               </div>
             )}
           </div>
-        </div>
+
+                  {/* Mobile Menu Button */}
+                  <button className="mobile-toggle" onClick={toggleMenu}>
+                      {isOpen ? <X size={22} /> : <Menu size={22} />}
+                  </button>
+              </div>
+          </nav>
+
+          {/* Mobile Menu Overlay */}
+          <div className={`mobile-overlay ${isOpen ? 'active' : ''}`} onClick={closeMenu}></div>
+
+          {/* Mobile Menu */}
+          <div className={`mobile-menu ${isOpen ? 'active' : ''}`}>
+              <div className="mobile-nav-pills">
+                  <Link
+                      to="/"
+                      className={`mobile-nav-item ${isActive('/') ? 'active' : ''}`}
+                      onClick={closeMenu}
+                  >
+                      <Home size={20} />
+                      <span>Home</span>
+                  </Link>
+                  <Link
+                      to="/influencers"
+                      className={`mobile-nav-item ${isActive('/influencers') ? 'active' : ''}`}
+                      onClick={closeMenu}
+                  >
+                      <Users size={20} />
+                      <span>Influencers</span>
+                  </Link>
+                  {isAuthenticated && (
+                      <>
+                          <Link
+                              to="/dashboard"
+                              className={`mobile-nav-item ${isActive('/dashboard') ? 'active' : ''}`}
+                              onClick={closeMenu}
+                          >
+                              <LayoutDashboard size={20} />
+                              <span>Dashboard</span>
+                          </Link>
+                          <Link
+                              to="/collaborations"
+                              className={`mobile-nav-item ${isActive('/collaborations') ? 'active' : ''}`}
+                              onClick={closeMenu}
+                          >
+                              <Briefcase size={20} />
+                              <span>Collaborations</span>
+                          </Link>
+                          <Link
+                              to="/messages"
+                              className={`mobile-nav-item ${isActive('/messages') ? 'active' : ''}`}
+                              onClick={closeMenu}
+                          >
+                              <MessageSquare size={20} />
+                              <span>Messages</span>
+                          </Link>
+                      </>
+                  )}
+              </div>
+              {!isAuthenticated && (
+                  <div className="mobile-auth">
+                      <Link to="/login" className="mobile-login" onClick={closeMenu}>
+                          Login
+                      </Link>
+                      <Link to="/register" className="mobile-signup" onClick={closeMenu}>
+                          <span>Get Started</span>
+                          <ArrowUpRight size={18} />
+                      </Link>
+                  </div>
+              )}
       </div>
-    </nav>
+      </header>
   );
 };
 
