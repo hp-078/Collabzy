@@ -99,6 +99,18 @@ const Register = () => {
 
   return (
     <div className="auth-page">
+          {/* Animated Particles */}
+          <div className="auth-particles">
+              <div className="auth-particle"></div>
+              <div className="auth-particle"></div>
+              <div className="auth-particle"></div>
+              <div className="auth-particle"></div>
+              <div className="auth-particle"></div>
+              <div className="auth-particle"></div>
+              <div className="auth-particle"></div>
+              <div className="auth-particle"></div>
+          </div>
+
       <div className="auth-container">
         <div className="auth-left">
           <div className="auth-left-content">
