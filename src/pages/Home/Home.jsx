@@ -291,6 +291,80 @@ const Home = () => {
         </div>
       </section>
 
+      {/* How It Works Section */}
+      <section id="how-it-works" className="home-how-it-works-section">
+        <div className="home-section-container">
+          <div className="home-section-header" data-scroll-animate>
+            <div className="home-section-badge">
+              <Rocket size={16} />
+              <span>How It Works</span>
+            </div>
+            <h2 className="home-section-title">
+              Start Your Journey in
+              <span className="home-title-accent"> 3 Simple Steps</span>
+            </h2>
+            <p className="home-section-subtitle">
+              From signup to collaboration in minutes
+            </p>
+          </div>
+
+          <div className="home-steps-container">
+            <div className="home-step-card" data-scroll-animate>
+              <div className="home-step-number">
+                <span>01</span>
+              </div>
+              <div className="home-step-icon">
+                <Users size={32} />
+              </div>
+              <h3 className="home-step-title">Create Your Profile</h3>
+              <p className="home-step-description">
+                Sign up as an influencer or brand. Build your profile with portfolio,
+                metrics, and showcase your unique value proposition.
+              </p>
+              <div className="home-step-glow"></div>
+            </div>
+
+            <div className="home-step-arrow" data-scroll-animate>
+              <ArrowRight size={32} />
+            </div>
+
+            <div className="home-step-card" data-scroll-animate style={{ animationDelay: '0.2s' }}>
+              <div className="home-step-number">
+                <span>02</span>
+              </div>
+              <div className="home-step-icon">
+                <Search size={32} />
+              </div>
+              <h3 className="home-step-title">Discover & Connect</h3>
+              <p className="home-step-description">
+                Use AI-powered search to find perfect matches. Filter by niche,
+                engagement rate, and platform. Send collaboration requests instantly.
+              </p>
+              <div className="home-step-glow"></div>
+            </div>
+
+            <div className="home-step-arrow" data-scroll-animate>
+              <ArrowRight size={32} />
+            </div>
+
+            <div className="home-step-card" data-scroll-animate style={{ animationDelay: '0.4s' }}>
+              <div className="home-step-number">
+                <span>03</span>
+              </div>
+              <div className="home-step-icon">
+                <Rocket size={32} />
+              </div>
+              <h3 className="home-step-title">Launch & Track</h3>
+              <p className="home-step-description">
+                Manage collaborations, track progress, and communicate in real-time.
+                Secure payments and detailed analytics included.
+              </p>
+              <div className="home-step-glow"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Grid */}
       <section className="home-features-section">
         <div className="home-section-container">

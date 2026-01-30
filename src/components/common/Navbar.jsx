@@ -68,6 +68,14 @@ const Navbar = () => {
                               <Home size={16} />
                               <span>Home</span>
                           </Link>
+                          <a
+                              href="#how-it-works"
+                              className="nav-pill"
+                              onClick={closeMenu}
+                          >
+                              <Sparkles size={16} />
+                              <span>How it Works</span>
+                          </a>
                           <Link
                               to="/influencers" 
                               className={`nav-pill ${isActive('/influencers') ? 'active' : ''}`}
