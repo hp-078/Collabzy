@@ -5,18 +5,22 @@
   position: relative;
   overflow-x: hidden;
   padding-top: 70px;
+  scroll-behavior: smooth;
 }
 
+/* ========== ANIMATED BACKGROUND ========== */
 /* ========== ANIMATED BACKGROUND ========== */
 .home-bg-animated {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   z-index: -1;
   background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
   overflow: hidden;
+  will-change: transform;
+  pointer-events: none;
 }
 
 .home-gradient-orb {
@@ -25,6 +29,8 @@
   filter: blur(80px);
   opacity: 0.6;
   animation: home-float 20s infinite ease-in-out;
+  will-change: transform;
+  pointer-events: none;
 }
 
 .home-orb-1 {
@@ -72,10 +78,14 @@
 
 /* Particle System */
 .home-particles {
-  position: absolute;
-  width: 100%;
-  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
+  pointer-events: none;
+  will-change: transform;
 }
 
 .home-particle {
@@ -86,11 +96,15 @@
   border-radius: 50%;
   animation: home-particle-rise linear infinite;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  top: -100px;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  pointer-events: none;
 }
 
 @keyframes home-particle-rise {
   0% {
-    transform: translateY(100vh) scale(0);
+    transform: translateY(calc(100vh + 100px)) scale(0);
     opacity: 0;
   }
 
@@ -103,7 +117,7 @@
   }
 
   100% {
-    transform: translateY(-100vh) scale(1);
+    transform: translateY(-200px) scale(1);
     opacity: 0;
   }
 }
@@ -876,7 +890,7 @@
 .home-feature-hover-effect {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(139, 92, 246, 0.1), transparent);
+  background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05) 50%, transparent 80%);
   opacity: 0;
   transition: opacity 0.3s;
   pointer-events: none;

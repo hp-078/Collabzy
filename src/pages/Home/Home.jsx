@@ -31,14 +31,9 @@ import './Home.css';
 
 const Home = () => {
   const { influencers } = useData();
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
@@ -61,11 +56,9 @@ const Home = () => {
     const animatedElements = document.querySelectorAll('[data-scroll-animate]');
     animatedElements.forEach(el => observer.observe(el));
 
-    window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('scroll', handleScroll);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('scroll', handleScroll);
       animatedElements.forEach(el => observer.unobserve(el));
     };
