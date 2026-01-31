@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import Lenis from 'lenis';
 import {
   ArrowRight,
   CheckCircle,
@@ -15,8 +16,28 @@ import './Home.css';
 
 const Home = () => {
   const { influencers } = useData();
+  const lenisRef = useRef(null);
 
   useEffect(() => {
+    // Initialize Lenis smooth scroll
+    lenisRef.current = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 2,
+      infinite: false,
+    });
+
+    // RAF loop for Lenis
+    function raf(time) {
+      lenisRef.current?.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
     // Scroll animation observer
     const observerOptions = {
       threshold: 0.1,
@@ -35,6 +56,7 @@ const Home = () => {
     animatedElements.forEach(el => observer.observe(el));
 
     return () => {
+      lenisRef.current?.destroy();
       animatedElements.forEach(el => observer.unobserve(el));
     };
   }, []);
