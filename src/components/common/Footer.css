@@ -1,5 +1,6 @@
 /* ================================
    Playful Pastel Footer Styles
+   Prefix: footer-
    ================================ */
 
 .footer-wrapper {
@@ -112,13 +113,13 @@
 }
 
 /* Social Links - Pastel Theme */
-.social-links {
+.footer-social-links {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
 
-.social-link {
+.footer-social-link {
   width: 36px;
   height: 36px;
   display: flex;
@@ -130,7 +131,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.social-link:hover {
+.footer-social-link:hover {
   background: var(--dark-text);
   color: white;
   transform: translateY(-3px);
@@ -174,7 +175,7 @@
   flex-direction: column;
 }
 
-.contact-item {
+.footer-contact-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -186,11 +187,11 @@
   transition: color 0.2s ease;
 }
 
-.contact-item:hover {
+.footer-contact-item:hover {
   color: var(--accent-coral);
 }
 
-.contact-item svg {
+.footer-contact-item svg {
   flex-shrink: 0;
   color: var(--pastel-pink);
 }

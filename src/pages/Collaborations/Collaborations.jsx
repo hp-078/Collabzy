@@ -60,9 +60,9 @@ const Collaborations = () => {
   };
 
   return (
-    <div className="collaborations-page">
-      <div className="collaborations-container">
-        <div className="page-header">
+    <div className="collab-page">
+      <div className="collab-container">
+        <div className="collab-page-header">
           <div>
             <h1>Collaborations</h1>
             <p>Manage all your collaboration requests and projects</p>
@@ -70,8 +70,8 @@ const Collaborations = () => {
         </div>
 
         {/* Filters */}
-        <div className="filters-bar">
-          <div className="search-box">
+        <div className="collab-filters-bar">
+          <div className="collab-search-box">
             <Search size={20} />
             <input
               type="text"
@@ -81,29 +81,29 @@ const Collaborations = () => {
             />
           </div>
 
-          <div className="filter-tabs">
+          <div className="collab-filter-tabs">
             {['all', 'pending', 'active', 'completed'].map(status => (
               <button
                 key={status}
-                className={`filter-tab ${filter === status ? 'active' : ''}`}
+                className={`collab-filter-tab ${filter === status ? 'collab-active' : ''}`}
                 onClick={() => setFilter(status)}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
-                <span className="count">{statusCounts[status]}</span>
+                <span className="collab-count">{statusCounts[status]}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Collaborations List */}
-        <div className="collaborations-list">
+        <div className="collab-list">
           {filteredCollabs.length > 0 ? (
             filteredCollabs.map((collab) => (
               <div key={collab.id} className="collab-card">
                 <div className="collab-header">
                   <div className="collab-title">
                     <h3>{isInfluencer ? collab.brandName : collab.influencerName}</h3>
-                    <span className={`status-badge status-${collab.status}`}>
+                    <span className={`collab-status-badge collab-status-${collab.status}`}>
                       {getStatusIcon(collab.status)}
                       {collab.status}
                     </span>
@@ -118,17 +118,17 @@ const Collaborations = () => {
                   <p className="collab-message">{collab.message}</p>
                   
                   <div className="collab-details">
-                    <div className="detail-item">
+                    <div className="collab-detail-item">
                       <DollarSign size={16} />
                       <span>Budget: <strong>${collab.budget}</strong></span>
                     </div>
                     {collab.deadline && (
-                      <div className="detail-item">
+                      <div className="collab-detail-item">
                         <Calendar size={16} />
                         <span>Deadline: <strong>{collab.deadline}</strong></span>
                       </div>
                     )}
-                    <div className="detail-item">
+                    <div className="collab-detail-item">
                       <Clock size={16} />
                       <span>Created: <strong>{collab.createdAt}</strong></span>
                     </div>
@@ -137,7 +137,7 @@ const Collaborations = () => {
 
                 <div className="collab-footer">
                   {collab.status === 'pending' && isInfluencer && (
-                    <div className="action-buttons">
+                    <div className="collab-action-buttons">
                       <button 
                         className="btn btn-primary btn-sm"
                         onClick={() => handleStatusChange(collab.id, 'active')}
@@ -153,7 +153,7 @@ const Collaborations = () => {
                     </div>
                   )}
                   {collab.status === 'active' && (
-                    <div className="action-buttons">
+                    <div className="collab-action-buttons">
                       <Link to="/messages" className="btn btn-secondary btn-sm">
                         <MessageSquare size={16} />
                         Message
@@ -170,7 +170,7 @@ const Collaborations = () => {
                     </div>
                   )}
                   {collab.status === 'completed' && (
-                    <div className="completed-info">
+                    <div className="collab-completed-info">
                       <CheckCircle size={18} />
                       <span>Completed on {collab.completedAt || 'recently'}</span>
                     </div>
@@ -179,7 +179,7 @@ const Collaborations = () => {
               </div>
             ))
           ) : (
-            <div className="empty-state">
+            <div className="collab-empty-state">
               <Briefcase size={48} />
               <h3>No collaborations found</h3>
               <p>

@@ -47,16 +47,16 @@ const Influencers = () => {
   };
 
   return (
-    <div className="influencers-page">
-      <div className="influencers-container">
+    <div className="inf-page">
+      <div className="inf-container">
         {/* Header */}
-        <div className="influencers-header">
-          <div className="header-content">
+        <div className="inf-header">
+          <div className="inf-header-content">
             <h1>Discover Influencers</h1>
             <p>Find the perfect influencer for your brand collaboration</p>
           </div>
-          <div className="header-stats">
-            <div className="stat-badge">
+          <div className="inf-header-stats">
+            <div className="inf-stat-badge">
               <Users size={18} />
               <span>{influencers.length} Influencers</span>
             </div>
@@ -64,20 +64,20 @@ const Influencers = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="filters-section">
-          <div className="search-bar">
-            <Search size={20} className="search-icon" />
+        <div className="inf-filters-section">
+          <div className="inf-search-bar">
+            <Search size={20} className="inf-search-icon" />
             <input
               type="text"
               placeholder="Search by name or niche..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
+              className="inf-search-input"
             />
           </div>
           
           <button 
-            className="filter-toggle btn btn-secondary"
+            className="inf-filter-toggle btn btn-secondary"
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter size={18} />
@@ -86,13 +86,13 @@ const Influencers = () => {
         </div>
 
         {showFilters && (
-          <div className="filters-panel">
-            <div className="filter-group">
+          <div className="inf-filters-panel">
+            <div className="inf-filter-group">
               <label>Niche</label>
               <select 
                 value={selectedNiche}
                 onChange={(e) => setSelectedNiche(e.target.value)}
-                className="filter-select"
+                className="inf-filter-select"
               >
                 <option value="">All Niches</option>
                 {niches.map(niche => (
@@ -101,12 +101,12 @@ const Influencers = () => {
               </select>
             </div>
 
-            <div className="filter-group">
+            <div className="inf-filter-group">
               <label>Platform</label>
               <select 
                 value={selectedPlatform}
                 onChange={(e) => setSelectedPlatform(e.target.value)}
-                className="filter-select"
+                className="inf-filter-select"
               >
                 <option value="">All Platforms</option>
                 {platforms.map(platform => (
@@ -122,81 +122,81 @@ const Influencers = () => {
         )}
 
         {/* Results Info */}
-        <div className="results-info">
+        <div className="inf-results-info">
           <span>Showing {filteredInfluencers.length} influencers</span>
           {(searchTerm || selectedNiche || selectedPlatform) && (
-            <button className="clear-btn" onClick={clearFilters}>
+            <button className="inf-clear-btn" onClick={clearFilters}>
               Clear all filters
             </button>
           )}
         </div>
 
         {/* Influencer Grid */}
-        <div className="influencer-grid">
+        <div className="inf-grid">
           {filteredInfluencers.map((influencer) => (
             <Link 
               key={influencer.id} 
               to={`/influencer/${influencer.id}`}
-              className="influencer-card"
+              className="inf-card"
             >
-              <div className="card-header">
-                <div className="avatar-wrapper">
+              <div className="inf-card-header">
+                <div className="inf-avatar-wrapper">
                   <img 
                     src={influencer.avatar} 
                     alt={influencer.name}
-                    className="influencer-avatar"
+                    className="inf-avatar"
                   />
                   {influencer.verified && (
-                    <span className="verified-badge">
+                    <span className="inf-verified-badge">
                       <CheckCircle size={16} />
                     </span>
                   )}
                 </div>
-                <div className="platform-badge">
+                <div className="inf-platform-badge">
                   {platformIcons[influencer.platform] || influencer.platform}
                 </div>
               </div>
               
-              <div className="card-body">
-                <h3 className="influencer-name">{influencer.name}</h3>
-                <p className="influencer-niche">{influencer.niche}</p>
+              <div className="inf-card-body">
+                <h3 className="inf-name">{influencer.name}</h3>
+                <p className="inf-niche">{influencer.niche}</p>
                 
-                <div className="influencer-location">
+                <div className="inf-location">
                   <MapPin size={14} />
                   <span>{influencer.location}</span>
                 </div>
 
-                <p className="influencer-description">
+                <p className="inf-description">
                   {influencer.description.slice(0, 100)}...
                 </p>
 
-                <div className="influencer-stats">
-                  <div className="stat">
+                <div className="inf-stats">
+                  <div className="inf-stat">
                     <Users size={16} />
                     <span>{influencer.followers}</span>
                   </div>
-                  <div className="stat">
+                  <div className="inf-stat">
                     <Star size={16} fill="currentColor" />
                     <span>{influencer.rating}</span>
                   </div>
                 </div>
 
                 {influencer.services && influencer.services.length > 0 && (
-                  <div className="price-range">
+                  <div className="inf-price-range">
                     Starting from <strong>${Math.min(...influencer.services.map(s => s.price))}</strong>
                   </div>
                 )}
               </div>
 
-              <div className="card-footer">
-                <span className="view-profile">View Profile →</span>
+              <div className="inf-card-footer">
+                <span className="inf-view-profile">View Profile →</span>
               </div>
             </Link>
           ))}
         </div>
 
         {filteredInfluencers.length === 0 && (
-          <div className="no-results">
+          <div className="inf-no-results">
             <Users size={48} />
             <h3>No influencers found</h3>
             <p>Try adjusting your search or filters</p>

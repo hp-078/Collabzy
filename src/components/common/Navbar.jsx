@@ -46,26 +46,26 @@ const Navbar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-      <header className={`header ${scrolled ? 'scrolled' : ''}`}>
-          <nav className="navbar-floating">
-              <div className="navbar-shimmer-wrapper">
-                  <div className="navbar-shimmer"></div>
+      <header className={`nav-header ${scrolled ? 'nav-scrolled' : ''}`}>
+          <nav className="nav-floating">
+              <div className="nav-shimmer-wrapper">
+                  <div className="nav-shimmer"></div>
               </div>
-              <div className="navbar-inner">
+              <div className="nav-inner">
                   {/* Logo */}
-                  <Link to="/" className="navbar-logo" onClick={closeMenu}>
-                      <span className="logo-icon">
+                  <Link to="/" className="nav-logo" onClick={closeMenu}>
+                      <span className="nav-logo-icon">
                           <Sparkles size={20} />
                       </span>
-                      <span className="logo-text">Collabzy</span>
+                      <span className="nav-logo-text">Collabzy</span>
                   </Link>
 
                   {/* Center Navigation */}
-                  <div className={`navbar-center ${isOpen ? 'active' : ''}`}>
+                  <div className={`nav-center ${isOpen ? 'nav-active' : ''}`}>
                       <div className="nav-pills">
                           <Link
                               to="/" 
-                              className={`nav-pill ${isActive('/') ? 'active' : ''}`}
+                              className={`nav-pill ${isActive('/') ? 'nav-active' : ''}`}
                               onClick={closeMenu}
                           >
                               <Home size={16} />
@@ -81,7 +81,7 @@ const Navbar = () => {
                           </a>
                           <Link
                               to="/influencers" 
-                              className={`nav-pill ${isActive('/influencers') ? 'active' : ''}`}
+                              className={`nav-pill ${isActive('/influencers') ? 'nav-active' : ''}`}
                               onClick={closeMenu}
                           >
                               <Users size={16} />
@@ -91,7 +91,7 @@ const Navbar = () => {
                               <>
                                   <Link 
                                       to="/dashboard"
-                                      className={`nav-pill ${isActive('/dashboard') ? 'active' : ''}`}
+                                      className={`nav-pill ${isActive('/dashboard') ? 'nav-active' : ''}`}
                                       onClick={closeMenu}
                                   >
                                       <LayoutDashboard size={16} />
@@ -99,7 +99,7 @@ const Navbar = () => {
                                   </Link>
                                   <Link 
                                       to="/collaborations"
-                                      className={`nav-pill ${isActive('/collaborations') ? 'active' : ''}`}
+                                      className={`nav-pill ${isActive('/collaborations') ? 'nav-active' : ''}`}
                                       onClick={closeMenu}
                                   >
                                       <Briefcase size={16} />
@@ -111,46 +111,46 @@ const Navbar = () => {
                   </div>
 
                   {/* Right Actions */}
-          <div className="navbar-actions">
+          <div className="nav-actions">
             {isAuthenticated ? (
-                          <div className="user-section">
-                              <Link to="/messages" className="icon-btn messages-btn">
+                          <div className="nav-user-section">
+                              <Link to="/messages" className="nav-icon-btn nav-messages-btn">
                                   <MessageSquare size={18} />
-                                  <span className="badge">2</span>
+                                  <span className="nav-badge">2</span>
                               </Link>
-                              <button className="icon-btn notification-btn">
+                              <button className="nav-icon-btn nav-notification-btn">
                                   <Bell size={18} />
-                                  <span className="badge">3</span>
+                                  <span className="nav-badge">3</span>
                 </button>
                 <div 
-                                  className="user-avatar-container"
+                                  className="nav-user-avatar-container"
                   onClick={() => setShowDropdown(!showDropdown)}
                 >
                   {user?.avatar ? (
-                    <img src={user.avatar} alt={user.name} className="user-avatar" />
+                    <img src={user.avatar} alt={user.name} className="nav-user-avatar" />
                   ) : (
-                    <div className="user-avatar-placeholder">
+                    <div className="nav-user-avatar-placeholder">
                       {user?.name?.charAt(0) || 'U'}
                     </div>
                   )}
-                                  <div className="avatar-ring"></div>
+                                  <div className="nav-avatar-ring"></div>
                 </div>
 
                 {showDropdown && (
-                  <div className="dropdown-menu">
-                    <div className="dropdown-header">
-                                          <div className="dropdown-avatar">
+                  <div className="nav-dropdown-menu">
+                    <div className="nav-dropdown-header">
+                                          <div className="nav-dropdown-avatar">
                                               {user?.name?.charAt(0) || 'U'}
                                           </div>
-                                          <div className="dropdown-info">
-                                              <span className="dropdown-name">{user?.name}</span>
-                                              <span className="dropdown-role">{user?.role}</span>
+                                          <div className="nav-dropdown-info">
+                                              <span className="nav-dropdown-name">{user?.name}</span>
+                                              <span className="nav-dropdown-role">{user?.role}</span>
                                           </div>
                                       </div>
-                    <div className="dropdown-divider"></div>
+                    <div className="nav-dropdown-divider"></div>
                     <Link 
                       to="/dashboard" 
-                      className="dropdown-item"
+                      className="nav-dropdown-item"
                       onClick={() => setShowDropdown(false)}
                     >
                                           <LayoutDashboard size={16} />
@@ -158,14 +158,14 @@ const Navbar = () => {
                     </Link>
                     <Link 
                       to="/profile" 
-                      className="dropdown-item"
+                      className="nav-dropdown-item"
                       onClick={() => setShowDropdown(false)}
                     >
                       <Settings size={16} />
                       <span>Settings</span>
                     </Link>
-                    <div className="dropdown-divider"></div>
-                    <button className="dropdown-item logout" onClick={handleLogout}>
+                    <div className="nav-dropdown-divider"></div>
+                    <button className="nav-dropdown-item nav-logout" onClick={handleLogout}>
                       <LogOut size={16} />
                       <span>Logout</span>
                     </button>
@@ -173,13 +173,13 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-                              <div className="auth-actions">
-                                  <Link to="/login" className="login-link" onClick={closeMenu}>
+                              <div className="nav-auth-actions">
+                                  <Link to="/login" className="nav-login-link" onClick={closeMenu}>
                   Login
                 </Link>
-                                  <Link to="/register" className="cta-button" onClick={closeMenu}>
+                                  <Link to="/register" className="nav-cta-button" onClick={closeMenu}>
                                       <span>Get Started</span>
-                                      <span className="cta-arrow">
+                                      <span className="nav-cta-arrow">
                                           <ArrowUpRight size={16} />
                                       </span>
                 </Link>
@@ -188,21 +188,21 @@ const Navbar = () => {
           </div>
 
                   {/* Mobile Menu Button */}
-                  <button className="mobile-toggle" onClick={toggleMenu}>
+                  <button className="nav-mobile-toggle" onClick={toggleMenu}>
                       {isOpen ? <X size={22} /> : <Menu size={22} />}
                   </button>
               </div>
           </nav>
 
           {/* Mobile Menu Overlay */}
-          <div className={`mobile-overlay ${isOpen ? 'active' : ''}`} onClick={closeMenu}></div>
+          <div className={`nav-mobile-overlay ${isOpen ? 'nav-active' : ''}`} onClick={closeMenu}></div>
 
           {/* Mobile Menu */}
-          <div className={`mobile-menu ${isOpen ? 'active' : ''}`}>
-              <div className="mobile-nav-pills">
+          <div className={`nav-mobile-menu ${isOpen ? 'nav-active' : ''}`}>
+              <div className="nav-mobile-pills">
                   <Link
                       to="/"
-                      className={`mobile-nav-item ${isActive('/') ? 'active' : ''}`}
+                      className={`nav-mobile-item ${isActive('/') ? 'nav-active' : ''}`}
                       onClick={closeMenu}
                   >
                       <Home size={20} />
@@ -210,7 +210,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                       to="/influencers"
-                      className={`mobile-nav-item ${isActive('/influencers') ? 'active' : ''}`}
+                      className={`nav-mobile-item ${isActive('/influencers') ? 'nav-active' : ''}`}
                       onClick={closeMenu}
                   >
                       <Users size={20} />
@@ -220,7 +220,7 @@ const Navbar = () => {
                       <>
                           <Link
                               to="/dashboard"
-                              className={`mobile-nav-item ${isActive('/dashboard') ? 'active' : ''}`}
+                              className={`nav-mobile-item ${isActive('/dashboard') ? 'nav-active' : ''}`}
                               onClick={closeMenu}
                           >
                               <LayoutDashboard size={20} />
@@ -228,7 +228,7 @@ const Navbar = () => {
                           </Link>
                           <Link
                               to="/collaborations"
-                              className={`mobile-nav-item ${isActive('/collaborations') ? 'active' : ''}`}
+                              className={`nav-mobile-item ${isActive('/collaborations') ? 'nav-active' : ''}`}
                               onClick={closeMenu}
                           >
                               <Briefcase size={20} />
@@ -236,7 +236,7 @@ const Navbar = () => {
                           </Link>
                           <Link
                               to="/messages"
-                              className={`mobile-nav-item ${isActive('/messages') ? 'active' : ''}`}
+                              className={`nav-mobile-item ${isActive('/messages') ? 'nav-active' : ''}`}
                               onClick={closeMenu}
                           >
                               <MessageSquare size={20} />
@@ -246,11 +246,11 @@ const Navbar = () => {
                   )}
               </div>
               {!isAuthenticated && (
-                  <div className="mobile-auth">
-                      <Link to="/login" className="mobile-login" onClick={closeMenu}>
+                  <div className="nav-mobile-auth">
+                      <Link to="/login" className="nav-mobile-login" onClick={closeMenu}>
                           Login
                       </Link>
-                      <Link to="/register" className="mobile-signup" onClick={closeMenu}>
+                      <Link to="/register" className="nav-mobile-signup" onClick={closeMenu}>
                           <span>Get Started</span>
                           <ArrowUpRight size={18} />
                       </Link>

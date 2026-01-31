@@ -1,28 +1,29 @@
 /* ========================================
    Dashboard Page - Portfolio Cream Theme
+   Prefix: dash-
 ======================================== */
 
-.dashboard-page {
+.dash-page {
   padding: 120px 0 60px;
   min-height: 100vh;
   background: var(--pastel-cream);
 }
 
-.dashboard-container {
+.dash-container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 1.5rem;
 }
 
 /* Welcome Section */
-.welcome-section {
+.dash-welcome-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
 }
 
-.welcome-content h1 {
+.dash-welcome-content h1 {
   font-size: 2rem;
   font-weight: 900;
   font-family: var(--heading-font);
@@ -31,20 +32,20 @@
   letter-spacing: -0.04em;
 }
 
-.welcome-content p {
+.dash-welcome-content p {
   color: var(--light-text);
   font-family: var(--body-font);
 }
 
 /* Stats Grid - Pastel Theme */
-.stats-grid {
+.dash-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
-.stat-card {
+.dash-stat-card {
   background: white;
   border-radius: 24px;
   padding: 1.5rem;
@@ -56,12 +57,12 @@
   transition: all 0.4s ease;
 }
 
-.stat-card:hover {
+.dash-stat-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
 }
 
-.stat-icon {
+.dash-stat-icon {
   width: 56px;
   height: 56px;
   display: flex;
@@ -70,31 +71,31 @@
   border-radius: 16px;
 }
 
-.stat-primary .stat-icon {
+.dash-stat-primary .dash-stat-icon {
   background: var(--pastel-lavender);
   color: var(--accent-purple);
 }
 
-.stat-warning .stat-icon {
+.dash-stat-warning .dash-stat-icon {
   background: var(--pastel-yellow);
   color: var(--dark-text);
 }
 
-.stat-success .stat-icon {
+.dash-stat-success .dash-stat-icon {
   background: var(--pastel-mint);
   color: #2E8B57;
 }
 
-.stat-info .stat-icon {
+.dash-stat-info .dash-stat-icon {
   background: var(--pastel-pink);
   color: var(--accent-coral);
 }
 
-.stat-info-content {
+.dash-stat-info-content {
   flex: 1;
 }
 
-.stat-value {
+.dash-stat-value {
   display: block;
   font-size: 1.75rem;
   font-weight: 900;
@@ -103,26 +104,26 @@
   letter-spacing: -0.03em;
 }
 
-.stat-label {
+.dash-stat-label {
   font-size: 0.875rem;
   font-family: var(--body-font);
   color: var(--light-text);
 }
 
 /* Dashboard Content */
-.dashboard-content {
+.dash-content {
   display: grid;
   grid-template-columns: 1fr 350px;
   gap: 2rem;
 }
 
-.content-main {
+.dash-content-main {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.dashboard-card {
+.dash-card {
   background: white;
   border-radius: 24px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
@@ -130,7 +131,7 @@
   overflow: hidden;
 }
 
-.card-header {
+.dash-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -138,7 +139,7 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.card-header h2 {
+.dash-card-header h2 {
   font-size: 1.25rem;
   font-weight: 800;
   font-family: var(--heading-font);
@@ -146,7 +147,7 @@
   letter-spacing: -0.03em;
 }
 
-.view-all {
+.dash-view-all {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -156,11 +157,11 @@
   font-weight: 600;
 }
 
-.view-all:hover {
+.dash-view-all:hover {
   text-decoration: underline;
 }
 
-.pending-count {
+.dash-pending-count {
   background: var(--pastel-yellow);
   color: var(--dark-text);
   padding: 0.25rem 0.75rem;
@@ -170,18 +171,18 @@
   font-family: var(--body-font);
 }
 
-.card-body {
+.dash-card-body {
   padding: 1.5rem;
 }
 
 /* Collab List - Pastel Theme */
-.collab-list {
+.dash-collab-list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.collab-item {
+.dash-collab-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -191,15 +192,15 @@
   transition: all 0.3s ease;
 }
 
-.collab-item:hover {
+.dash-collab-item:hover {
   background: var(--pastel-lavender);
 }
 
-.collab-item.pending {
+.dash-collab-item.dash-pending {
   border-left: 3px solid var(--accent-coral);
 }
 
-.collab-info h4 {
+.dash-collab-info h4 {
   font-size: 1rem;
   font-weight: 700;
   font-family: var(--heading-font);
@@ -208,19 +209,19 @@
   letter-spacing: -0.02em;
 }
 
-.collab-info p {
+.dash-collab-info p {
   font-size: 0.8125rem;
   font-family: var(--body-font);
   color: var(--light-text);
 }
 
-.collab-meta {
+.dash-collab-meta {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.status-badge {
+.dash-status-badge {
   padding: 0.375rem 0.875rem;
   border-radius: 50px;
   font-size: 0.75rem;
@@ -229,22 +230,22 @@
   text-transform: capitalize;
 }
 
-.status-pending {
+.dash-status-pending {
   background: var(--pastel-peach);
   color: var(--accent-coral);
 }
 
-.status-active {
+.dash-status-active {
   background: var(--pastel-lavender);
   color: var(--accent-purple);
 }
 
-.status-completed {
+.dash-status-completed {
   background: var(--pastel-mint);
   color: #2E8B57;
 }
 
-.collab-budget {
+.dash-collab-budget {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -253,38 +254,38 @@
   color: var(--dark-text);
 }
 
-.collab-actions {
+.dash-collab-actions {
   display: flex;
   gap: 0.5rem;
 }
 
 /* Empty State - Pastel Theme */
-.empty-state {
+.dash-empty-state {
   text-align: center;
   padding: 2rem;
   color: var(--muted-text);
 }
 
-.empty-state svg {
+.dash-empty-state svg {
   margin-bottom: 1rem;
   color: var(--accent-coral);
 }
 
-.empty-state p {
+.dash-empty-state p {
   margin-bottom: 1rem;
   font-family: var(--body-font);
   color: var(--light-text);
 }
 
 /* Sidebar - Pastel Theme */
-.content-sidebar {
+.dash-content-sidebar {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
 /* Profile Card - Pastel Theme */
-.profile-card {
+.dash-profile-card {
   background: white;
   border-radius: 24px;
   padding: 1.5rem;
@@ -293,11 +294,11 @@
   text-align: center;
 }
 
-.profile-card .profile-header {
+.dash-profile-card .dash-profile-header {
   margin-bottom: 1rem;
 }
 
-.profile-avatar {
+.dash-profile-avatar {
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -306,7 +307,7 @@
   border: 3px solid var(--pastel-lavender);
 }
 
-.profile-avatar-placeholder {
+.dash-profile-avatar-placeholder {
   width: 80px;
   height: 80px;
   display: flex;
@@ -321,7 +322,7 @@
   margin: 0 auto 1rem;
 }
 
-.profile-card h3 {
+.dash-profile-card h3 {
   font-size: 1.25rem;
   font-weight: 800;
   font-family: var(--heading-font);
@@ -330,14 +331,14 @@
   letter-spacing: -0.03em;
 }
 
-.profile-role {
+.dash-profile-role {
   font-size: 0.875rem;
   font-family: var(--body-font);
   color: var(--light-text);
   text-transform: capitalize;
 }
 
-.profile-stats {
+.dash-profile-stats {
   display: flex;
   justify-content: center;
   gap: 2rem;
@@ -347,11 +348,11 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.profile-stat {
+.dash-profile-stat {
   text-align: center;
 }
 
-.profile-stat .value {
+.dash-profile-stat .dash-value {
   display: block;
   font-size: 1.25rem;
   font-weight: 900;
@@ -359,19 +360,19 @@
   color: var(--dark-text);
 }
 
-.profile-stat .label {
+.dash-profile-stat .dash-label {
   font-size: 0.75rem;
   font-family: var(--body-font);
   color: var(--light-text);
 }
 
-.profile-card .btn {
+.dash-profile-card .btn {
   width: 100%;
   margin-top: 1rem;
 }
 
 /* Quick Links - Pastel Theme */
-.quick-links-card {
+.dash-quick-links-card {
   background: white;
   border-radius: 24px;
   padding: 1.5rem;
@@ -379,7 +380,7 @@
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.quick-links-card h3 {
+.dash-quick-links-card h3 {
   font-size: 1.125rem;
   font-weight: 800;
   font-family: var(--heading-font);
@@ -388,13 +389,13 @@
   letter-spacing: -0.02em;
 }
 
-.quick-links {
+.dash-quick-links {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.quick-link {
+.dash-quick-link {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -405,41 +406,41 @@
   font-family: var(--body-font);
 }
 
-.quick-link:hover {
+.dash-quick-link:hover {
   background: var(--pastel-lavender);
   color: var(--accent-purple);
 }
 
-.quick-link svg {
+.dash-quick-link svg {
   color: var(--light-text);
 }
 
-.quick-link:hover svg {
+.dash-quick-link:hover svg {
   color: var(--accent-purple);
 }
 
 /* Deadlines Card */
-.deadlines-card {
+.dash-deadlines-card {
   background: var(--white);
   border-radius: var(--radius-xl);
   padding: 1.5rem;
   box-shadow: var(--shadow-md);
 }
 
-.deadlines-card h3 {
+.dash-deadlines-card h3 {
   font-size: 1rem;
   font-weight: 600;
   color: var(--gray-900);
   margin-bottom: 1rem;
 }
 
-.deadline-list {
+.dash-deadline-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.deadline-item {
+.dash-deadline-item {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
@@ -448,23 +449,23 @@
   border-radius: var(--radius-md);
 }
 
-.deadline-item svg {
+.dash-deadline-item svg {
   color: var(--primary-500);
   margin-top: 2px;
 }
 
-.deadline-title {
+.dash-deadline-title {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--gray-900);
 }
 
-.deadline-date {
+.dash-deadline-date {
   font-size: 0.75rem;
   color: var(--gray-500);
 }
 
-.no-deadlines {
+.dash-no-deadlines {
   font-size: 0.875rem;
   color: var(--gray-500);
   text-align: center;
@@ -473,44 +474,44 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .dashboard-content {
+  .dash-content {
     grid-template-columns: 1fr;
   }
 
-  .content-sidebar {
+  .dash-content-sidebar {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
-  .welcome-section {
+  .dash-welcome-section {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
   }
 
-  .stats-grid {
+  .dash-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .content-sidebar {
+  .dash-content-sidebar {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 480px) {
-  .stats-grid {
+  .dash-stats-grid {
     grid-template-columns: 1fr;
   }
 
-  .collab-item {
+  .dash-collab-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
   }
 
-  .collab-meta {
+  .dash-collab-meta {
     width: 100%;
     justify-content: space-between;
   }

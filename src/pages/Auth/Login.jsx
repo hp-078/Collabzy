@@ -111,8 +111,8 @@ const Login = () => {
         <div className="auth-left">
           <div className="auth-left-content">
             <Link to="/" className="auth-logo">
-              <span className="logo-icon">C</span>
-              <span className="logo-text">Collabzy</span>
+              <span className="auth-logo-icon">C</span>
+              <span className="auth-logo-text">Collabzy</span>
             </Link>
             <h1 className="auth-welcome">Welcome Back!</h1>
             <p className="auth-tagline">
@@ -120,19 +120,19 @@ const Login = () => {
             </p>
             <div className="auth-features">
               <div className="auth-feature">
-                <span className="feature-icon">✓</span>
+                <span className="auth-feature-icon">✓</span>
                 <span>Track your collaborations</span>
               </div>
               <div className="auth-feature">
-                <span className="feature-icon">✓</span>
+                <span className="auth-feature-icon">✓</span>
                 <span>Message partners</span>
               </div>
               <div className="auth-feature">
-                <span className="feature-icon">✓</span>
+                <span className="auth-feature-icon">✓</span>
                 <span>Manage your profile</span>
               </div>
               <div className="auth-feature">
-                <span className="feature-icon">✓</span>
+                <span className="auth-feature-icon">✓</span>
                 <span>Discover new opportunities</span>
               </div>
             </div>
@@ -152,8 +152,8 @@ const Login = () => {
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="input-group">
                 <label htmlFor="email">Email Address</label>
-                <div className="input-wrapper">
-                  <Mail size={20} className="input-icon" />
+                <div className="auth-input-wrapper">
+                  <Mail size={20} className="auth-input-icon" />
                   <input
                     type="email"
                     id="email"
@@ -167,12 +167,12 @@ const Login = () => {
               </div>
 
               <div className="input-group">
-                <div className="label-row">
+                <div className="auth-label-row">
                   <label htmlFor="password">Password</label>
-                  <a href="#" className="forgot-link">Forgot password?</a>
+                  <a href="#" className="auth-forgot-link">Forgot password?</a>
                 </div>
-                <div className="input-wrapper">
-                  <Lock size={20} className="input-icon" />
+                <div className="auth-input-wrapper">
+                  <Lock size={20} className="auth-input-icon" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     id="password"
@@ -184,7 +184,7 @@ const Login = () => {
                   />
                   <button
                     type="button"
-                    className="password-toggle"
+                    className="auth-password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -192,7 +192,7 @@ const Login = () => {
                 </div>
               </div>
 
-              <div className="remember-checkbox">
+              <div className="auth-remember-checkbox">
                 <input type="checkbox" id="remember" />
                 <label htmlFor="remember">Remember me for 30 days</label>
               </div>
@@ -203,9 +203,9 @@ const Login = () => {
               </button>
             </form>
 
-            <div className="demo-login">
-              <p className="demo-title">Quick Demo Access</p>
-              <div className="demo-buttons">
+            <div className="auth-demo-login">
+              <p className="auth-demo-title">Quick Demo Access</p>
+              <div className="auth-demo-buttons">
                 <button 
                   className="btn btn-secondary btn-sm"
                   onClick={() => handleDemoLogin('influencer')}

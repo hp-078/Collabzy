@@ -1,20 +1,20 @@
 /* ========================================
-   Influencer Detail Page - Playful Pastel Theme
+   INFLUENCER DETAIL PAGE STYLES - Prefixed with 'idet-'
 ======================================== */
 
-.influencer-detail-page {
+.idet-page {
   padding: 120px 0 60px;
   min-height: 100vh;
   background: linear-gradient(180deg, var(--pastel-peach) 0%, var(--pastel-cream) 100%);
 }
 
-.detail-container {
+.idet-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;
 }
 
-.back-link {
+.idet-back-link {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -28,15 +28,16 @@
   border-radius: 50px;
   box-shadow: 0 4px 12px rgba(255, 181, 186, 0.15);
   transition: all 0.3s ease;
+  text-decoration: none;
 }
 
-.back-link:hover {
+.idet-back-link:hover {
   color: var(--accent-coral);
   transform: translateX(-4px);
   box-shadow: 0 8px 20px rgba(255, 181, 186, 0.25);
 }
 
-.not-found {
+.idet-not-found {
   text-align: center;
   padding: 4rem;
   background: white;
@@ -44,7 +45,7 @@
   box-shadow: 0 8px 32px rgba(255, 181, 186, 0.15);
 }
 
-.not-found h2 {
+.idet-not-found h2 {
   margin-bottom: 1.5rem;
   font-family: var(--heading-font);
   font-weight: 800;
@@ -52,8 +53,8 @@
   letter-spacing: -0.04em;
 }
 
-/* Profile Header - Pastel Theme */
-.profile-header {
+/* Profile Header */
+.idet-profile-header {
   display: flex;
   gap: 2.5rem;
   background: white;
@@ -64,15 +65,15 @@
   margin-bottom: 2rem;
 }
 
-.profile-avatar-section {
+.idet-avatar-section {
   flex-shrink: 0;
 }
 
-.avatar-wrapper {
+.idet-avatar-wrapper {
   position: relative;
 }
 
-.profile-avatar {
+.idet-profile-avatar {
   width: 180px;
   height: 180px;
   border-radius: 50%;
@@ -81,7 +82,7 @@
   box-shadow: 0 8px 32px rgba(255, 181, 186, 0.3);
 }
 
-.profile-avatar-section .verified-badge {
+.idet-verified-badge {
   position: absolute;
   bottom: 12px;
   right: 12px;
@@ -96,18 +97,18 @@
   box-shadow: 0 4px 12px rgba(184, 229, 208, 0.4);
 }
 
-.profile-info {
+.idet-profile-info {
   flex: 1;
 }
 
-.profile-header-top {
+.idet-header-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
 }
 
-.profile-name {
+.idet-profile-name {
   font-size: 2.5rem;
   font-weight: 900;
   font-family: var(--heading-font);
@@ -116,20 +117,20 @@
   letter-spacing: -0.05em;
 }
 
-.profile-niche {
+.idet-profile-niche {
   font-size: 1.125rem;
   color: var(--accent-coral);
   font-weight: 700;
   font-family: var(--heading-font);
 }
 
-.profile-meta {
+.idet-profile-meta {
   display: flex;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
-.meta-item {
+.idet-meta-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -138,16 +139,16 @@
   font-family: var(--body-font);
 }
 
-.meta-item svg {
+.idet-meta-item svg {
   color: var(--pastel-pink);
 }
 
-.profile-stats {
+.idet-profile-stats {
   display: flex;
   gap: 1.5rem;
 }
 
-.stat-box {
+.idet-stat-box {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -158,16 +159,16 @@
   transition: all 0.3s ease;
 }
 
-.stat-box:hover {
+.idet-stat-box:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(255, 181, 186, 0.2);
 }
 
-.stat-box svg {
+.idet-stat-box svg {
   color: var(--accent-coral);
 }
 
-.stat-box .stat-value {
+.idet-stat-box .idet-stat-value {
   display: block;
   font-size: 1.5rem;
   font-weight: 800;
@@ -176,26 +177,26 @@
   letter-spacing: -0.03em;
 }
 
-.stat-box .stat-label {
+.idet-stat-box .idet-stat-label {
   font-size: 0.8125rem;
   color: var(--light-text);
   font-family: var(--body-font);
 }
 
-/* Profile Content - Pastel Theme */
-.profile-content {
+/* Profile Content */
+.idet-profile-content {
   display: grid;
   grid-template-columns: 1fr 320px;
   gap: 2rem;
 }
 
-.content-main {
+.idet-content-main {
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-.profile-section {
+.idet-section {
   background: white;
   border-radius: 24px;
   padding: 2rem;
@@ -203,7 +204,7 @@
   border: 1px solid rgba(255, 181, 186, 0.2);
 }
 
-.profile-section .section-title {
+.idet-section-title {
   font-size: 1.375rem;
   font-weight: 800;
   font-family: var(--heading-font);
@@ -214,21 +215,21 @@
   letter-spacing: -0.03em;
 }
 
-.about-text {
+.idet-about-text {
   color: var(--light-text);
   line-height: 1.8;
   font-family: var(--body-font);
   font-size: 1rem;
 }
 
-/* Services Grid - Pastel Theme */
-.services-grid {
+/* Services Grid */
+.idet-services-grid {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.service-card {
+.idet-service-card {
   padding: 1.5rem;
   background: var(--pastel-cream);
   border-radius: 16px;
@@ -236,21 +237,21 @@
   transition: all 0.3s ease;
 }
 
-.service-card:hover {
+.idet-service-card:hover {
   border-color: var(--pastel-pink);
   background: white;
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(255, 181, 186, 0.2);
 }
 
-.service-header {
+.idet-service-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
 }
 
-.service-name {
+.idet-service-name {
   font-size: 1.0625rem;
   font-weight: 700;
   font-family: var(--heading-font);
@@ -258,7 +259,7 @@
   letter-spacing: -0.02em;
 }
 
-.service-price {
+.idet-service-price {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -268,7 +269,7 @@
   color: var(--accent-coral);
 }
 
-.service-description {
+.idet-service-description {
   font-size: 0.9375rem;
   color: var(--light-text);
   font-family: var(--body-font);
@@ -276,14 +277,14 @@
   line-height: 1.6;
 }
 
-/* Past Collaborations - Pastel Theme */
-.collab-badges {
+/* Past Collaborations */
+.idet-collab-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-.collab-badge {
+.idet-collab-badge {
   padding: 0.625rem 1.25rem;
   background: linear-gradient(135deg, var(--pastel-lavender), var(--pastel-pink));
   color: var(--dark-text);
@@ -294,19 +295,19 @@
   transition: all 0.3s ease;
 }
 
-.collab-badge:hover {
+.idet-collab-badge:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(232, 213, 242, 0.4);
 }
 
-/* Sidebar - Pastel Theme */
-.content-sidebar {
+/* Sidebar */
+.idet-sidebar {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.sidebar-card {
+.idet-sidebar-card {
   background: white;
   border-radius: 24px;
   padding: 1.5rem;
@@ -314,7 +315,7 @@
   border: 1px solid rgba(255, 181, 186, 0.2);
 }
 
-.sidebar-card h3 {
+.idet-sidebar-card h3 {
   font-size: 1.125rem;
   font-weight: 800;
   font-family: var(--heading-font);
@@ -323,52 +324,52 @@
   letter-spacing: -0.03em;
 }
 
-.quick-stats {
+.idet-quick-stats {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.quick-stat {
+.idet-quick-stat {
   display: flex;
   justify-content: space-between;
   padding: 0.875rem 0;
   border-bottom: 1px solid rgba(255, 181, 186, 0.2);
 }
 
-.quick-stat:last-child {
+.idet-quick-stat:last-child {
   border-bottom: none;
 }
 
-.quick-stat .label {
+.idet-quick-stat .idet-label {
   color: var(--light-text);
   font-size: 0.9375rem;
   font-family: var(--body-font);
 }
 
-.quick-stat .value {
+.idet-quick-stat .idet-value {
   font-weight: 700;
   font-family: var(--heading-font);
   color: var(--dark-text);
 }
 
-.cta-card {
+.idet-cta-card {
   background: linear-gradient(135deg, var(--pastel-pink), var(--accent-coral));
   color: white;
 }
 
-.cta-card h3 {
+.idet-cta-card h3 {
   color: white;
 }
 
-.cta-card p {
+.idet-cta-card p {
   font-size: 0.9375rem;
   opacity: 0.95;
   margin-bottom: 1.25rem;
   font-family: var(--body-font);
 }
 
-.cta-card .btn {
+.idet-cta-card .btn {
   width: 100%;
   background: white;
   color: var(--accent-coral);
@@ -379,13 +380,13 @@
   transition: all 0.3s ease;
 }
 
-.cta-card .btn:hover {
+.idet-cta-card .btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Modal - Pastel Theme */
-.modal-overlay {
+/* Modal */
+.idet-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(35, 35, 35, 0.6);
@@ -397,7 +398,7 @@
   padding: 1rem;
 }
 
-.modal-content {
+.idet-modal-content {
   background: white;
   border-radius: 24px;
   width: 100%;
@@ -405,10 +406,10 @@
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(255, 181, 186, 0.3);
-  animation: modalSlideIn 0.3s ease;
+  animation: idet-modalSlideIn 0.3s ease;
 }
 
-@keyframes modalSlideIn {
+@keyframes idet-modalSlideIn {
   from {
     opacity: 0;
     transform: scale(0.95) translateY(-20px);
@@ -419,7 +420,7 @@
   }
 }
 
-.modal-header {
+.idet-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -427,7 +428,7 @@
   border-bottom: 2px solid rgba(255, 181, 186, 0.2);
 }
 
-.modal-header h2 {
+.idet-modal-header h2 {
   font-size: 1.375rem;
   font-weight: 800;
   font-family: var(--heading-font);
@@ -435,65 +436,68 @@
   letter-spacing: -0.03em;
 }
 
-.modal-close {
+.idet-modal-close {
   padding: 0.5rem;
   color: var(--light-text);
   border-radius: 8px;
   transition: all 0.3s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
-.modal-close:hover {
+.idet-modal-close:hover {
   color: var(--dark-text);
   background: var(--pastel-cream);
 }
 
-.modal-form {
+.idet-modal-form {
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
-.modal-info {
+.idet-modal-info {
   background: var(--pastel-cream);
   padding: 1.25rem;
   border-radius: 16px;
   border: 1px solid rgba(255, 181, 186, 0.2);
 }
 
-.info-row {
+.idet-info-row {
   display: flex;
   justify-content: space-between;
   padding: 0.625rem 0;
 }
 
-.info-row:not(:last-child) {
+.idet-info-row:not(:last-child) {
   border-bottom: 1px solid rgba(255, 181, 186, 0.2);
 }
 
-.info-label {
+.idet-info-label {
   color: var(--light-text);
   font-family: var(--body-font);
 }
 
-.info-value {
+.idet-info-value {
   font-weight: 600;
   font-family: var(--body-font);
   color: var(--dark-text);
 }
 
-.info-value.price {
+.idet-info-value.idet-price {
   color: var(--accent-coral);
   font-weight: 800;
   font-family: var(--heading-font);
 }
 
-.textarea {
+.idet-textarea {
   resize: vertical;
   min-height: 120px;
 }
 
-.modal-actions {
+.idet-modal-actions {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
@@ -503,39 +507,39 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .profile-content {
+  .idet-profile-content {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .profile-header {
+  .idet-profile-header {
     flex-direction: column;
     text-align: center;
   }
 
-  .profile-avatar-section {
+  .idet-avatar-section {
     display: flex;
     justify-content: center;
   }
 
-  .profile-header-top {
+  .idet-header-top {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
   }
 
-  .profile-meta {
+  .idet-profile-meta {
     justify-content: center;
     flex-wrap: wrap;
   }
 
-  .profile-stats {
+  .idet-profile-stats {
     flex-wrap: wrap;
     justify-content: center;
   }
 
-  .service-header {
+  .idet-service-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;

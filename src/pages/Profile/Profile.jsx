@@ -100,38 +100,38 @@ const Profile = () => {
   };
 
   return (
-    <div className="profile-page">
-      <div className="profile-container">
-        <div className="page-header">
+    <div className="prof-page">
+      <div className="prof-container">
+        <div className="prof-page-header">
           <h1>Profile Settings</h1>
           <p>Manage your account information and preferences</p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="profile-grid">
+          <div className="prof-grid">
             {/* Avatar Section */}
-            <div className="profile-section avatar-section">
-              <div className="avatar-wrapper">
+            <div className="prof-section prof-avatar-section">
+              <div className="prof-avatar-wrapper">
                 {user?.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="profile-avatar" />
+                  <img src={user.avatar} alt={user.name} className="prof-avatar" />
                 ) : (
-                  <div className="avatar-placeholder">
+                  <div className="prof-avatar-placeholder">
                     {user?.name?.charAt(0) || 'U'}
                   </div>
                 )}
-                <button type="button" className="avatar-upload">
+                <button type="button" className="prof-avatar-upload">
                   <Camera size={20} />
                 </button>
               </div>
               <h3>{user?.name}</h3>
-              <p className="user-role">{user?.role}</p>
+              <p className="prof-user-role">{user?.role}</p>
             </div>
 
             {/* Basic Info */}
-            <div className="profile-section">
+            <div className="prof-section">
               <h2>Basic Information</h2>
               
-              <div className="form-grid">
+              <div className="prof-form-grid">
                 <div className="input-group">
                   <label htmlFor="name">
                     <User size={16} />
@@ -197,7 +197,7 @@ const Profile = () => {
                 )}
               </div>
 
-              <div className="input-group full-width">
+              <div className="input-group prof-full-width">
                 <label htmlFor="description">About</label>
                 <textarea
                   id="description"
@@ -205,7 +205,7 @@ const Profile = () => {
                   value={formData.description}
                   onChange={handleChange}
                   placeholder="Tell us about yourself or your brand..."
-                  className="input textarea"
+                  className="input prof-textarea"
                   rows={4}
                 />
               </div>
@@ -214,10 +214,10 @@ const Profile = () => {
             {/* Influencer Specific */}
             {isInfluencer && (
               <>
-                <div className="profile-section">
+                <div className="prof-section">
                   <h2>Creator Details</h2>
                   
-                  <div className="form-grid">
+                  <div className="prof-form-grid">
                     <div className="input-group">
                       <label htmlFor="niche">Niche / Category</label>
                       <select
@@ -276,8 +276,8 @@ const Profile = () => {
                 </div>
 
                 {/* Services Section */}
-                <div className="profile-section services-section">
-                  <div className="section-header">
+                <div className="prof-section prof-services-section">
+                  <div className="prof-section-header">
                     <h2>Services</h2>
                     <button 
                       type="button" 
@@ -289,22 +289,22 @@ const Profile = () => {
                     </button>
                   </div>
 
-                  <div className="services-list">
+                  <div className="prof-services-list">
                     {formData.services.length > 0 ? (
                       formData.services.map((service) => (
-                        <div key={service.id} className="service-item">
-                          <div className="service-info">
+                        <div key={service.id} className="prof-service-item">
+                          <div className="prof-service-info">
                             <h4>{service.name}</h4>
                             <p>{service.description}</p>
                           </div>
-                          <div className="service-actions">
-                            <span className="service-price">
+                          <div className="prof-service-actions">
+                            <span className="prof-service-price">
                               <DollarSign size={16} />
                               {service.price}
                             </span>
                             <button 
                               type="button"
-                              className="remove-btn"
+                              className="prof-remove-btn"
                               onClick={() => handleRemoveService(service.id)}
                             >
                               <X size={16} />
@@ -313,7 +313,7 @@ const Profile = () => {
                         </div>
                       ))
                     ) : (
-                      <p className="no-services">
+                      <p className="prof-no-services">
                         No services added yet. Add your services to start receiving collaboration requests.
                       </p>
                     )}
@@ -324,10 +324,10 @@ const Profile = () => {
 
             {/* Brand Specific */}
             {isBrand && (
-              <div className="profile-section">
+              <div className="prof-section">
                 <h2>Brand Details</h2>
                 
-                <div className="form-grid">
+                <div className="prof-form-grid">
                   <div className="input-group">
                     <label htmlFor="industry">Industry</label>
                     <select
@@ -356,9 +356,9 @@ const Profile = () => {
           </div>
 
           {/* Save Button */}
-          <div className="form-actions">
+          <div className="prof-form-actions">
             {success && (
-              <span className="success-message">Profile saved successfully!</span>
+              <span className="prof-success-message">Profile saved successfully!</span>
             )}
             <button type="submit" className="btn btn-primary btn-lg" disabled={saving}>
               <Save size={18} />
@@ -369,20 +369,20 @@ const Profile = () => {
 
         {/* Add Service Modal */}
         {showServiceModal && (
-          <div className="modal-overlay" onClick={() => setShowServiceModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
+          <div className="prof-modal-overlay" onClick={() => setShowServiceModal(false)}>
+            <div className="prof-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="prof-modal-header">
                 <h2>Add Service</h2>
                 <button 
                   type="button" 
-                  className="modal-close"
+                  className="prof-modal-close"
                   onClick={() => setShowServiceModal(false)}
                 >
                   <X size={24} />
                 </button>
               </div>
               
-              <div className="modal-body">
+              <div className="prof-modal-body">
                 <div className="input-group">
                   <label htmlFor="serviceName">Service Name</label>
                   <input
@@ -414,13 +414,13 @@ const Profile = () => {
                     value={newService.description}
                     onChange={(e) => setNewService({ ...newService, description: e.target.value })}
                     placeholder="Describe what's included in this service..."
-                    className="input textarea"
+                    className="input prof-textarea"
                     rows={3}
                   />
                 </div>
               </div>
 
-              <div className="modal-actions">
+              <div className="prof-modal-actions">
                 <button 
                   type="button" 
                   className="btn btn-secondary"

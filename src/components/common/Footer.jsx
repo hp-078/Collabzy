@@ -28,17 +28,17 @@ const Footer = () => {
                               Connecting influencers with brands for meaningful collaborations. 
                               Build your network and grow your influence.
                           </p>
-                          <div className="social-links">
-                              <a href="#" className="social-link" aria-label="Twitter">
+                          <div className="footer-social-links">
+                              <a href="#" className="footer-social-link" aria-label="Twitter">
                                   <Twitter size={18} />
                               </a>
-                              <a href="#" className="social-link" aria-label="Instagram">
+                              <a href="#" className="footer-social-link" aria-label="Instagram">
                                   <Instagram size={18} />
                               </a>
-                              <a href="#" className="social-link" aria-label="LinkedIn">
+                              <a href="#" className="footer-social-link" aria-label="LinkedIn">
                                   <Linkedin size={18} />
                               </a>
-                              <a href="#" className="social-link" aria-label="YouTube">
+                              <a href="#" className="footer-social-link" aria-label="YouTube">
                                   <Youtube size={18} />
                               </a>
                           </div>
@@ -76,15 +76,15 @@ const Footer = () => {
 
                       <div className="footer-contact">
                           <h4 className="footer-heading">Contact</h4>
-                          <div className="contact-item">
+                          <div className="footer-contact-item">
                               <Mail size={16} />
                               <span>hello@collabzy.com</span>
                           </div>
-                          <div className="contact-item">
+                          <div className="footer-contact-item">
                               <Phone size={16} />
                               <span>+1 (555) 123-4567</span>
                           </div>
-                          <div className="contact-item">
+                          <div className="footer-contact-item">
                               <MapPin size={16} />
                               <span>San Francisco, CA</span>
                           </div>

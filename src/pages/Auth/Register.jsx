@@ -115,8 +115,8 @@ const Register = () => {
         <div className="auth-left">
           <div className="auth-left-content">
             <Link to="/" className="auth-logo">
-              <span className="logo-icon">C</span>
-              <span className="logo-text">Collabzy</span>
+              <span className="auth-logo-icon">C</span>
+              <span className="auth-logo-text">Collabzy</span>
             </Link>
             <h1 className="auth-welcome">Join the Community</h1>
             <p className="auth-tagline">
@@ -124,19 +124,19 @@ const Register = () => {
             </p>
             <div className="auth-features">
               <div className="auth-feature">
-                <span className="feature-icon">✓</span>
+                <span className="auth-feature-icon">✓</span>
                 <span>Free to join</span>
               </div>
               <div className="auth-feature">
-                <span className="feature-icon">✓</span>
+                <span className="auth-feature-icon">✓</span>
                 <span>Verified profiles</span>
               </div>
               <div className="auth-feature">
-                <span className="feature-icon">✓</span>
+                <span className="auth-feature-icon">✓</span>
                 <span>Direct messaging</span>
               </div>
               <div className="auth-feature">
-                <span className="feature-icon">✓</span>
+                <span className="auth-feature-icon">✓</span>
                 <span>Collaboration tracking</span>
               </div>
             </div>
@@ -153,10 +153,10 @@ const Register = () => {
 
             {error && <div className="auth-error">{error}</div>}
 
-            <div className="role-selector">
+            <div className="auth-role-selector">
               <button
                 type="button"
-                className={`role-btn ${formData.role === 'influencer' ? 'active' : ''}`}
+                className={`auth-role-btn ${formData.role === 'influencer' ? 'auth-active' : ''}`}
                 onClick={() => setFormData({ ...formData, role: 'influencer' })}
               >
                 <User size={20} />
@@ -164,7 +164,7 @@ const Register = () => {
               </button>
               <button
                 type="button"
-                className={`role-btn ${formData.role === 'brand' ? 'active' : ''}`}
+                className={`auth-role-btn ${formData.role === 'brand' ? 'auth-active' : ''}`}
                 onClick={() => setFormData({ ...formData, role: 'brand' })}
               >
                 <Building size={20} />
@@ -177,8 +177,8 @@ const Register = () => {
                 <label htmlFor="name">
                   {formData.role === 'influencer' ? 'Full Name' : 'Brand Name'}
                 </label>
-                <div className="input-wrapper">
-                  <User size={20} className="input-icon" />
+                <div className="auth-input-wrapper">
+                  <User size={20} className="auth-input-icon" />
                   <input
                     type="text"
                     id="name"
@@ -193,8 +193,8 @@ const Register = () => {
 
               <div className="input-group">
                 <label htmlFor="email">Email Address</label>
-                <div className="input-wrapper">
-                  <Mail size={20} className="input-icon" />
+                <div className="auth-input-wrapper">
+                  <Mail size={20} className="auth-input-icon" />
                   <input
                     type="email"
                     id="email"
@@ -209,8 +209,8 @@ const Register = () => {
 
               <div className="input-group">
                 <label htmlFor="password">Password</label>
-                <div className="input-wrapper">
-                  <Lock size={20} className="input-icon" />
+                <div className="auth-input-wrapper">
+                  <Lock size={20} className="auth-input-icon" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     id="password"
@@ -222,7 +222,7 @@ const Register = () => {
                   />
                   <button
                     type="button"
-                    className="password-toggle"
+                    className="auth-password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -232,8 +232,8 @@ const Register = () => {
 
               <div className="input-group">
                 <label htmlFor="confirmPassword">Confirm Password</label>
-                <div className="input-wrapper">
-                  <Lock size={20} className="input-icon" />
+                <div className="auth-input-wrapper">
+                  <Lock size={20} className="auth-input-icon" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
                     id="confirmPassword"
@@ -245,7 +245,7 @@ const Register = () => {
                   />
                   <button
                     type="button"
-                    className="password-toggle"
+                    className="auth-password-toggle"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -253,7 +253,7 @@ const Register = () => {
                 </div>
               </div>
 
-              <div className="terms-checkbox">
+              <div className="auth-terms-checkbox">
                 <input type="checkbox" id="terms" required />
                 <label htmlFor="terms">
                   I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>

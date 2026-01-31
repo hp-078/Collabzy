@@ -1,8 +1,9 @@
 /* ================================
    Playful Pastel Navbar Styles
+   Prefix: nav-
    ================================ */
 
-.header {
+.nav-header {
   position: fixed;
   top: 0;
   left: 0;
@@ -12,12 +13,12 @@
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.header.scrolled {
+.nav-header.nav-scrolled {
   padding: 0.75rem 1.5rem;
 }
 
 /* Floating Navbar Container - Pastel Theme */
-.navbar-floating {
+.nav-floating {
   max-width: 1200px;
   margin: 0 auto;
   background: linear-gradient(
@@ -35,14 +36,14 @@
     inset 0 2px 4px rgba(255, 255, 255, 0.9),
     inset 0 -1px 2px rgba(0, 0, 0, 0.02);
   border: 1px solid rgba(255, 181, 186, 0.3);
-  animation: navbarSlideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: nav-slideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: visible;
   isolation: isolate;
 }
 
 /* Glassy shimmer effect - separate wrapper for proper clipping */
-.navbar-shimmer-wrapper {
+.nav-shimmer-wrapper {
   position: absolute;
   inset: 0;
   border-radius: 100px;
@@ -51,7 +52,7 @@
   z-index: 0;
 }
 
-.navbar-shimmer {
+.nav-shimmer {
   position: absolute;
   top: 0;
   left: -100%;
@@ -66,12 +67,12 @@
   transition: left 0.6s ease;
 }
 
-.navbar-floating:hover .navbar-shimmer {
+.nav-floating:hover .nav-shimmer {
   left: 100%;
 }
 
 /* Top highlight for 3D glass effect */
-.navbar-floating::after {
+.nav-floating::after {
   content: '';
   position: absolute;
   top: 0;
@@ -91,7 +92,7 @@
   border-radius: 100px;
 }
 
-@keyframes navbarSlideDown {
+@keyframes nav-slideDown {
   from {
     opacity: 0;
     transform: translateY(-20px);
@@ -102,7 +103,7 @@
   }
 }
 
-.header.scrolled .navbar-floating {
+.nav-header.nav-scrolled .nav-floating {
   background: linear-gradient(
     135deg,
     rgba(255, 249, 240, 0.92) 0%,
@@ -116,7 +117,7 @@
     inset 0 -1px 3px rgba(0, 0, 0, 0.03);
 }
 
-.navbar-inner {
+.nav-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -127,7 +128,7 @@
 }
 
 /* Logo Styles - Playful Theme */
-.navbar-logo {
+.nav-logo {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -135,7 +136,7 @@
   flex-shrink: 0;
 }
 
-.logo-icon {
+.nav-logo-icon {
   width: 36px;
   height: 36px;
   display: flex;
@@ -147,13 +148,13 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.navbar-logo:hover .logo-icon {
+.nav-logo:hover .nav-logo-icon {
   transform: rotate(-5deg) scale(1.05);
   box-shadow: 0 4px 15px rgba(26, 26, 26, 0.25);
   background: var(--accent-coral);
 }
 
-.logo-text {
+.nav-logo-text {
   font-size: 1.35rem;
   font-weight: 800;
   font-family: var(--heading-font);
@@ -162,7 +163,7 @@
 }
 
 /* Center Navigation Pills - Pastel Theme */
-.navbar-center {
+.nav-center {
   display: flex;
   align-items: center;
 }
@@ -218,32 +219,32 @@
   z-index: 1;
 }
 
-.nav-pill.active {
+.nav-pill.nav-active {
   color: var(--dark-text);
   background: white;
   box-shadow: 0 2px 12px rgba(255, 181, 186, 0.3);
 }
 
-.nav-pill.active::before {
+.nav-pill.nav-active::before {
   opacity: 1;
   transform: scale(1);
 }
 
 /* Right Actions */
-.navbar-actions {
+.nav-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
 /* Auth Actions (Not Logged In) - Pastel Theme */
-.auth-actions {
+.nav-auth-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.login-link {
+.nav-login-link {
   padding: 0.6rem 1.25rem;
   font-size: 0.875rem;
   font-weight: 600;
@@ -253,12 +254,12 @@
   transition: all 0.3s ease;
 }
 
-.login-link:hover {
+.nav-login-link:hover {
   color: var(--accent-coral);
 }
 
 /* CTA Button with Arrow - Playful Theme */
-.cta-button {
+.nav-cta-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -274,13 +275,13 @@
   box-shadow: 0 4px 16px rgba(255, 240, 165, 0.4);
 }
 
-.cta-button:hover {
+.nav-cta-button:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(255, 240, 165, 0.5);
   background: var(--pastel-peach);
 }
 
-.cta-arrow {
+.nav-cta-arrow {
   width: 28px;
   height: 28px;
   display: flex;
@@ -292,13 +293,13 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.cta-button:hover .cta-arrow {
+.nav-cta-button:hover .nav-cta-arrow {
   transform: rotate(45deg);
   background: var(--accent-coral);
 }
 
 /* User Section (Logged In) */
-.user-section {
+.nav-user-section {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -306,7 +307,7 @@
   z-index: 1001;
 }
 
-.icon-btn {
+.nav-icon-btn {
   position: relative;
   width: 38px;
   height: 38px;
@@ -319,13 +320,13 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.icon-btn:hover {
+.nav-icon-btn:hover {
   background: var(--pastel-pink);
   color: var(--dark-text);
   transform: translateY(-2px);
 }
 
-.icon-btn .badge {
+.nav-icon-btn .nav-badge {
   position: absolute;
   top: -2px;
   right: -2px;
@@ -342,10 +343,10 @@
   border-radius: 50px;
   padding: 0 5px;
   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
-  animation: badgePulse 2s infinite;
+  animation: nav-badgePulse 2s infinite;
 }
 
-@keyframes badgePulse {
+@keyframes nav-badgePulse {
   0%, 100% {
     transform: scale(1);
   }
@@ -355,14 +356,14 @@
 }
 
 /* User Avatar */
-.user-avatar-container {
+.nav-user-avatar-container {
   position: relative;
   cursor: pointer;
   padding: 3px;
   z-index: 10000;
 }
 
-.user-avatar {
+.nav-user-avatar {
   width: 38px;
   height: 38px;
   border-radius: 50%;
@@ -370,7 +371,7 @@
   transition: all 0.3s ease;
 }
 
-.user-avatar-placeholder {
+.nav-user-avatar-placeholder {
   width: 38px;
   height: 38px;
   display: flex;
@@ -385,7 +386,7 @@
   transition: all 0.3s ease;
 }
 
-.avatar-ring {
+.nav-avatar-ring {
   position: absolute;
   inset: 0;
   border-radius: 50%;
@@ -394,23 +395,26 @@
   -webkit-mask: 
     linear-gradient(#fff 0 0) padding-box, 
     linear-gradient(#fff 0 0);
+  mask: 
+    linear-gradient(#fff 0 0) padding-box, 
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0;
   transition: all 0.3s ease;
 }
 
-.user-avatar-container:hover .avatar-ring {
+.nav-user-avatar-container:hover .nav-avatar-ring {
   opacity: 1;
 }
 
-.user-avatar-container:hover .user-avatar,
-.user-avatar-container:hover .user-avatar-placeholder {
+.nav-user-avatar-container:hover .nav-user-avatar,
+.nav-user-avatar-container:hover .nav-user-avatar-placeholder {
   transform: scale(0.95);
 }
 
 /* Dropdown Menu - Pastel Theme */
-.dropdown-menu {
+.nav-dropdown-menu {
   position: absolute;
   top: calc(100% + 0.75rem);
   right: 0;
@@ -422,11 +426,11 @@
     0 2px 10px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(255, 181, 186, 0.3);
   overflow: visible;
-  animation: dropdownFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: nav-dropdownFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 9999;
 }
 
-@keyframes dropdownFadeIn {
+@keyframes nav-dropdownFadeIn {
   from {
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
@@ -437,7 +441,7 @@
   }
 }
 
-.dropdown-header {
+.nav-dropdown-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -446,7 +450,7 @@
   border-radius: 20px 20px 0 0;
 }
 
-.dropdown-avatar {
+.nav-dropdown-avatar {
   width: 42px;
   height: 42px;
   display: flex;
@@ -460,12 +464,12 @@
   border-radius: 12px;
 }
 
-.dropdown-info {
+.nav-dropdown-info {
   display: flex;
   flex-direction: column;
 }
 
-.dropdown-name {
+.nav-dropdown-name {
   font-weight: 700;
   font-family: var(--heading-font);
   color: var(--dark-text);
@@ -473,19 +477,19 @@
   letter-spacing: -0.02em;
 }
 
-.dropdown-role {
+.nav-dropdown-role {
   font-size: 0.75rem;
   font-family: var(--body-font);
   color: var(--light-text);
   text-transform: capitalize;
 }
 
-.dropdown-divider {
+.nav-dropdown-divider {
   height: 1px;
   background: rgba(255, 181, 186, 0.3);
 }
 
-.dropdown-item {
+.nav-dropdown-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -499,23 +503,23 @@
   text-align: left;
 }
 
-.dropdown-item:hover {
+.nav-dropdown-item:hover {
   background: var(--pastel-peach);
   color: var(--dark-text);
   padding-left: 1.25rem;
 }
 
-.dropdown-item.logout {
+.nav-dropdown-item.nav-logout {
   color: var(--accent-coral);
 }
 
-.dropdown-item.logout:hover {
+.nav-dropdown-item.nav-logout:hover {
   background: rgba(255, 107, 107, 0.1);
   color: #c44444;
 }
 
 /* Mobile Toggle - Pastel Theme */
-.mobile-toggle {
+.nav-mobile-toggle {
   display: none;
   width: 40px;
   height: 40px;
@@ -527,12 +531,12 @@
   transition: all 0.3s ease;
 }
 
-.mobile-toggle:hover {
+.nav-mobile-toggle:hover {
   background: var(--pastel-peach);
 }
 
 /* Mobile Overlay */
-.mobile-overlay {
+.nav-mobile-overlay {
   display: none;
   position: fixed;
   inset: 0;
@@ -544,13 +548,13 @@
   z-index: 998;
 }
 
-.mobile-overlay.active {
+.nav-mobile-overlay.nav-active {
   opacity: 1;
   visibility: visible;
 }
 
 /* Mobile Menu - Pastel Theme */
-.mobile-menu {
+.nav-mobile-menu {
   display: none;
   position: fixed;
   top: 90px;
@@ -568,19 +572,19 @@
   z-index: 999;
 }
 
-.mobile-menu.active {
+.nav-mobile-menu.nav-active {
   transform: translateY(0);
   opacity: 1;
   visibility: visible;
 }
 
-.mobile-nav-pills {
+.nav-mobile-pills {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.mobile-nav-item {
+.nav-mobile-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -593,18 +597,18 @@
   transition: all 0.3s ease;
 }
 
-.mobile-nav-item:hover,
-.mobile-nav-item.active {
+.nav-mobile-item:hover,
+.nav-mobile-item.nav-active {
   background: #f5f5f7;
   color: #1a1a2e;
 }
 
-.mobile-nav-item.active {
+.nav-mobile-item.nav-active {
   background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
   color: var(--primary-700);
 }
 
-.mobile-auth {
+.nav-mobile-auth {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -613,7 +617,7 @@
   border-top: 1px solid #f0f0f2;
 }
 
-.mobile-login {
+.nav-mobile-login {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -625,11 +629,11 @@
   transition: all 0.3s ease;
 }
 
-.mobile-login:hover {
+.nav-mobile-login:hover {
   background: #f5f5f7;
 }
 
-.mobile-signup {
+.nav-mobile-signup {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -643,7 +647,7 @@
   transition: all 0.3s ease;
 }
 
-.mobile-signup:hover {
+.nav-mobile-signup:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(212, 244, 65, 0.4);
 }
@@ -670,35 +674,35 @@
 }
 
 @media (max-width: 768px) {
-  .header {
+  .nav-header {
     padding: 0.75rem 1rem;
   }
   
-  .navbar-inner {
+  .nav-inner {
     padding: 0.5rem 0.5rem 0.5rem 1rem;
   }
   
-  .navbar-center {
+  .nav-center {
     display: none;
   }
   
-  .auth-actions {
+  .nav-auth-actions {
     display: none;
   }
   
-  .mobile-toggle {
+  .nav-mobile-toggle {
     display: flex;
   }
   
-  .mobile-overlay {
+  .nav-mobile-overlay {
     display: block;
   }
   
-  .mobile-menu {
+  .nav-mobile-menu {
     display: block;
   }
   
-  .user-section .messages-btn {
+  .nav-user-section .nav-messages-btn {
     display: none;
   }
 }

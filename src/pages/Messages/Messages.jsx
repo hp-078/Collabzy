@@ -109,15 +109,15 @@ const Messages = () => {
   };
 
   return (
-    <div className="messages-page">
-      <div className="messages-container">
+    <div className="msg-page">
+      <div className="msg-container">
         {/* Sidebar */}
-        <div className={`messages-sidebar ${selectedChat ? 'hidden-mobile' : ''}`}>
-          <div className="sidebar-header">
+        <div className={`msg-sidebar ${selectedChat ? 'msg-hidden-mobile' : ''}`}>
+          <div className="msg-sidebar-header">
             <h2>Messages</h2>
           </div>
 
-          <div className="sidebar-search">
+          <div className="msg-sidebar-search">
             <Search size={18} />
             <input
               type="text"
@@ -127,30 +127,30 @@ const Messages = () => {
             />
           </div>
 
-          <div className="conversations-list">
+          <div className="msg-conversations-list">
             {filteredConversations.length > 0 ? (
               filteredConversations.map((conv) => (
                 <div
                   key={conv.partnerId}
-                  className={`conversation-item ${selectedChat === conv.partnerId ? 'active' : ''}`}
+                  className={`msg-conversation-item ${selectedChat === conv.partnerId ? 'msg-active' : ''}`}
                   onClick={() => setSelectedChat(conv.partnerId)}
                 >
-                  <div className="conversation-avatar">
+                  <div className="msg-conversation-avatar">
                     {conv.partnerName.charAt(0)}
                   </div>
-                  <div className="conversation-info">
-                    <div className="conversation-header">
+                  <div className="msg-conversation-info">
+                    <div className="msg-conversation-header">
                       <h4>{conv.partnerName}</h4>
-                      <span className="conversation-time">
+                      <span className="msg-conversation-time">
                         {formatTime(conv.timestamp)}
                       </span>
                     </div>
-                    <p className="conversation-preview">{conv.lastMessage}</p>
+                    <p className="msg-conversation-preview">{conv.lastMessage}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="no-conversations">
+              <div className="msg-no-conversations">
                 <p>No conversations yet</p>
               </div>
             )}
@@ -158,39 +158,39 @@ const Messages = () => {
         </div>
 
         {/* Chat Area */}
-        <div className={`messages-chat ${!selectedChat ? 'hidden-mobile' : ''}`}>
+        <div className={`msg-chat ${!selectedChat ? 'msg-hidden-mobile' : ''}`}>
           {selectedChat ? (
             <>
-              <div className="chat-header">
+              <div className="msg-chat-header">
                 <button 
-                  className="back-btn mobile-only"
+                  className="msg-back-btn msg-mobile-only"
                   onClick={() => setSelectedChat(null)}
                 >
                   <ChevronLeft size={24} />
                 </button>
-                <div className="chat-user">
-                  <div className="chat-avatar">
+                <div className="msg-chat-user">
+                  <div className="msg-chat-avatar">
                     {selectedConversation?.partnerName.charAt(0)}
                   </div>
-                  <div className="chat-user-info">
+                  <div className="msg-chat-user-info">
                     <h3>{selectedConversation?.partnerName}</h3>
-                    <span className="online-status">Online</span>
+                    <span className="msg-online-status">Online</span>
                   </div>
                 </div>
-                <div className="chat-actions">
-                  <button className="action-btn">
+                <div className="msg-chat-actions">
+                  <button className="msg-action-btn">
                     <Phone size={20} />
                   </button>
-                  <button className="action-btn">
+                  <button className="msg-action-btn">
                     <Video size={20} />
                   </button>
-                  <button className="action-btn">
+                  <button className="msg-action-btn">
                     <MoreVertical size={20} />
                   </button>
                 </div>
               </div>
 
-              <div className="chat-messages">
+              <div className="msg-chat-messages">
                 {chatMessages.length > 0 ? (
                   chatMessages.map((msg, index) => {
                     const isOwn = msg.senderId === user?.id;
@@ -200,14 +200,14 @@ const Messages = () => {
                     return (
                       <div key={msg.id}>
                         {showDate && (
-                          <div className="message-date">
+                          <div className="msg-message-date">
                             {formatDate(msg.timestamp)}
                           </div>
                         )}
-                        <div className={`message ${isOwn ? 'own' : 'other'}`}>
-                          <div className="message-bubble">
+                        <div className={`msg-message ${isOwn ? 'msg-own' : 'msg-other'}`}>
+                          <div className="msg-message-bubble">
                             <p>{msg.content}</p>
-                            <span className="message-time">
+                            <span className="msg-message-time">
                               {formatTime(msg.timestamp)}
                             </span>
                           </div>
@@ -216,19 +216,19 @@ const Messages = () => {
                     );
                   })
                 ) : (
-                  <div className="no-messages">
+                  <div className="msg-no-messages">
                     <p>No messages yet. Start the conversation!</p>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
               </div>
 
-              <form className="chat-input" onSubmit={handleSendMessage}>
-                <div className="input-actions">
-                  <button type="button" className="input-action">
+              <form className="msg-chat-input" onSubmit={handleSendMessage}>
+                <div className="msg-input-actions">
+                  <button type="button" className="msg-input-action">
                     <Paperclip size={20} />
                   </button>
-                  <button type="button" className="input-action">
+                  <button type="button" className="msg-input-action">
                     <Image size={20} />
                   </button>
                 </div>
@@ -238,18 +238,18 @@ const Messages = () => {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                 />
-                <button type="button" className="input-action">
+                <button type="button" className="msg-input-action">
                   <Smile size={20} />
                 </button>
-                <button type="submit" className="send-btn" disabled={!newMessage.trim()}>
+                <button type="submit" className="msg-send-btn" disabled={!newMessage.trim()}>
                   <Send size={20} />
                 </button>
               </form>
             </>
           ) : (
-            <div className="no-chat-selected">
-              <div className="no-chat-content">
-                <div className="no-chat-icon">💬</div>
+            <div className="msg-no-chat-selected">
+              <div className="msg-no-chat-content">
+                <div className="msg-no-chat-icon">💬</div>
                 <h3>Select a conversation</h3>
                 <p>Choose a conversation from the sidebar to start messaging</p>
               </div>

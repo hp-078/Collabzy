@@ -161,92 +161,92 @@ const Home = () => {
   ];
 
   return (
-    <div className="home-playful">
+    <div className="home-page">
       {/* Hero Section with Wavy Background */}
-      <section className="hero-section">
-        <div className="hero-wave-bg">
-          <svg className="wave-top" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <section className="home-hero">
+        <div className="home-hero-wave-bg">
+          <svg className="home-wave-top" viewBox="0 0 1440 320" preserveAspectRatio="none">
             <path fill="#FFE4D6" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,138.7C672,128,768,160,864,181.3C960,203,1056,213,1152,197.3C1248,181,1344,139,1392,117.3L1440,96L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>
           </svg>
         </div>
 
-        <div className="hero-container">
-          <div className="hero-content" data-animate>
-            <div className="hero-logo-area">
-              <div className="hero-logo-icon">
+        <div className="home-hero-container">
+          <div className="home-hero-content" data-animate>
+            <div className="home-hero-logo-area">
+              <div className="home-hero-logo-icon">
                 <Sparkles size={24} />
               </div>
-              <span className="hero-brand">Collabzy</span>
+              <span className="home-hero-brand">Collabzy</span>
             </div>
 
-            <h1 className="hero-title">
-              <span className="title-line">connecting</span>
-              <span className="title-accent">
-                <span className="handwritten">brands</span>
-                <span className="and-symbol">&</span>
-                <span className="handwritten">creators</span>
+            <h1 className="home-hero-title">
+              <span className="home-title-line">connecting</span>
+              <span className="home-title-accent">
+                <span className="home-handwritten">brands</span>
+                <span className="home-and-symbol">&</span>
+                <span className="home-handwritten">creators</span>
               </span>
             </h1>
 
-            <p className="hero-subtitle">
+            <p className="home-hero-subtitle">
               a platform for modern influencer marketing
             </p>
 
-            <Link to="/influencers" className="hero-cta-btn">
+            <Link to="/influencers" className="home-hero-cta-btn">
               <span>Explore Creators</span>
               <ArrowRight size={18} />
             </Link>
           </div>
 
-          <div className="hero-image-area" data-animate>
-            <div className="hero-mockup">
+          <div className="home-hero-image-area" data-animate>
+            <div className="home-hero-mockup">
               <img
                 src="https://images.unsplash.com/photo-1611162616475-46b635cb6868?w=500&h=400&fit=crop"
                 alt="Platform Preview"
-                className="mockup-image"
+                className="home-mockup-image"
               />
-              <div className="mockup-overlay">
-                <div className="mockup-stat">
-                  <span className="stat-value">50K+</span>
-                  <span className="stat-label">Creators</span>
+              <div className="home-mockup-overlay">
+                <div className="home-mockup-stat">
+                  <span className="home-stat-value">50K+</span>
+                  <span className="home-stat-label">Creators</span>
                 </div>
               </div>
             </div>
-            <div className="floating-badge badge-1">
+            <div className="home-floating-badge home-badge-1">
               <Heart size={16} fill="currentColor" />
               <span>10K+ Collaborations</span>
             </div>
           </div>
         </div>
 
-        <div className="scroll-indicator">
-          <div className="scroll-dot"></div>
+        <div className="home-scroll-indicator">
+          <div className="home-scroll-dot"></div>
         </div>
       </section>
 
       {/* Portfolio Section */}
-      <section className="portfolio-section" id="how-it-works">
-        <div className="section-container">
-          <div className="section-header" data-animate>
-            <h2 className="section-title playful-title">
-              <span className="title-small">How</span>
-              <span className="title-large">
-                it  <span className="handwritten accent-pink"> Works ?</span> 
+      <section className="home-portfolio-section" id="how-it-works">
+        <div className="home-section-container">
+          <div className="home-section-header" data-animate>
+            <h2 className="home-section-title">
+              <span className="home-title-small">How</span>
+              <span className="home-title-large">
+                it  <span className="home-handwritten home-accent-pink"> Works ?</span> 
               </span>
             </h2>
           </div>
 
-          <div className="portfolio-list">
+          <div className="home-portfolio-list">
             {portfolioItems.map((item, index) => (
               <div
                 key={item.id}
-                className={`portfolio-card ${index % 2 === 1 ? 'reverse' : ''}`}
+                className={`home-portfolio-card ${index % 2 === 1 ? 'home-reverse' : ''}`}
                 data-animate
               >
-                <div className="portfolio-content">
-                  <span className="portfolio-category">{item.category}</span>
-                  <h3 className="portfolio-title">{item.title}</h3>
-                  <ul className="portfolio-features">
+                <div className="home-portfolio-content">
+                  <span className="home-portfolio-category">{item.category}</span>
+                  <h3 className="home-portfolio-title">{item.title}</h3>
+                  <ul className="home-portfolio-features">
                     {item.description.map((desc, i) => (
                       <li key={i}>
                         <CheckCircle size={16} />
@@ -254,24 +254,24 @@ const Home = () => {
                       </li>
                     ))}
                   </ul>
-                  <div className="portfolio-stats">
-                    <div className="stat-item">
-                      <span className="stat-label">Views</span>
-                      <span className="stat-value">{item.stats.views}</span>
+                  <div className="home-portfolio-stats">
+                    <div className="home-stat-item">
+                      <span className="home-stat-label">Views</span>
+                      <span className="home-stat-value">{item.stats.views}</span>
                     </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Engagement</span>
-                      <span className="stat-value">{item.stats.engagement}</span>
+                    <div className="home-stat-item">
+                      <span className="home-stat-label">Engagement</span>
+                      <span className="home-stat-value">{item.stats.engagement}</span>
                     </div>
                   </div>
-                  <Link to="/influencers" className="portfolio-link">
+                  <Link to="/influencers" className="home-portfolio-link">
                     <span>See Case Study</span>
                     <ExternalLink size={16} />
                   </Link>
                 </div>
-                <div className="portfolio-image-wrapper">
-                  <img src={item.image} alt={item.title} className="portfolio-image" />
-                  <div className="image-decoration"></div>
+                <div className="home-portfolio-image-wrapper">
+                  <img src={item.image} alt={item.title} className="home-portfolio-image" />
+                  <div className="home-image-decoration"></div>
                 </div>
               </div>
             ))}
@@ -280,74 +280,74 @@ const Home = () => {
       </section>
 
       {/* Testimonials Section with Video Grid */}
-      <section className="testimonials-section">
-        <div className="testimonials-wave-top"></div>
+      <section className="home-testimonials-section">
+        <div className="home-testimonials-wave-top"></div>
 
-        <div className="section-container">
-          <div className="section-header" data-animate>
-            <h2 className="section-title playful-title light">
-              <span className="title-small">What my</span>
-              <span className="title-large">
-                <span className="handwritten accent-cream">Clients</span> say
+        <div className="home-section-container">
+          <div className="home-section-header" data-animate>
+            <h2 className="home-section-title home-light">
+              <span className="home-title-small">What my</span>
+              <span className="home-title-large">
+                <span className="home-handwritten home-accent-cream">Clients</span> say
               </span>
             </h2>
           </div>
 
-          <div className="video-testimonials-grid" data-animate>
+          <div className="home-video-testimonials-grid" data-animate>
             {videoTestimonials.map((testimonial) => (
-              <div key={testimonial.id} className="video-testimonial-card">
-                <div className="video-thumbnail">
+              <div key={testimonial.id} className="home-video-testimonial-card">
+                <div className="home-video-thumbnail">
                   <img src={testimonial.image} alt={testimonial.name} />
-                  <button className="play-button">
+                  <button className="home-play-button">
                     <Play size={24} fill="currentColor" />
                   </button>
                 </div>
-                <div className="testimonial-info">
-                  <span className="testimonial-name">{testimonial.name}</span>
-                  <span className="testimonial-role">{testimonial.role}</span>
+                <div className="home-testimonial-info">
+                  <span className="home-testimonial-name">{testimonial.name}</span>
+                  <span className="home-testimonial-role">{testimonial.role}</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="testimonials-wave-bottom"></div>
+        <div className="home-testimonials-wave-bottom"></div>
       </section>
 
       {/* Services/Pricing Section */}
-      <section className="pricing-section">
-        <div className="section-container">
-          <div className="section-header" data-animate>
-            <h2 className="section-title playful-title">
-              <span className="title-small">Ser</span>
-              <span className="title-large">
-                <span className="handwritten accent-green">vices</span>
-                <span className="title-small inline"> I offer</span>
+      <section className="home-pricing-section">
+        <div className="home-section-container">
+          <div className="home-section-header" data-animate>
+            <h2 className="home-section-title">
+              <span className="home-title-small">Ser</span>
+              <span className="home-title-large">
+                <span className="home-handwritten home-accent-green">vices</span>
+                <span className="home-title-small home-inline"> I offer</span>
               </span>
             </h2>
           </div>
 
-          <div className="pricing-grid" data-animate>
+          <div className="home-pricing-grid" data-animate>
             {pricingPackages.map((pkg) => (
-              <div key={pkg.id} className={`pricing-card ${pkg.popular ? 'popular' : ''}`}>
-                {pkg.popular && <div className="popular-badge">Most Popular</div>}
+              <div key={pkg.id} className={`home-pricing-card ${pkg.popular ? 'home-popular' : ''}`}>
+                {pkg.popular && <div className="home-popular-badge">Most Popular</div>}
 
-                <div className="pricing-header">
-                  <h3 className="pricing-name">{pkg.name}</h3>
-                  <div className="pricing-amount">
-                    <span className="currency">$</span>
-                    <span className="price">{pkg.price}</span>
-                    <span className="period">/{pkg.period}</span>
+                <div className="home-pricing-header">
+                  <h3 className="home-pricing-name">{pkg.name}</h3>
+                  <div className="home-pricing-amount">
+                    <span className="home-currency">$</span>
+                    <span className="home-price">{pkg.price}</span>
+                    <span className="home-period">/{pkg.period}</span>
                   </div>
-                  <p className="pricing-description">{pkg.description}</p>
+                  <p className="home-pricing-description">{pkg.description}</p>
                 </div>
 
-                <div className="pricing-testimonial">
-                  <p className="testimonial-text">{pkg.testimonial.text}</p>
-                  <span className="testimonial-author">{pkg.testimonial.author}</span>
+                <div className="home-pricing-testimonial">
+                  <p className="home-testimonial-text">{pkg.testimonial.text}</p>
+                  <span className="home-testimonial-author">{pkg.testimonial.author}</span>
                 </div>
 
-                <ul className="pricing-features">
+                <ul className="home-pricing-features">
                   {pkg.features.map((feature, index) => (
                     <li key={index}>
                       <CheckCircle size={16} />
@@ -356,7 +356,7 @@ const Home = () => {
                   ))}
                 </ul>
 
-                <Link to="/register" className="pricing-cta">
+                <Link to="/register" className="home-pricing-cta">
                   Get Started
                 </Link>
               </div>
@@ -366,43 +366,43 @@ const Home = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="contact-section">
-        <div className="contact-wave-bg"></div>
+      <section className="home-contact-section">
+        <div className="home-contact-wave-bg"></div>
 
-        <div className="section-container">
-          <div className="contact-content" data-animate>
-            <div className="contact-illustration">
-              <div className="illustration-circle">
+        <div className="home-section-container">
+          <div className="home-contact-content" data-animate>
+            <div className="home-contact-illustration">
+              <div className="home-illustration-circle">
                 <MessageSquare size={48} />
               </div>
-              <div className="illustration-dots">
+              <div className="home-illustration-dots">
                 <span></span><span></span><span></span>
               </div>
             </div>
 
-            <div className="contact-header">
-              <h2 className="section-title playful-title">
-                <span className="title-small">Have any other questions?</span>
+            <div className="home-contact-header">
+              <h2 className="home-section-title">
+                <span className="home-title-small">Have any other questions?</span>
               </h2>
-              <p className="contact-subtitle">
+              <p className="home-contact-subtitle">
                 Fill the form or DM me on X. I usually respond within 24 hours.
               </p>
             </div>
 
-            <form className="contact-form">
-              <div className="form-group">
+            <form className="home-contact-form">
+              <div className="home-form-group">
                 <label>Name</label>
                 <input type="text" placeholder="Your name" />
               </div>
-              <div className="form-group">
+              <div className="home-form-group">
                 <label>Email</label>
                 <input type="email" placeholder="your@email.com" />
               </div>
-              <div className="form-group">
+              <div className="home-form-group">
                 <label>Message</label>
                 <textarea placeholder="Tell us about your project..." rows={4}></textarea>
               </div>
-              <button type="submit" className="submit-btn">
+              <button type="submit" className="home-submit-btn">
                 <span>Submit Message</span>
                 <Send size={18} />
               </button>
@@ -412,15 +412,15 @@ const Home = () => {
       </section>
 
       {/* Final CTA Section */}
-      <section className="final-cta-section">
-        <div className="section-container">
-          <div className="cta-content" data-animate>
-            <h2 className="cta-title">Ready to Bring Your Vision to Life?</h2>
-            <p className="cta-subtitle">
+      <section className="home-final-cta-section">
+        <div className="home-section-container">
+          <div className="home-cta-content" data-animate>
+            <h2 className="home-cta-title">Ready to Bring Your Vision to Life?</h2>
+            <p className="home-cta-subtitle">
               Let's collaborate! Join thousands of brands and creators
               building amazing campaigns together.
             </p>
-            <Link to="/register" className="cta-button">
+            <Link to="/register" className="home-cta-button">
               <span>Start Now</span>
               <ArrowRight size={20} />
             </Link>
