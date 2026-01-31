@@ -297,10 +297,9 @@ const Home = () => {
         <div className="home-section-container">
           <div className="home-section-header" data-animate>
             <h2 className="home-section-title">
-              <span className="home-title-small">Ser</span>
+              <span className="home-title-small">Servies</span>
               <span className="home-title-large">
-                <span className="home-handwritten home-accent-green">vices</span>
-                <span className="home-title-small home-inline"> I offer</span>
+                we <span className="home-handwritten home-accent-pink">Offer!</span>
               </span>
             </h2>
           </div>
