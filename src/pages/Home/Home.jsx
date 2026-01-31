@@ -1,556 +1,421 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import {
   ArrowRight,
-  Users,
-  Star,
-  TrendingUp,
   CheckCircle,
   Sparkles,
-  Search,
-  Instagram,
-  Youtube,
-  Video,
   MessageSquare,
-  Shield,
-  Zap,
-  BarChart3,
   Send,
-  Target,
-  Calendar,
-  DollarSign,
-  FileText,
-  Quote,
   Play,
-  Award,
-  Rocket,
-  Globe
+  ExternalLink,
+  Heart
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import './Home.css';
 
 const Home = () => {
   const { influencers } = useData();
-  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-
     // Scroll animation observer
     const observerOptions = {
       threshold: 0.1,
-      rootMargin: '0px 0px -100px 0px'
+      rootMargin: '0px 0px -50px 0px'
     };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          entry.target.classList.add('home-animate-in');
+          entry.target.classList.add('animate-in');
         }
       });
     }, observerOptions);
 
-    // Observe all elements with scroll animation
-    const animatedElements = document.querySelectorAll('[data-scroll-animate]');
+    const animatedElements = document.querySelectorAll('[data-animate]');
     animatedElements.forEach(el => observer.observe(el));
 
-    window.addEventListener('scroll', handleScroll);
-
     return () => {
-      window.removeEventListener('scroll', handleScroll);
       animatedElements.forEach(el => observer.unobserve(el));
     };
   }, []);
 
   const featuredInfluencers = influencers.slice(0, 6);
 
-  const heroFeatures = [
-    { icon: <Rocket size={20} />, text: 'AI-Powered Matching' },
-    { icon: <Shield size={20} />, text: 'Secure Payments' },
-    { icon: <Zap size={20} />, text: 'Instant Collaboration' },
-  ];
-
-  const platformFeatures = [
+  // Portfolio/Project items with placeholder content
+  const portfolioItems = [
     {
-      icon: <Search size={32} />,
-      title: 'Smart Discovery',
-      description: 'AI-powered search finds perfect creators instantly',
-      gradient: 'from-purple-500 to-pink-500'
+      id: 1,
+      title: 'Fashion Brand Campaign',
+      category: 'Instagram • Lifestyle',
+      description: [
+        'Complete social media campaign with 50+ posts',
+        'Increased brand awareness by 180%',
+        'Reached 2M+ targeted audience',
+        'Generated 500+ user-generated content pieces'
+      ],
+      image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
+      stats: { views: '2.4M', engagement: '8.5%' }
     },
     {
-      icon: <MessageSquare size={32} />,
-      title: 'Real-Time Chat',
-      description: 'Collaborate seamlessly with built-in messaging',
-      gradient: 'from-blue-500 to-cyan-500'
+      id: 2,
+      title: 'Tech Product Launch',
+      category: 'YouTube • Technology',
+      description: [
+        'Product review and unboxing series',
+        'Collaborated with 15 tech influencers',
+        'Achieved 1M+ views in first week',
+        'Drove 25K+ website conversions'
+      ],
+      image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&h=300&fit=crop',
+      stats: { views: '1.2M', engagement: '6.2%' }
     },
     {
-      icon: <Shield size={32} />,
-      title: 'Secure Escrow',
-      description: 'Protected payments for peace of mind',
-      gradient: 'from-green-500 to-emerald-500'
+      id: 3,
+      title: 'Beauty Collection Promo',
+      category: 'TikTok • Beauty',
+      description: [
+        'Viral TikTok challenge campaign',
+        'Featured 30+ beauty creators',
+        'Hashtag reached 50M+ impressions',
+        'Sold out product in 48 hours'
+      ],
+      image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop',
+      stats: { views: '5.8M', engagement: '12.3%' }
     },
     {
-      icon: <BarChart3 size={32} />,
-      title: 'Analytics Dashboard',
-      description: 'Track performance with real-time insights',
-      gradient: 'from-orange-500 to-red-500'
-    },
-    {
-      icon: <Zap size={32} />,
-      title: 'Instant Approval',
-      description: 'Fast-track collaborations with one click',
-      gradient: 'from-violet-500 to-purple-500'
-    },
-    {
-      icon: <Award size={32} />,
-      title: 'Verified Creators',
-      description: 'Work with authenticated influencers only',
-      gradient: 'from-yellow-500 to-amber-500'
+      id: 4,
+      title: 'Fitness App Collaboration',
+      category: 'Multi-Platform • Health',
+      description: [
+        'Cross-platform fitness challenge',
+        'Partnered with 20 fitness influencers',
+        'Generated 100K+ app downloads',
+        'Built engaged community of 50K+'
+      ],
+      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
+      stats: { views: '3.1M', engagement: '9.7%' }
     }
   ];
 
-  const stats = [
-    { value: '50K+', label: 'Active Creators', icon: <Users size={24} /> },
-    { value: '10K+', label: 'Brands', icon: <Sparkles size={24} /> },
-    { value: '100K+', label: 'Collaborations', icon: <Rocket size={24} /> },
-    { value: '98%', label: 'Success Rate', icon: <Award size={24} /> }
+  // Testimonial videos with placeholder content
+  const videoTestimonials = [
+    { id: 1, name: 'Alex Rivera', role: 'Brand Manager', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
+    { id: 2, name: 'Sarah Kim', role: 'Marketing Lead', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' },
+    { id: 3, name: 'Jordan Chen', role: 'Startup Founder', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan' },
+    { id: 4, name: 'Maya Patel', role: 'Content Creator', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maya' },
+    { id: 5, name: 'Chris Taylor', role: 'E-commerce Owner', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Chris' },
+    { id: 6, name: 'Lisa Wong', role: 'Agency Director', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa' }
   ];
 
-  const testimonials = [
+  // Pricing packages
+  const pricingPackages = [
     {
-      name: 'Sarah Mitchell',
-      role: 'Marketing Director',
-      company: 'TechVision',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-      rating: 5,
-      quote: 'Collabzy transformed our influencer marketing. The AI matching is incredible!'
+      id: 1,
+      name: 'Starter',
+      price: '299',
+      period: 'month',
+      description: 'Perfect for small businesses and startups looking to start their influencer marketing journey.',
+      features: [
+        'Up to 5 influencer connections',
+        'Basic analytics dashboard',
+        'Email support',
+        '1 active campaign',
+        'Standard matching algorithm'
+      ],
+      testimonial: {
+        text: '"Great for getting started. Found amazing micro-influencers for our brand!"',
+        author: 'Jamie L. - Small Business Owner'
+      },
+      popular: false
     },
     {
-      name: 'Alex Chen',
-      role: 'Founder',
-      company: 'StartupHub',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
-      rating: 5,
-      quote: 'Best platform for finding authentic creators. ROI increased by 300%!'
-    },
-    {
-      name: 'Emma Davis',
-      role: 'Content Creator',
-      company: '@emmalifestyle',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma',
-      rating: 5,
-      quote: 'Finally, a platform that values creators. Payments are instant and secure!'
+      id: 2,
+      name: 'Professional',
+      price: '799',
+      period: 'month',
+      description: 'Full-featured platform for growing brands with advanced tools and priority support.',
+      features: [
+        'Unlimited influencer connections',
+        'Advanced analytics & reporting',
+        'Priority 24/7 support',
+        'Unlimited campaigns',
+        'AI-powered matching',
+        'Secure payment escrow',
+        'Campaign performance tracking'
+      ],
+      testimonial: {
+        text: '"The AI matching is incredible. Our ROI increased by 300% in just 3 months!"',
+        author: 'Michael R. - Marketing Director'
+      },
+      popular: true
     }
   ];
 
   return (
-    <div className="home-futuristic">
-      {/* Animated Background */}
-      <div className="home-bg-animated">
-        <div className="home-gradient-orb home-orb-1"></div>
-        <div className="home-gradient-orb home-orb-2"></div>
-        <div className="home-gradient-orb home-orb-3"></div>
-        <div className="home-particles">
-          {[...Array(50)].map((_, i) => (
-            <div key={i} className="home-particle" style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 20}s`,
-              animationDuration: `${15 + Math.random() * 10}s`
-            }}></div>
-          ))}
+    <div className="home-playful">
+      {/* Hero Section with Wavy Background */}
+      <section className="hero-section">
+        <div className="hero-wave-bg">
+          <svg className="wave-top" viewBox="0 0 1440 320" preserveAspectRatio="none">
+            <path fill="#FFE4D6" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,138.7C672,128,768,160,864,181.3C960,203,1056,213,1152,197.3C1248,181,1344,139,1392,117.3L1440,96L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>
+          </svg>
         </div>
-      </div>
 
-      {/* Hero Section */}
-      <section className="home-hero-section">
-        <div className="home-hero-container">
-          <div className="home-hero-content" data-scroll-animate>
-            <div className="home-hero-badge">
-              <Sparkles size={16} className="home-badge-icon" />
-              <span>Next-Gen Influencer Platform</span>
-              <div className="home-badge-glow"></div>
+        <div className="hero-container">
+          <div className="hero-content" data-animate>
+            <div className="hero-logo-area">
+              <div className="hero-logo-icon">
+                <Sparkles size={24} />
+              </div>
+              <span className="hero-brand">Collabzy</span>
             </div>
 
-            <h1 className="home-hero-title">
-              <span className="home-title-line" data-animate-in>
-                The Future of
-              </span>
-              <span className="home-title-gradient" data-animate-in>
-                Influencer Marketing
-              </span>
-              <span className="home-title-line" data-animate-in>
-                Starts Here
+            <h1 className="hero-title">
+              <span className="title-line">connecting</span>
+              <span className="title-accent">
+                <span className="handwritten">brands</span>
+                <span className="and-symbol">&</span>
+                <span className="handwritten">creators</span>
               </span>
             </h1>
 
-            <p className="home-hero-description" data-animate-in>
-              Connect with verified creators, launch campaigns in minutes, and track
-              real-time performance with AI-powered insights.
+            <p className="hero-subtitle">
+              a platform for modern influencer marketing
             </p>
 
-            {/* Animated Search Bar */}
-            <div className="home-search-container" data-animate-in>
-              <div className="home-search-wrapper">
-                <Search size={20} className="home-search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search creators by niche, platform, or name..."
-                  className="home-search-input"
-                />
-                <Link to="/influencers" className="home-search-btn">
-                  <span>Explore</span>
-                  <ArrowRight size={18} />
-                </Link>
-              </div>
-              <div className="home-search-glow"></div>
-            </div>
+            <Link to="/influencers" className="hero-cta-btn">
+              <span>Explore Creators</span>
+              <ArrowRight size={18} />
+            </Link>
+          </div>
 
-            {/* Hero Features */}
-            <div className="home-hero-features" data-animate-in>
-              {heroFeatures.map((feature, index) => (
-                <div key={index} className="home-hero-feature-item">
-                  {feature.icon}
-                  <span>{feature.text}</span>
+          <div className="hero-image-area" data-animate>
+            <div className="hero-mockup">
+              <img
+                src="https://images.unsplash.com/photo-1611162616475-46b635cb6868?w=500&h=400&fit=crop"
+                alt="Platform Preview"
+                className="mockup-image"
+              />
+              <div className="mockup-overlay">
+                <div className="mockup-stat">
+                  <span className="stat-value">50K+</span>
+                  <span className="stat-label">Creators</span>
                 </div>
-              ))}
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="home-hero-cta" data-animate-in>
-              <Link to="/register?role=brand" className="home-btn-primary">
-                <span>Start as Brand</span>
-                <ArrowRight size={20} />
-                <div className="home-btn-glow"></div>
-              </Link>
-              <Link to="/register?role=influencer" className="home-btn-secondary">
-                <Play size={20} />
-                <span>Join as Creator</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Floating Elements */}
-          <div className="home-hero-floating">
-            <div className="home-float-card home-float-1" style={{
-              transform: `translateY(${scrollY * 0.1}px)`
-            }}>
-              <div className="home-float-icon">
-                <TrendingUp size={24} />
-              </div>
-              <div className="home-float-text">
-                <div className="home-float-value">+245%</div>
-                <div className="home-float-label">ROI Growth</div>
               </div>
             </div>
-            <div className="home-float-card home-float-2" style={{
-              transform: `translateY(${scrollY * 0.15}px)`
-            }}>
-              <div className="home-float-icon">
-                <Users size={24} />
-              </div>
-              <div className="home-float-text">
-                <div className="home-float-value">50K+</div>
-                <div className="home-float-label">Creators</div>
-              </div>
-            </div>
-            <div className="home-float-card home-float-3" style={{
-              transform: `translateY(${scrollY * 0.12}px)`
-            }}>
-              <div className="home-float-icon">
-                <Rocket size={24} />
-              </div>
-              <div className="home-float-text">
-                <div className="home-float-value">24/7</div>
-                <div className="home-float-label">Support</div>
-              </div>
+            <div className="floating-badge badge-1">
+              <Heart size={16} fill="currentColor" />
+              <span>10K+ Collaborations</span>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Animated Stats */}
-      <section className="home-stats-section">
-        <div className="home-stats-container">
-          {stats.map((stat, index) => (
-            <div key={index} className="home-stat-card" data-scroll-animate>
-              <div className="home-stat-icon">{stat.icon}</div>
-              <div className="home-stat-value">{stat.value}</div>
-              <div className="home-stat-label">{stat.label}</div>
-              <div className="home-stat-glow"></div>
-            </div>
-          ))}
+        <div className="scroll-indicator">
+          <div className="scroll-dot"></div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="home-how-it-works-section">
-        <div className="home-section-container">
-          <div className="home-section-header" data-scroll-animate>
-            <div className="home-section-badge">
-              <Rocket size={16} />
-              <span>How It Works</span>
-            </div>
-            <h2 className="home-section-title">
-              Start Your Journey in
-              <span className="home-title-accent"> 3 Simple Steps</span>
+      {/* Portfolio Section */}
+      <section className="portfolio-section">
+        <div className="section-container">
+          <div className="section-header" data-animate>
+            <h2 className="section-title playful-title">
+              <span className="title-small">Look what</span>
+              <span className="title-large">
+                we <span className="handwritten accent-pink">made!</span>
+              </span>
             </h2>
-            <p className="home-section-subtitle">
-              From signup to collaboration in minutes
-            </p>
           </div>
 
-          <div className="home-steps-container">
-            <div className="home-step-card" data-scroll-animate>
-              <div className="home-step-number">
-                <span>01</span>
-              </div>
-              <div className="home-step-icon">
-                <Users size={32} />
-              </div>
-              <h3 className="home-step-title">Create Your Profile</h3>
-              <p className="home-step-description">
-                Sign up as an influencer or brand. Build your profile with portfolio,
-                metrics, and showcase your unique value proposition.
-              </p>
-              <div className="home-step-glow"></div>
-            </div>
-
-            <div className="home-step-arrow" data-scroll-animate>
-              <ArrowRight size={32} />
-            </div>
-
-            <div className="home-step-card" data-scroll-animate style={{ animationDelay: '0.2s' }}>
-              <div className="home-step-number">
-                <span>02</span>
-              </div>
-              <div className="home-step-icon">
-                <Search size={32} />
-              </div>
-              <h3 className="home-step-title">Discover & Connect</h3>
-              <p className="home-step-description">
-                Use AI-powered search to find perfect matches. Filter by niche,
-                engagement rate, and platform. Send collaboration requests instantly.
-              </p>
-              <div className="home-step-glow"></div>
-            </div>
-
-            <div className="home-step-arrow" data-scroll-animate>
-              <ArrowRight size={32} />
-            </div>
-
-            <div className="home-step-card" data-scroll-animate style={{ animationDelay: '0.4s' }}>
-              <div className="home-step-number">
-                <span>03</span>
-              </div>
-              <div className="home-step-icon">
-                <Rocket size={32} />
-              </div>
-              <h3 className="home-step-title">Launch & Track</h3>
-              <p className="home-step-description">
-                Manage collaborations, track progress, and communicate in real-time.
-                Secure payments and detailed analytics included.
-              </p>
-              <div className="home-step-glow"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="home-features-section">
-        <div className="home-section-container">
-          <div className="home-section-header" data-scroll-animate>
-            <div className="home-section-badge">
-              <Zap size={16} />
-              <span>Platform Features</span>
-            </div>
-            <h2 className="home-section-title">
-              Everything You Need to
-              <span className="home-title-accent"> Succeed</span>
-            </h2>
-            <p className="home-section-subtitle">
-              Powerful tools designed for modern influencer marketing
-            </p>
-          </div>
-
-          <div className="home-features-grid">
-            {platformFeatures.map((feature, index) => (
-              <div key={index} className="home-feature-card" data-scroll-animate style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className={`home-feature-icon bg-gradient-to-br ${feature.gradient}`}>
-                  {feature.icon}
-                  <div className="home-feature-icon-glow"></div>
+          <div className="portfolio-list">
+            {portfolioItems.map((item, index) => (
+              <div
+                key={item.id}
+                className={`portfolio-card ${index % 2 === 1 ? 'reverse' : ''}`}
+                data-animate
+              >
+                <div className="portfolio-content">
+                  <span className="portfolio-category">{item.category}</span>
+                  <h3 className="portfolio-title">{item.title}</h3>
+                  <ul className="portfolio-features">
+                    {item.description.map((desc, i) => (
+                      <li key={i}>
+                        <CheckCircle size={16} />
+                        <span>{desc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="portfolio-stats">
+                    <div className="stat-item">
+                      <span className="stat-label">Views</span>
+                      <span className="stat-value">{item.stats.views}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Engagement</span>
+                      <span className="stat-value">{item.stats.engagement}</span>
+                    </div>
+                  </div>
+                  <Link to="/influencers" className="portfolio-link">
+                    <span>See Case Study</span>
+                    <ExternalLink size={16} />
+                  </Link>
                 </div>
-                <h3 className="home-feature-title">{feature.title}</h3>
-                <p className="home-feature-description">{feature.description}</p>
-                <div className="home-feature-hover-effect"></div>
+                <div className="portfolio-image-wrapper">
+                  <img src={item.image} alt={item.title} className="portfolio-image" />
+                  <div className="image-decoration"></div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Influencer Showcase - Instagram Style */}
-      <section className="home-showcase-section">
-        <div className="home-section-container">
-          <div className="home-section-header" data-scroll-animate>
-            <div className="home-section-badge">
-              <Star size={16} />
-              <span>Top Creators</span>
-            </div>
-            <h2 className="home-section-title">
-              Featured
-              <span className="home-title-accent"> Influencers</span>
+      {/* Testimonials Section with Video Grid */}
+      <section className="testimonials-section">
+        <div className="testimonials-wave-top"></div>
+
+        <div className="section-container">
+          <div className="section-header" data-animate>
+            <h2 className="section-title playful-title light">
+              <span className="title-small">What my</span>
+              <span className="title-large">
+                <span className="handwritten accent-cream">Clients</span> say
+              </span>
             </h2>
           </div>
 
-          <div className="home-showcase-grid">
-            {featuredInfluencers.map((influencer, index) => (
-              <div
-                key={influencer.id}
-                className="home-insta-card"
-                data-scroll-animate
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                {/* Instagram-style Header */}
-                <div className="home-insta-header">
-                  <div className="home-insta-avatar-wrapper">
-                    <div className="home-insta-avatar-ring">
-                      <img src={influencer.avatar} alt={influencer.name} className="home-insta-avatar" />
-                    </div>
-                    {influencer.verified && (
-                      <div className="home-insta-verified">
-                        <CheckCircle size={20} />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="home-insta-stats">
-                    <div className="home-insta-stat">
-                      <div className="home-insta-stat-value">{influencer.followers}</div>
-                      <div className="home-insta-stat-label">Followers</div>
-                    </div>
-                    <div className="home-insta-stat">
-                      <div className="home-insta-stat-value">{250 + (index * 50)}</div>
-                      <div className="home-insta-stat-label">Posts</div>
-                    </div>
-                    <div className="home-insta-stat">
-                      <div className="home-insta-stat-value">{influencer.engagementRate || '4.2%'}</div>
-                      <div className="home-insta-stat-label">Engagement</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Profile Info */}
-                <div className="home-insta-info">
-                  <h3 className="home-insta-name">{influencer.name}</h3>
-                  <p className="home-insta-category">{influencer.niche}</p>
-                  <p className="home-insta-bio">
-                    Professional {influencer.niche.toLowerCase()} creator • Collaborations welcome
-                  </p>
-
-                  <div className="home-insta-platforms">
-                    <Instagram size={16} />
-                    <Youtube size={16} />
-                    <Video size={16} />
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="home-insta-actions">
-                  <Link to={`/influencer/${influencer.id}`} className="home-insta-btn-primary">
-                    <span>View Profile</span>
-                  </Link>
-                  <button className="home-insta-btn-secondary">
-                    <MessageSquare size={18} />
+          <div className="video-testimonials-grid" data-animate>
+            {videoTestimonials.map((testimonial) => (
+              <div key={testimonial.id} className="video-testimonial-card">
+                <div className="video-thumbnail">
+                  <img src={testimonial.image} alt={testimonial.name} />
+                  <button className="play-button">
+                    <Play size={24} fill="currentColor" />
                   </button>
                 </div>
-
-                {/* Rating & Price */}
-                <div className="home-insta-footer">
-                  <div className="home-insta-rating">
-                    <Star size={16} fill="currentColor" />
-                    <span>{influencer.rating}</span>
-                    <span className="home-insta-reviews">({100 + (index * 30)} reviews)</span>
-                  </div>
-                  <div className="home-insta-price">
-                    From <strong>${200 + (index * 75)}</strong>
-                  </div>
+                <div className="testimonial-info">
+                  <span className="testimonial-name">{testimonial.name}</span>
+                  <span className="testimonial-role">{testimonial.role}</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
+
+        <div className="testimonials-wave-bottom"></div>
       </section>
 
-      {/* Testimonials */}
-      <section className="home-testimonials-section">
-        <div className="home-section-container">
-          <div className="home-section-header" data-scroll-animate>
-            <div className="home-section-badge">
-              <Quote size={16} />
-              <span>Testimonials</span>
-            </div>
-            <h2 className="home-section-title">
-              Loved by
-              <span className="home-title-accent"> Thousands</span>
+      {/* Services/Pricing Section */}
+      <section className="pricing-section">
+        <div className="section-container">
+          <div className="section-header" data-animate>
+            <h2 className="section-title playful-title">
+              <span className="title-small">Ser</span>
+              <span className="title-large">
+                <span className="handwritten accent-green">vices</span>
+                <span className="title-small inline"> I offer</span>
+              </span>
             </h2>
           </div>
 
-          <div className="home-testimonials-grid">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="home-testimonial-card" data-scroll-animate style={{ animationDelay: `${index * 0.15}s` }}>
-                <div className="home-testimonial-quote-icon">
-                  <Quote size={24} />
+          <div className="pricing-grid" data-animate>
+            {pricingPackages.map((pkg) => (
+              <div key={pkg.id} className={`pricing-card ${pkg.popular ? 'popular' : ''}`}>
+                {pkg.popular && <div className="popular-badge">Most Popular</div>}
+
+                <div className="pricing-header">
+                  <h3 className="pricing-name">{pkg.name}</h3>
+                  <div className="pricing-amount">
+                    <span className="currency">$</span>
+                    <span className="price">{pkg.price}</span>
+                    <span className="period">/{pkg.period}</span>
+                  </div>
+                  <p className="pricing-description">{pkg.description}</p>
                 </div>
-                <div className="home-testimonial-rating">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} size={16} fill="currentColor" />
+
+                <div className="pricing-testimonial">
+                  <p className="testimonial-text">{pkg.testimonial.text}</p>
+                  <span className="testimonial-author">{pkg.testimonial.author}</span>
+                </div>
+
+                <ul className="pricing-features">
+                  {pkg.features.map((feature, index) => (
+                    <li key={index}>
+                      <CheckCircle size={16} />
+                      <span>{feature}</span>
+                    </li>
                   ))}
-                </div>
-                <p className="home-testimonial-quote">"{testimonial.quote}"</p>
-                <div className="home-testimonial-author">
-                  <img src={testimonial.avatar} alt={testimonial.name} className="home-testimonial-avatar" />
-                  <div className="home-testimonial-info">
-                    <h4 className="home-testimonial-name">{testimonial.name}</h4>
-                    <p className="home-testimonial-role">{testimonial.role} • {testimonial.company}</p>
-                  </div>
-                </div>
-                <div className="home-testimonial-glow"></div>
+                </ul>
+
+                <Link to="/register" className="pricing-cta">
+                  Get Started
+                </Link>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="home-cta-section">
-        <div className="home-cta-container" data-scroll-animate>
-          <div className="home-cta-content">
-            <div className="home-cta-icon">
-              <Rocket size={48} />
+      {/* Contact Section */}
+      <section className="contact-section">
+        <div className="contact-wave-bg"></div>
+
+        <div className="section-container">
+          <div className="contact-content" data-animate>
+            <div className="contact-illustration">
+              <div className="illustration-circle">
+                <MessageSquare size={48} />
+              </div>
+              <div className="illustration-dots">
+                <span></span><span></span><span></span>
+              </div>
             </div>
-            <h2 className="home-cta-title">
-              Ready to Transform Your
-              <span className="home-title-accent"> Marketing?</span>
-            </h2>
-            <p className="home-cta-description">
-              Join thousands of brands and creators building the future of influencer marketing
-            </p>
-            <div className="home-cta-buttons">
-              <Link to="/register?role=brand" className="home-btn-primary home-btn-large">
-                <span>Get Started Free</span>
-                <ArrowRight size={22} />
-                <div className="home-btn-glow"></div>
-              </Link>
-              <Link to="/register?role=influencer" className="home-btn-glass home-btn-large">
-                <Globe size={22} />
-                <span>Join as Creator</span>
-              </Link>
+
+            <div className="contact-header">
+              <h2 className="section-title playful-title">
+                <span className="title-small">Have any other questions?</span>
+              </h2>
+              <p className="contact-subtitle">
+                Fill the form or DM me on X. I usually respond within 24 hours.
+              </p>
             </div>
+
+            <form className="contact-form">
+              <div className="form-group">
+                <label>Name</label>
+                <input type="text" placeholder="Your name" />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input type="email" placeholder="your@email.com" />
+              </div>
+              <div className="form-group">
+                <label>Message</label>
+                <textarea placeholder="Tell us about your project..." rows={4}></textarea>
+              </div>
+              <button type="submit" className="submit-btn">
+                <span>Submit Message</span>
+                <Send size={18} />
+              </button>
+            </form>
           </div>
-          <div className="home-cta-glow"></div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="final-cta-section">
+        <div className="section-container">
+          <div className="cta-content" data-animate>
+            <h2 className="cta-title">Ready to Bring Your Vision to Life?</h2>
+            <p className="cta-subtitle">
+              Let's collaborate! Join thousands of brands and creators
+              building amazing campaigns together.
+            </p>
+            <Link to="/register" className="cta-button">
+              <span>Start Now</span>
+              <ArrowRight size={20} />
+            </Link>
+          </div>
         </div>
       </section>
     </div>
