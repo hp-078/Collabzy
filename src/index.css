@@ -1,61 +1,112 @@
-/* Collabzy - Global Styles */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* ========================================
+   COLLABZY - Global Styles
+   Playful Pastel Theme with 1970s Typography
+======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400;1,9..144,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+/* ========================================
+   LENIS SMOOTH SCROLL (Global)
+======================================== */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
 
 :root {
-  /* Primary Colors - Modern Deep Purple/Indigo */
-  --primary-50: #f5f3ff;
-  --primary-100: #ede9fe;
-  --primary-200: #ddd6fe;
-  --primary-300: #c4b5fd;
-  --primary-400: #a78bfa;
-  --primary-500: #8b5cf6;
-  --primary-600: #7c3aed;
-  --primary-700: #6d28d9;
-  --primary-800: #5b21b6;
-  --primary-900: #4c1d95;
+  /* ===== PLAYFUL PASTEL PALETTE ===== */
+  --pastel-pink: #FFB5BA;
+  --pastel-peach: #FFE4D6;
+  --pastel-yellow: #FFF0A5;
+  --pastel-mint: #B8E5D0;
+  --pastel-lavender: #E8D5F2;
+  --pastel-cream: #FFF9F0;
+  --pastel-coral: #FFCEC2;
+  --pastel-sky: #C5E8F1;
+  
+  /* Accent Colors */
+  --accent-coral: #FF6B6B;
+  --accent-purple: #9B59B6;
+  --accent-teal: #20B2AA;
+  
+  /* Dark/Light Text */
+  --dark-text: #1A1A1A;
+  --light-text: #555555;
+  --muted-text: #888888;
+  
+  /* ===== TYPOGRAPHY ===== */
+  --heading-font: 'Fraunces', Georgia, serif;
+  --body-font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  /* Secondary Colors - Vibrant Coral/Orange */
-  --secondary-50: #fff7ed;
-  --secondary-100: #ffedd5;
-  --secondary-200: #fed7aa;
-  --secondary-300: #fdba74;
-  --secondary-400: #fb923c;
-  --secondary-500: #f97316;
-  --secondary-600: #ea580c;
-  --secondary-700: #c2410c;
-  --secondary-800: #9a3412;
-  --secondary-900: #7c2d12;
+  /* Primary Colors - Soft Coral/Peach tones */
+  --primary-50: #fff5f3;
+  --primary-100: #ffe8e3;
+  --primary-200: #ffd5cc;
+  --primary-300: #ffb5a8;
+  --primary-400: #ff9580;
+  --primary-500: #FF6B6B;
+  --primary-600: #e85555;
+  --primary-700: #c44444;
+  --primary-800: #a33838;
+  --primary-900: #862e2e;
+
+  /* Secondary Colors - Soft Lavender */
+  --secondary-50: #faf5ff;
+  --secondary-100: #f3e8ff;
+  --secondary-200: #e9d5ff;
+  --secondary-300: #d8b4fe;
+  --secondary-400: #c084fc;
+  --secondary-500: #9B59B6;
+  --secondary-600: #8b47a5;
+  --secondary-700: #7c3a91;
+  --secondary-800: #6b2f7d;
+  --secondary-900: #581c68;
 
   /* Accent Colors */
-  --accent-blue: #3b82f6;
-  --accent-blue-light: #60a5fa;
-  --accent-pink: #ec4899;
-  --accent-cyan: #06b6d4;
-  --accent-green: #10b981;
+  --accent-blue: #87CEEB;
+  --accent-blue-light: #B0E0E6;
+  --accent-pink: #FFB5BA;
+  --accent-cyan: #B8E5D0;
+  --accent-green: #98D8AA;
 
-  /* Semantic Colors */
-  --success: #10b981;
-  --success-light: #d1fae5;
-  --warning: #f59e0b;
-  --warning-light: #fef3c7;
-  --error: #ef4444;
-  --error-light: #fee2e2;
-  --info: #3b82f6;
-  --info-light: #dbeafe;
+  /* Semantic Colors - Softer versions */
+  --success: #98D8AA;
+  --success-light: #E8F5E8;
+  --warning: #FFD686;
+  --warning-light: #FFF8E8;
+  --error: #FF9B9B;
+  --error-light: #FFF0F0;
+  --info: #87CEEB;
+  --info-light: #F0F8FF;
 
-  /* Neutral Colors */
+  /* Neutral Colors - Warmer tones */
   --white: #ffffff;
-  --black: #000000;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+  --black: #1A1A1A;
+  --gray-50: #FFF9F0;
+  --gray-100: #F5F0E8;
+  --gray-200: #E8E3DA;
+  --gray-300: #D4CFC6;
+  --gray-400: #A8A299;
+  --gray-500: #7A756C;
+  --gray-600: #555555;
+  --gray-700: #3D3D3D;
+  --gray-800: #2A2A2A;
+  --gray-900: #1A1A1A;
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -88,7 +139,7 @@
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Typography */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family: var(--body-font);
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -120,23 +171,23 @@ body {
   height: 100%;
   width: 100%;
   overflow-y: auto;
-  font-family: var(--font-family);
+  font-family: var(--body-font);
   font-size: var(--font-size-base);
   line-height: 1.6;
-  color: var(--gray-800);
-  background-color: var(--gray-50);
+  color: var(--dark-text);
+  background-color: var(--pastel-cream);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
 }
 
-body {
-  font-family: var(--font-family);
-  font-size: var(--font-size-base);
-  line-height: 1.6;
-  color: var(--gray-800);
-  background-color: var(--gray-50);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Override duplicate body selector */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--heading-font);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  color: var(--dark-text);
 }
 
 a {
@@ -213,78 +264,94 @@ select {
   gap: var(--spacing-lg);
 }
 
-/* Button Styles */
+/* Button Styles - Playful Theme */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.75rem;
   font-size: var(--font-size-sm);
-  font-weight: 500;
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-base);
+  font-weight: 600;
+  font-family: var(--body-font);
+  border-radius: 50px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  border: none;
+  letter-spacing: -0.01em;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  background: var(--dark-text);
   color: var(--white);
-  box-shadow: 0 4px 14px 0 rgba(20, 184, 166, 0.39);
+  box-shadow: 0 4px 20px rgba(26, 26, 26, 0.2);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px 0 rgba(20, 184, 166, 0.5);
+  background: #333;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(26, 26, 26, 0.3);
 }
 
 .btn-secondary {
   background: var(--white);
-  color: var(--gray-700);
-  border: 1px solid var(--gray-300);
+  color: var(--dark-text);
+  border: 2px solid var(--dark-text);
 }
 
 .btn-secondary:hover {
-  background: var(--gray-50);
-  border-color: var(--gray-400);
+  background: var(--pastel-cream);
+  transform: translateY(-2px);
 }
 
 .btn-outline {
   background: transparent;
-  color: var(--primary-600);
-  border: 2px solid var(--primary-500);
+  color: var(--dark-text);
+  border: 2px solid var(--dark-text);
 }
 
 .btn-outline:hover {
-  background: var(--primary-50);
+  background: var(--pastel-peach);
+  transform: translateY(-2px);
+}
+
+.btn-pastel {
+  background: var(--pastel-pink);
+  color: var(--dark-text);
+  border: none;
+}
+
+.btn-pastel:hover {
+  background: var(--pastel-peach);
+  transform: translateY(-2px);
 }
 
 .btn-lg {
-  padding: 1rem 2rem;
+  padding: 1rem 2.5rem;
   font-size: var(--font-size-base);
 }
 
 .btn-sm {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.25rem;
   font-size: var(--font-size-xs);
 }
 
-/* Card Styles */
+/* Card Styles - Playful Theme */
 .card {
   background: var(--white);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   overflow: hidden;
-  transition: all var(--transition-base);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  transform: translateY(-6px);
 }
 
-/* Input Styles */
+/* Input Styles - Playful Theme */
 .input-group {
   display: flex;
   flex-direction: column;
@@ -293,45 +360,49 @@ select {
 
 .input-group label {
   font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--gray-700);
+  font-weight: 600;
+  color: var(--dark-text);
+  font-family: var(--body-font);
 }
 
 .input {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-md);
+  padding: 0.875rem 1.25rem;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
   font-size: var(--font-size-base);
-  transition: all var(--transition-fast);
+  font-family: var(--body-font);
+  transition: all 0.3s ease;
+  background: var(--white);
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px var(--primary-100);
+  border-color: var(--pastel-pink);
+  box-shadow: 0 0 0 4px rgba(255, 181, 186, 0.3);
 }
 
 .input::placeholder {
-  color: var(--gray-400);
+  color: var(--muted-text);
 }
 
-/* Badge Styles */
+/* Badge Styles - Playful Theme */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.75rem;
+  padding: 0.375rem 1rem;
   font-size: var(--font-size-xs);
-  font-weight: 500;
-  border-radius: var(--radius-full);
+  font-weight: 600;
+  border-radius: 50px;
+  font-family: var(--body-font);
 }
 
 .badge-primary {
-  background: var(--primary-100);
-  color: var(--primary-700);
+  background: var(--pastel-pink);
+  color: var(--dark-text);
 }
 
 .badge-success {
-  background: var(--success-light);
+  background: var(--pastel-mint);
   color: var(--success);
 }
 

@@ -1,4 +1,6 @@
-/* App Styles */
+/* ========================================
+   App Styles - Playful Pastel Theme
+======================================== */
 
 .loading-screen {
   display: flex;
@@ -6,23 +8,26 @@
   justify-content: center;
   min-height: 100vh;
   font-size: 1.25rem;
-  color: var(--primary-600);
-  background: var(--gray-50);
+  font-family: var(--heading-font);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--dark-text);
+  background: linear-gradient(180deg, var(--pastel-peach) 0%, var(--pastel-cream) 100%);
 }
 
 main {
   min-height: calc(100vh - 80px);
 }
 
-/* Page Transitions */
+/* Page Transitions - Smooth & Playful */
 main > * {
-  animation: fadeIn 0.3s ease-out;
+  animation: pageSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes fadeIn {
+@keyframes pageSlideIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
