@@ -11,6 +11,7 @@ import {
   Heart
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
+import DomeGallery from '../../components/DomeGallery/DomeGallery';
 import './Home.css';
 
 const Home = () => {
@@ -40,6 +41,87 @@ const Home = () => {
   }, []);
 
   const featuredInfluencers = influencers.slice(0, 6);
+
+  // Top Influencers for Dome Gallery
+  const topInfluencers = [
+    {
+      id: 1,
+      name: 'Emma Johnson',
+      niche: 'Fashion & Lifestyle',
+      avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+      followers: '250K',
+      engagement: '8.5%',
+      rating: '4.9',
+      bio: 'Fashion influencer helping brands connect with modern audiences. Specializing in sustainable fashion and lifestyle content.',
+      specialties: ['Fashion', 'Lifestyle', 'Sustainable Living', 'Brand Partnerships']
+    },
+    {
+      id: 2,
+      name: 'Marcus Chen',
+      niche: 'Tech & Gadgets',
+      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+      followers: '500K',
+      engagement: '12.3%',
+      rating: '5.0',
+      bio: 'Tech reviewer and gadget enthusiast. Helping brands showcase their products to tech-savvy audiences.',
+      specialties: ['Technology', 'Product Reviews', 'Innovation', 'Tutorials']
+    },
+    {
+      id: 3,
+      name: 'Sofia Rodriguez',
+      niche: 'Beauty & Makeup',
+      avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
+      followers: '380K',
+      engagement: '9.7%',
+      rating: '4.8',
+      bio: 'Professional makeup artist and beauty content creator. Passionate about empowering brands and individuals.',
+      specialties: ['Beauty', 'Makeup', 'Skincare', 'Tutorials']
+    },
+    {
+      id: 4,
+      name: 'David Park',
+      niche: 'Fitness & Wellness',
+      avatar: 'https://randomuser.me/api/portraits/men/46.jpg',
+      followers: '420K',
+      engagement: '11.2%',
+      rating: '4.9',
+      bio: 'Certified fitness trainer and wellness coach. Creating content that inspires healthy lifestyles.',
+      specialties: ['Fitness', 'Nutrition', 'Wellness', 'Motivation']
+    },
+    {
+      id: 5,
+      name: 'Aisha Kumar',
+      niche: 'Travel & Adventure',
+      avatar: 'https://randomuser.me/api/portraits/women/90.jpg',
+      followers: '310K',
+      engagement: '10.5%',
+      rating: '5.0',
+      bio: 'Travel blogger exploring the world one destination at a time. Partnering with travel brands globally.',
+      specialties: ['Travel', 'Photography', 'Culture', 'Adventure']
+    },
+    {
+      id: 6,
+      name: 'Jake Morrison',
+      niche: 'Food & Cooking',
+      avatar: 'https://randomuser.me/api/portraits/men/52.jpg',
+      followers: '290K',
+      engagement: '8.9%',
+      rating: '4.7',
+      bio: 'Chef and food content creator. Bringing culinary experiences to life through engaging content.',
+      specialties: ['Cooking', 'Recipe Development', 'Food Photography', 'Restaurants']
+    },
+    {
+      id: 7,
+      name: 'Nina Patel',
+      niche: 'Parenting & Family',
+      avatar: 'https://randomuser.me/api/portraits/women/26.jpg',
+      followers: '195K',
+      engagement: '13.1%',
+      rating: '4.8',
+      bio: 'Mom of three sharing parenting tips and family moments. Authentic voice for family-focused brands.',
+      specialties: ['Parenting', 'Family Life', 'Education', 'Child Development']
+    }
+  ];
 
   // How It Works - 3 Step Process
   const portfolioItems = [
@@ -290,6 +372,35 @@ const Home = () => {
         </div>
 
         <div className="home-testimonials-wave-bottom"></div>
+      </section>
+
+      {/* Top Influencers Section with Dome Gallery */}
+      <section className="home-top-influencers-section">
+        <div className="home-influencers-header-container">
+          <div className="home-section-header" data-animate>
+            <h2 className="home-section-title home-playful-title">
+              <span className="home-title-small">Meet our</span>
+              <span className="home-title-large">
+                <span className="home-handwritten home-accent-pink">Top</span> Influencers
+              </span>
+            </h2>
+            <p className="home-section-subtitle">
+              Explore our community of verified creators. Drag to explore, click to connect.
+            </p>
+          </div>
+        </div>
+
+        <div className="home-dome-gallery-fullscreen" data-animate>
+          <DomeGallery
+            influencers={topInfluencers}
+            fit={0.9}
+            minRadius={650}
+            maxVerticalRotationDeg={8}
+            segments={34}
+            dragDampening={1.5}
+            grayscale={false}
+          />
+        </div>
       </section>
 
       {/* Services/Pricing Section */}
