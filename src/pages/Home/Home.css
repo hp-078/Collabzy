@@ -6,8 +6,8 @@
 .home-page {
   font-family: var(--body-font);
   color: var(--dark-text);
-  overflow-x: hidden;
   background: var(--pastel-cream);
+  /* Note: overflow-x removed to allow sticky positioning */
 }
 
 /* Animation */
@@ -284,10 +284,12 @@
 
 /* ========================================
    PORTFOLIO/HOW IT WORKS SECTION
+   Sticky Stacked Cards Scroll Effect
 ======================================== */
 .home-portfolio-section {
-  padding: 100px 0;
+  padding: 100px 0 200px;
   background: var(--pastel-cream);
+  /* Extra bottom padding for sticky scroll space */
 }
 
 .home-section-container {
@@ -342,13 +344,15 @@
 .home-accent-cream { color: var(--pastel-cream); }
 .home-accent-green { color: #2E8B57; }
 
-/* Portfolio Cards */
+/* Sticky Stacked Cards Container */
 .home-portfolio-list {
   display: flex;
   flex-direction: column;
-  gap: 3rem;
+  gap: 0;
+  position: relative;
 }
 
+/* Sticky Stacked Card Base Styles */
 .home-portfolio-card {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -357,14 +361,41 @@
   background: white;
   border-radius: 24px;
   padding: 2.5rem;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.4s ease;
+  
+  /* Smoother transitions */
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+              box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* Sticky positioning for stacked effect */
+  position: sticky;
+  margin-bottom: 50px;
+  will-change: transform, box-shadow;
 }
 
+/* Staggered sticky tops - increased spacing for better stacking visibility */
+.home-portfolio-card:nth-child(1) {
+  top: 100px;
+  z-index: 1;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.home-portfolio-card:nth-child(2) {
+  top: 150px;
+  z-index: 2;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.home-portfolio-card:nth-child(3) {
+  top: 200px;
+  z-index: 3;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Hover effect */
 .home-portfolio-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.18);
 }
 
 .home-portfolio-card.home-reverse {
@@ -998,10 +1029,17 @@
   .home-title-large { font-size: 2.5rem; }
   .home-title-large .home-handwritten { font-size: 3.5rem; }
 
+  /* Sticky cards with adjusted top positions for tablet */
   .home-portfolio-card {
     grid-template-columns: 1fr;
     gap: 2rem;
+    top: 80px;
+    margin-bottom: 30px;
   }
+  
+  .home-portfolio-card:nth-child(1) { top: 80px; }
+  .home-portfolio-card:nth-child(2) { top: 105px; }
+  .home-portfolio-card:nth-child(3) { top: 130px; }
 
   .home-portfolio-card.home-reverse { direction: ltr; }
   .home-portfolio-image { height: 220px; }
@@ -1032,6 +1070,27 @@
   .home-testimonials-section,
   .home-pricing-section,
   .home-contact-section { padding: 60px 0; }
+  
+  /* Disable sticky on very small screens for better UX */
+  .home-portfolio-section {
+    padding-bottom: 60px;
+  }
+  
+  .home-portfolio-list {
+    gap: 1.5rem;
+  }
+  
+  .home-portfolio-card {
+    position: relative;
+    top: auto !important;
+    margin-bottom: 0;
+  }
+  
+  .home-portfolio-card:nth-child(1),
+  .home-portfolio-card:nth-child(2),
+  .home-portfolio-card:nth-child(3) {
+    z-index: auto;
+  }
 
   .home-video-testimonials-grid { grid-template-columns: 1fr; }
   .home-contact-form { padding: 1.5rem; }
