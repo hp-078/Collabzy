@@ -1,16 +1,16 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import {
   ArrowRight,
   CheckCircle,
   Sparkles,
   MessageSquare,
   Send,
-  Play,
   ExternalLink,
   Heart
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
+import CircularGallery from '../../components/common/CircularGallery';
 import './Home.css';
 
 const Home = () => {
@@ -84,14 +84,16 @@ const Home = () => {
     }
   ];
 
-  // Testimonial videos with placeholder content
-  const videoTestimonials = [
-    { id: 1, name: 'Alex Rivera', role: 'Brand Manager', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
-    { id: 2, name: 'Sarah Kim', role: 'Marketing Lead', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' },
-    { id: 3, name: 'Jordan Chen', role: 'Startup Founder', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan' },
-    { id: 4, name: 'Maya Patel', role: 'Content Creator', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maya' },
-    { id: 5, name: 'Chris Taylor', role: 'E-commerce Owner', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Chris' },
-    { id: 6, name: 'Lisa Wong', role: 'Agency Director', image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa' }
+  // Top Brands that work with Collabzy
+  const topBrands = [
+    { image: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&h=300&fit=crop', text: 'Nike' },
+    { image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400&h=300&fit=crop', text: 'Adidas' },
+    { image: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&h=300&fit=crop', text: 'Coca-Cola' },
+    { image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop', text: 'Apple' },
+    { image: 'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&h=300&fit=crop', text: 'Samsung' },
+    { image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop', text: 'Puma' },
+    { image: 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=400&h=300&fit=crop', text: 'L\'Oréal' },
+    { image: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=300&fit=crop', text: 'Sony' }
   ];
 
   // Pricing packages
@@ -257,39 +259,34 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Testimonials Section with Video Grid */}
-      <section className="home-testimonials-section">
-        <div className="home-testimonials-wave-top"></div>
+      {/* Top Brands Section with Circular Gallery */}
+      <section className="home-brands-section">
+        <div className="home-brands-wave-top"></div>
 
         <div className="home-section-container">
           <div className="home-section-header" data-animate>
             <h2 className="home-section-title home-light">
-              <span className="home-title-small">What my</span>
+              <span className="home-title-small">Trusted by</span>
               <span className="home-title-large">
-                <span className="home-handwritten home-accent-cream">Clients</span> say
+                Top <span className="home-handwritten home-accent-cream">Brands</span>
               </span>
             </h2>
           </div>
 
-          <div className="home-video-testimonials-grid" data-animate>
-            {videoTestimonials.map((testimonial) => (
-              <div key={testimonial.id} className="home-video-testimonial-card">
-                <div className="home-video-thumbnail">
-                  <img src={testimonial.image} alt={testimonial.name} />
-                  <button className="home-play-button">
-                    <Play size={24} fill="currentColor" />
-                  </button>
-                </div>
-                <div className="home-testimonial-info">
-                  <span className="home-testimonial-name">{testimonial.name}</span>
-                  <span className="home-testimonial-role">{testimonial.role}</span>
-                </div>
-              </div>
-            ))}
+          <div className="home-brands-gallery" data-animate>
+            <CircularGallery 
+              items={topBrands}
+              bend={0}
+              textColor="#1A1A1A"
+              borderRadius={0.08}
+              scrollSpeed={2}
+              scrollEase={0.05}
+              font="bold 24px DM Sans"
+            />
           </div>
         </div>
 
-        <div className="home-testimonials-wave-bottom"></div>
+        <div className="home-brands-wave-bottom"></div>
       </section>
 
       {/* Services/Pricing Section */}
