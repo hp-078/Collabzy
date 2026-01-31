@@ -30,9 +30,9 @@ html.lenis, html.lenis body {
 
 :root {
   /* ===== PLAYFUL PASTEL PALETTE ===== */
-  --pastel-pink: #FFB5BA;
-  --pastel-peach: #FFE4D6;
-  --pastel-yellow: #FFF0A5;
+  --pastel-pink: #FFDDE0;
+  --pastel-peach: #FFF0E8;
+  --pastel-yellow: #FFF8D6;
   --pastel-mint: #B8E5D0;
   --pastel-lavender: #E8D5F2;
   --pastel-cream: #FFF9F0;
@@ -80,7 +80,7 @@ html.lenis, html.lenis body {
   /* Accent Colors */
   --accent-blue: #87CEEB;
   --accent-blue-light: #B0E0E6;
-  --accent-pink: #FFB5BA;
+  --accent-pink: #FFDDE0;
   --accent-cyan: #B8E5D0;
   --accent-green: #98D8AA;
 

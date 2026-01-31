@@ -63,59 +63,46 @@ const Home = () => {
 
   const featuredInfluencers = influencers.slice(0, 6);
 
-  // Portfolio/Project items with placeholder content
+  // How It Works - 3 Step Process
   const portfolioItems = [
     {
       id: 1,
-      title: 'Fashion Brand Campaign',
-      category: 'Instagram • Lifestyle',
+      title: 'Brands Create Campaigns',
+      category: 'Step 1',
       description: [
-        'Complete social media campaign with 50+ posts',
-        'Increased brand awareness by 180%',
-        'Reached 2M+ targeted audience',
-        'Generated 500+ user-generated content pieces'
+        'Businesses post their advertising requirements on Collabzy',
+        'Set budget and platform type (Instagram/YouTube)',
+        'Define influencer eligibility criteria',
+        'Reach the right audience for your brand'
       ],
-      image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
-      stats: { views: '2.4M', engagement: '8.5%' }
+      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop',
+      stats: { views: 'Easy', engagement: 'Setup' }
     },
     {
       id: 2,
-      title: 'Tech Product Launch',
-      category: 'YouTube • Technology',
+      title: 'Creators Get Matched',
+      category: 'Step 2',
       description: [
-        'Product review and unboxing series',
-        'Collaborated with 15 tech influencers',
-        'Achieved 1M+ views in first week',
-        'Drove 25K+ website conversions'
+        'Influencers discover campaigns that fit their niche',
+        'Filter by reach and engagement requirements',
+        'Apply directly to relevant campaigns',
+        'Receive smart campaign suggestions automatically'
       ],
-      image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&h=300&fit=crop',
-      stats: { views: '1.2M', engagement: '6.2%' }
+      image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop',
+      stats: { views: 'Smart', engagement: 'Match' }
     },
     {
       id: 3,
-      title: 'Beauty Collection Promo',
-      category: 'TikTok • Beauty',
+      title: 'Collaborate & Confirm Deals',
+      category: 'Step 3',
       description: [
-        'Viral TikTok challenge campaign',
-        'Featured 30+ beauty creators',
-        'Hashtag reached 50M+ impressions',
-        'Sold out product in 48 hours'
+        'Brands and creators connect through secure chat',
+        'Finalize terms and deliverables together',
+        'Confirm collaborations safely within Collabzy',
+        'Track progress and complete successful campaigns'
       ],
-      image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop',
-      stats: { views: '5.8M', engagement: '12.3%' }
-    },
-    {
-      id: 4,
-      title: 'Fitness App Collaboration',
-      category: 'Multi-Platform • Health',
-      description: [
-        'Cross-platform fitness challenge',
-        'Partnered with 20 fitness influencers',
-        'Generated 100K+ app downloads',
-        'Built engaged community of 50K+'
-      ],
-      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
-      stats: { views: '3.1M', engagement: '9.7%' }
+      image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=300&fit=crop',
+      stats: { views: 'Secure', engagement: 'Deals' }
     }
   ];
 
@@ -238,13 +225,13 @@ const Home = () => {
       </section>
 
       {/* Portfolio Section */}
-      <section className="portfolio-section">
+      <section className="portfolio-section" id="how-it-works">
         <div className="section-container">
           <div className="section-header" data-animate>
             <h2 className="section-title playful-title">
-              <span className="title-small">Look what</span>
+              <span className="title-small">How</span>
               <span className="title-large">
-                we <span className="handwritten accent-pink">made!</span>
+                it  <span className="handwritten accent-pink"> Works ?</span> 
               </span>
             </h2>
           </div>
