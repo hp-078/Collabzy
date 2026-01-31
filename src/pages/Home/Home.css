@@ -569,6 +569,44 @@
 }
 
 /* ========================================
+   TOP INFLUENCERS SECTION - DOME GALLERY
+======================================== */
+.home-top-influencers-section {
+  padding: 0;
+  background: linear-gradient(180deg, var(--pastel-yellow) 0%, var(--pastel-cream) 50%, var(--pastel-peach) 100%);
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-influencers-header-container {
+  padding: 80px 2rem 40px;
+  position: relative;
+  z-index: 2;
+}
+
+.home-dome-gallery-fullscreen {
+  flex: 1;
+  width: 100%;
+  min-height: 80vh;
+  position: relative;
+  overflow: visible;
+}
+
+.home-section-subtitle {
+  text-align: center;
+  font-size: 1.125rem;
+  color: var(--light-text);
+  font-family: var(--body-font);
+  margin-top: 1rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+/* ========================================
    PRICING SECTION
 ======================================== */
 .home-pricing-section {
