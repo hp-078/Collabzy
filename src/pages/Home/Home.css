@@ -298,6 +298,11 @@
   padding: 0 2rem;
 }
 
+/* Full-width container for influencers section */
+.home-top-influencers-section .home-section-container {
+  max-width: 100%;
+}
+
 .home-section-header {
   text-align: center;
   margin-bottom: 2.5rem;
@@ -350,6 +355,8 @@
   flex-direction: column;
   gap: 0;
   position: relative;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* Sticky Stacked Card Base Styles */
@@ -527,7 +534,7 @@
    TOP BRANDS SECTION - Circular Gallery
 ======================================== */
 .home-brands-section {
-  padding: 120px 0 150px;
+  padding: 200px 0 200px;
   background: linear-gradient(180deg, #4A3B5C 0%, #2D2438 100%);
   position: relative;
   overflow: hidden;
@@ -573,44 +580,29 @@
   margin-left: -50vw;
   margin-right: -50vw;
   overflow: visible;
+  scroll-behavior: smooth;
 }
 
 /* ========================================
    TOP INFLUENCERS SECTION - DOME GALLERY
 ======================================== */
 .home-top-influencers-section {
-  padding: 0;
-  background: linear-gradient(180deg, var(--pastel-yellow) 0%, var(--pastel-cream) 50%, var(--pastel-peach) 100%);
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.home-influencers-wave-top {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100px;
+  padding: 0 0 250px;
   background: var(--pastel-yellow);
-  clip-path: ellipse(70% 100% at 50% 0%);
-  z-index: 1;
-}
-
-.home-influencers-header-container {
-
-  margin-top: -30px;
   position: relative;
-  z-index: 2;
+  min-height: auto;
+  /* margin-top: -100px; */
 }
 
-.home-dome-gallery-fullscreen {
-  flex: 1;
+.home-dome-gallery-container {
   width: 100%;
-  margin-top: 0px;
-  min-height: 80vh;
+  height: 85vh;
+  min-height: 700px;
+  max-height: 1000px;
   position: relative;
+  margin: 0;
+  padding-top: 0;
+  background: var(--pastel-yellow);
   overflow: visible;
 }
 
@@ -619,7 +611,8 @@
   font-size: 1.125rem;
   color: var(--light-text);
   font-family: var(--body-font);
-  margin-top: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
@@ -1031,17 +1024,26 @@
   .home-title-large { font-size: 2.5rem; }
   .home-title-large .home-handwritten { font-size: 3.5rem; }
 
-  /* Sticky cards with adjusted top positions for tablet */
+  /* Disable sticky cards on mobile/tablet for better UX */
   .home-portfolio-card {
+    position: relative !important;
+    top: auto !important;
+    margin-bottom: 2rem !important;
+    transform: none !important;
     grid-template-columns: 1fr;
     gap: 2rem;
-    top: 80px;
-    margin-bottom: 30px;
   }
   
-  .home-portfolio-card:nth-child(1) { top: 80px; }
-  .home-portfolio-card:nth-child(2) { top: 105px; }
-  .home-portfolio-card:nth-child(3) { top: 130px; }
+  .home-portfolio-card:nth-child(1),
+  .home-portfolio-card:nth-child(2),
+  .home-portfolio-card:nth-child(3) {
+    z-index: auto !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .home-portfolio-list {
+    gap: 2rem;
+  }
 
   .home-portfolio-card.home-reverse { direction: ltr; }
   .home-portfolio-image { height: 220px; }
@@ -1058,6 +1060,26 @@
 
   .home-pricing-grid { grid-template-columns: 1fr; }
   .home-section-container { padding: 0 1.5rem; }
+  
+  /* Dome Gallery responsive */
+  .home-dome-gallery-container {
+    height: 65vh;
+    min-height: 500px;
+    max-height: 650px;
+  }
+  
+  .home-top-influencers-section {
+    padding: 0 0 80px;
+  }
+  
+  .home-top-influencers-section .home-section-container {
+    padding: 0 1rem;
+  }
+  
+  .home-section-subtitle {
+    font-size: 1rem;
+    padding: 0 1rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1070,8 +1092,9 @@
 
   .home-portfolio-section,
   .home-brands-section,
-  .home-pricing-section,
   .home-contact-section { padding: 60px 0; }
+  
+  .home-pricing-section { padding: 100px 0 60px; }
   
   /* Disable sticky on very small screens for better UX */
   .home-portfolio-section {
@@ -1098,4 +1121,32 @@
   .home-contact-form { padding: 1.5rem; }
   .home-pricing-card { padding: 1.5rem; }
   .home-scroll-indicator { display: none; }
+  
+  /* Dome Gallery mobile */
+  .home-dome-gallery-container {
+    height: 50vh;
+    min-height: 380px;
+    max-height: 500px;
+  }
+  
+  .home-top-influencers-section {
+    padding: 0 0 50px;
+  }
+  
+  .home-top-influencers-section .home-section-container {
+    padding: 0 0.5rem;
+  }
+  
+  .home-section-subtitle {
+    font-size: 0.9rem;
+    padding: 0 0.5rem;
+  }
+  
+  .home-title-large {
+    font-size: 1.8rem;
+  }
+  
+  .home-title-small {
+    font-size: 1.25rem;
+  }
 }

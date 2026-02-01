@@ -293,7 +293,7 @@ const Home = () => {
             <h2 className="home-section-title">
               <span className="home-title-small">How</span>
               <span className="home-title-large">
-                it  <span className="home-handwritten home-accent-pink"> Works ?</span> 
+                it  <span className="home-handwritten home-accent-pink"> Works ?</span>
               </span>
             </h2>
           </div>
@@ -356,12 +356,12 @@ const Home = () => {
           </div>
 
           <div className="home-brands-gallery" data-animate>
-            <CircularGallery 
+            <CircularGallery
               items={topBrands}
               bend={0}
               textColor="#FFFFFF"
               borderRadius={0.08}
-              scrollSpeed={2}
+              scrollSpeed={-2}
               scrollEase={0.05}
               font="italic 400 32px Fraunces, serif"
             />
@@ -373,9 +373,7 @@ const Home = () => {
 
       {/* Top Influencers Section with Dome Gallery */}
       <section className="home-top-influencers-section">
-        <div className="home-influencers-wave-top"></div>
-
-        <div className="home-influencers-header-container">
+        <div className="home-section-container">
           <div className="home-section-header" data-animate>
             <h2 className="home-section-title home-playful-title">
               <span className="home-title-small">Meet our</span>
@@ -387,19 +385,20 @@ const Home = () => {
               Explore our community of verified creators. Drag to explore, click to connect.
             </p>
           </div>
+          <div className="home-dome-gallery-container" data-animate>
+            <DomeGallery
+              influencers={topInfluencers}
+              fit={0.9}
+              minRadius={650}
+              maxVerticalRotationDeg={8}
+              segments={34}
+              dragDampening={1.5}
+              grayscale={false}
+              overlayBlurColor="#FFF8D6"
+            />
+          </div>
         </div>
 
-        <div className="home-dome-gallery-fullscreen" data-animate>
-          <DomeGallery
-            influencers={topInfluencers}
-            fit={0.9}
-            minRadius={650}
-            maxVerticalRotationDeg={8}
-            segments={34}
-            dragDampening={1.5}
-            grayscale={false}
-          />
-        </div>
       </section>
 
       {/* Services/Pricing Section */}
