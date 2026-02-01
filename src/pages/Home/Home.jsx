@@ -373,6 +373,8 @@ const Home = () => {
 
       {/* Top Influencers Section with Dome Gallery */}
       <section className="home-top-influencers-section">
+        <div className="home-influencers-wave-top"></div>
+
         <div className="home-influencers-header-container">
           <div className="home-section-header" data-animate>
             <h2 className="home-section-title home-playful-title">
@@ -402,6 +404,8 @@ const Home = () => {
 
       {/* Services/Pricing Section */}
       <section className="home-pricing-section">
+        <div className="home-pricing-wave-top"></div>
+
         <div className="home-section-container">
           <div className="home-section-header" data-animate>
             <h2 className="home-section-title">

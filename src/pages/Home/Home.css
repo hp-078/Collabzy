@@ -300,7 +300,7 @@
 
 .home-section-header {
   text-align: center;
-  margin-bottom: 4rem;
+  margin-bottom: 2.5rem;
 }
 
 .home-section-title {
@@ -565,7 +565,8 @@
 .home-brands-gallery {
   height: 650px;
   width: 100vw;
-  margin: 2rem 0 0;
+  margin: 0;
+  margin-top: -100px;
   position: relative;
   left: 50%;
   right: 50%;
@@ -586,8 +587,20 @@
   flex-direction: column;
 }
 
+.home-influencers-wave-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: var(--pastel-yellow);
+  clip-path: ellipse(70% 100% at 50% 0%);
+  z-index: 1;
+}
+
 .home-influencers-header-container {
-  padding: 80px 2rem 40px;
+
+  margin-top: -30px;
   position: relative;
   z-index: 2;
 }
@@ -595,6 +608,7 @@
 .home-dome-gallery-fullscreen {
   flex: 1;
   width: 100%;
+  margin-top: 0px;
   min-height: 80vh;
   position: relative;
   overflow: visible;
@@ -616,9 +630,21 @@
    PRICING SECTION
 ======================================== */
 .home-pricing-section {
-  padding: 100px 0;
+  padding: 120px 0 100px;
   background: var(--pastel-yellow);
   position: relative;
+  overflow: hidden;
+}
+
+.home-pricing-wave-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: var(--pastel-yellow);
+  clip-path: ellipse(70% 100% at 50% 0%);
+  z-index: 1;
 }
 
 .home-pricing-section::before {
