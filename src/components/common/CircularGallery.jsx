@@ -29,7 +29,12 @@ function createTextTexture(gl, text, font = 'bold 30px monospace', color = 'blac
   context.font = font;
   const metrics = context.measureText(text);
   const textWidth = Math.ceil(metrics.width);
-  const textHeight = Math.ceil(parseInt(font, 10) * 1.2);
+
+  // Extract font size properly from font string (handles "italic 400 32px Fraunces" format)
+  const fontSizeMatch = font.match(/(\d+)px/);
+  const fontSize = fontSizeMatch ? parseInt(fontSizeMatch[1], 10) : 30;
+  const textHeight = Math.ceil(fontSize * 1.2);
+
   canvas.width = textWidth + 20;
   canvas.height = textHeight + 20;
   context.font = font;
@@ -216,7 +221,7 @@ class Media {
       renderer: this.renderer,
       text: this.text,
       textColor: this.textColor,
-      fontFamily: this.font
+      font: this.font
     });
   }
   update(scroll, direction) {

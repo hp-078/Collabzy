@@ -359,11 +359,11 @@ const Home = () => {
             <CircularGallery 
               items={topBrands}
               bend={0}
-              textColor="#1A1A1A"
+              textColor="#FFFFFF"
               borderRadius={0.08}
               scrollSpeed={2}
               scrollEase={0.05}
-              font="bold 24px DM Sans"
+              font="italic 400 32px Fraunces, serif"
             />
           </div>
         </div>

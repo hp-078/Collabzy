@@ -530,6 +530,7 @@
   padding: 120px 0 150px;
   background: linear-gradient(180deg, #4A3B5C 0%, #2D2438 100%);
   position: relative;
+  overflow: hidden;
 }
 
 .home-brands-wave-top {
@@ -563,9 +564,14 @@
 /* Circular Gallery Container */
 .home-brands-gallery {
   height: 650px;
-  max-width: 1400px;
-  margin: 2rem auto 0;
+  width: 100vw;
+  margin: 2rem 0 0;
   position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  overflow: visible;
 }
 
 /* ========================================
