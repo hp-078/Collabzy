@@ -23,7 +23,7 @@ const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
     const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('');
-  const { user, logout, isAuthenticated } = useAuth();
+    const { user, logout, isAuthenticated, isInfluencer } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -145,27 +145,31 @@ const Navbar = () => {
                               <Home size={16} />
                               <span>Home</span>
                           </Link>
-                          <button
-                              className={`nav-pill ${activeSection === 'how-it-works' ? 'nav-active' : ''}`}
-                              onClick={() => scrollToSection('how-it-works')}
-                          >
-                              <Sparkles size={16} />
-                              <span>How it Works</span>
-                          </button>
-                          <button
-                              className={`nav-pill ${activeSection === 'top-brands' ? 'nav-active' : ''}`}
-                              onClick={() => scrollToSection('top-brands')}
-                          >
-                              <Briefcase size={16} />
-                              <span>Top Brands</span>
-                          </button>
-                          <button
-                              className={`nav-pill ${activeSection === 'top-influencers' ? 'nav-active' : ''}`}
-                              onClick={() => scrollToSection('top-influencers')}
-                          >
-                              <Users size={16} />
-                              <span>Top Influencers</span>
-                          </button>
+                          {!isInfluencer && (
+                              <>
+                                  <button
+                                      className={`nav-pill ${activeSection === 'how-it-works' ? 'nav-active' : ''}`}
+                                      onClick={() => scrollToSection('how-it-works')}
+                                  >
+                                      <Sparkles size={16} />
+                                      <span>How it Works</span>
+                                  </button>
+                                  <button
+                                      className={`nav-pill ${activeSection === 'top-brands' ? 'nav-active' : ''}`}
+                                      onClick={() => scrollToSection('top-brands')}
+                                  >
+                                      <Briefcase size={16} />
+                                      <span>Top Brands</span>
+                                  </button>
+                                  <button
+                                      className={`nav-pill ${activeSection === 'top-influencers' ? 'nav-active' : ''}`}
+                                      onClick={() => scrollToSection('top-influencers')}
+                                  >
+                                      <Users size={16} />
+                                      <span>Top Influencers</span>
+                                  </button>
+                              </>
+                          )}
                           {isAuthenticated && (
                               <>
                                   <Link 
