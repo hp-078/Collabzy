@@ -22,6 +22,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState('');
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,6 +35,43 @@ const Navbar = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    useEffect(() => {
+        if (location.pathname !== '/') {
+            setActiveSection('');
+            return;
+        }
+
+        const observerOptions = {
+            root: null,
+            rootMargin: '-10% 0px -70% 0px',
+            threshold: 0
+        };
+
+        const observerCallback = (entries) => {
+            // Sort entries by their position on the page
+            const sortedEntries = entries.sort((a, b) => {
+                return a.target.getBoundingClientRect().top - b.target.getBoundingClientRect().top;
+            });
+
+            // Find the first intersecting entry (topmost on screen)
+            const activeEntry = sortedEntries.find(entry => entry.isIntersecting);
+            
+            if (activeEntry) {
+                setActiveSection(activeEntry.target.id);
+            }
+        };
+
+        const observer = new IntersectionObserver(observerCallback, observerOptions);
+        const sections = ['hero', 'how-it-works', 'top-brands', 'top-influencers'];
+        
+        sections.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) observer.observe(element);
+        });
+
+        return () => observer.disconnect();
+    }, [location.pathname]);
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -44,6 +82,42 @@ const Navbar = () => {
   const closeMenu = () => setIsOpen(false);
 
   const isActive = (path) => location.pathname === path;
+
+  const scrollToSection = (sectionId) => {
+    closeMenu();
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } else {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
+
+  const handleHomeClick = () => {
+    closeMenu();
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        const element = document.getElementById('hero');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } else {
+      const element = document.getElementById('hero');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
 
   return (
       <header className={`nav-header ${scrolled ? 'nav-scrolled' : ''}`}>
@@ -65,28 +139,33 @@ const Navbar = () => {
                       <div className="nav-pills">
                           <Link
                               to="/" 
-                              className={`nav-pill ${isActive('/') ? 'nav-active' : ''}`}
-                              onClick={closeMenu}
+                              className={`nav-pill ${activeSection === 'hero' ? 'nav-active' : ''}`}
+                              onClick={handleHomeClick}
                           >
                               <Home size={16} />
                               <span>Home</span>
                           </Link>
-                          <a
-                              href="#how-it-works"
-                              className="nav-pill"
-                              onClick={closeMenu}
+                          <button
+                              className={`nav-pill ${activeSection === 'how-it-works' ? 'nav-active' : ''}`}
+                              onClick={() => scrollToSection('how-it-works')}
                           >
                               <Sparkles size={16} />
                               <span>How it Works</span>
-                          </a>
-                          <Link
-                              to="/influencers" 
-                              className={`nav-pill ${isActive('/influencers') ? 'nav-active' : ''}`}
-                              onClick={closeMenu}
+                          </button>
+                          <button
+                              className={`nav-pill ${activeSection === 'top-brands' ? 'nav-active' : ''}`}
+                              onClick={() => scrollToSection('top-brands')}
+                          >
+                              <Briefcase size={16} />
+                              <span>Top Brands</span>
+                          </button>
+                          <button
+                              className={`nav-pill ${activeSection === 'top-influencers' ? 'nav-active' : ''}`}
+                              onClick={() => scrollToSection('top-influencers')}
                           >
                               <Users size={16} />
-                              <span>Influencers</span>
-                          </Link>
+                              <span>Top Influencers</span>
+                          </button>
                           {isAuthenticated && (
                               <>
                                   <Link 
