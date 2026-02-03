@@ -116,6 +116,10 @@
   transform: scale(1.1);
 }
 
+.prof-avatar-input {
+  display: none;
+}
+
 .prof-avatar-section h3 {
   font-size: 1.5rem;
   font-weight: 800;

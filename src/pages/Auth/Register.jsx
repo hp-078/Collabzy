@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { Eye, EyeOff, Mail, Lock, User, Building, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import './Auth.css';
 
 const Register = () => {
@@ -42,17 +43,17 @@ const Register = () => {
     setError('');
 
     if (!formData.name || !formData.email || !formData.password) {
-      setError('Please fill in all fields');
+      toast.error('Please fill in all fields');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+      toast.error('Password must be at least 6 characters');
       return;
     }
 
@@ -89,9 +90,10 @@ const Register = () => {
       }
 
       login(newUser);
+      toast.success(`Welcome to Collabzy, ${newUser.name}!`);
       navigate('/dashboard');
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      toast.error('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

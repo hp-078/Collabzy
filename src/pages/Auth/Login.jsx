@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import './Auth.css';
 
 const Login = () => {
@@ -37,7 +38,7 @@ const Login = () => {
     setError('');
 
     if (!formData.email || !formData.password) {
-      setError('Please fill in all fields');
+      toast.error('Please fill in all fields');
       return;
     }
 
@@ -55,6 +56,7 @@ const Login = () => {
       
       if (user) {
         login(user);
+        toast.success(`Welcome back, ${user.name}!`);
         navigate('/dashboard');
       } else {
         // For demo, create a demo user
@@ -68,10 +70,11 @@ const Login = () => {
           platform: 'Instagram',
         };
         login(demoUser);
+        toast.success(`Welcome, ${demoUser.name}!`);
         navigate('/dashboard');
       }
     } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      toast.error('Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -80,15 +83,19 @@ const Login = () => {
   const handleDemoLogin = (role) => {
     if (role === 'influencer') {
       login(influencers[0]);
+      toast.success(`Logged in as ${influencers[0].name}`);
     } else if (role === 'brand') {
       login(brands[0]);
+      toast.success(`Logged in as ${brands[0].brandName || brands[0].name}`);
     } else {
-      login({
+      const adminUser = {
         id: 'admin',
         name: 'Admin User',
         email: 'admin@collabzy.com',
         role: 'admin',
-      });
+      };
+      login(adminUser);
+      toast.success('Logged in as Admin');
     }
     navigate('/dashboard');
   };

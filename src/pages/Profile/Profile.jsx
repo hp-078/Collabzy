@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
+import toast from 'react-hot-toast';
 import {
   User,
   Mail,
@@ -41,7 +42,24 @@ const Profile = () => {
 
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [previewImage, setPreviewImage] = useState(user?.avatar || '');
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+        toast.success('Profile picture uploaded!');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -51,7 +69,10 @@ const Profile = () => {
   };
 
   const handleAddService = () => {
-    if (!newService.name || !newService.price) return;
+    if (!newService.name || !newService.price) {
+      toast.error('Please fill in service name and price');
+      return;
+    }
 
     const service = {
       id: Date.now().toString(),
@@ -67,6 +88,7 @@ const Profile = () => {
 
     setNewService({ name: '', price: '', description: '' });
     setShowServiceModal(false);
+    toast.success('Service added successfully!');
   };
 
   const handleRemoveService = (serviceId) => {
@@ -83,17 +105,19 @@ const Profile = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      const updatedData = { ...formData, avatar: previewImage };
+
       if (isInfluencer) {
-        updateInfluencer(user.id, formData);
+        updateInfluencer(user.id, updatedData);
       } else if (isBrand) {
-        updateBrand(user.id, formData);
+        updateBrand(user.id, updatedData);
       }
 
-      updateUser(formData);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      updateUser(updatedData);
+      toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Error saving profile:', error);
+      toast.error('Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -112,16 +136,23 @@ const Profile = () => {
             {/* Avatar Section */}
             <div className="prof-section prof-avatar-section">
               <div className="prof-avatar-wrapper">
-                {user?.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="prof-avatar" />
+                {previewImage ? (
+                  <img src={previewImage} alt={user.name} className="prof-avatar" />
                 ) : (
                   <div className="prof-avatar-placeholder">
                     {user?.name?.charAt(0) || 'U'}
                   </div>
                 )}
-                <button type="button" className="prof-avatar-upload">
+                <label htmlFor="avatar-upload" className="prof-avatar-upload">
                   <Camera size={20} />
-                </button>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="prof-avatar-input"
+                  />
+                </label>
               </div>
               <h3>{user?.name}</h3>
               <p className="prof-user-role">{user?.role}</p>
@@ -357,9 +388,6 @@ const Profile = () => {
 
           {/* Save Button */}
           <div className="prof-form-actions">
-            {success && (
-              <span className="prof-success-message">Profile saved successfully!</span>
-            )}
             <button type="submit" className="btn btn-primary btn-lg" disabled={saving}>
               <Save size={18} />
               {saving ? 'Saving...' : 'Save Changes'}

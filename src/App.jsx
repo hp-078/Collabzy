@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
+import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 
 // Layout Components
 import Navbar from './components/common/Navbar';
@@ -86,11 +88,37 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <DataProvider>
-          <AppRoutes />
-        </DataProvider>
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <DataProvider>
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: '#1e293b',
+                  color: '#fff',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                },
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff',
+                  },
+                },
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
+                },
+              }}
+            />
+            <AppRoutes />
+          </DataProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </Router>
   );
 }
