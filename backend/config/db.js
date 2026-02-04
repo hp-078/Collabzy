@@ -15,8 +15,11 @@ const connectDB = async () => {
     
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
-    // Exit process with failure
-    process.exit(1);
+    console.log(
+      "⚠️  Continuing without database (configure MongoDB to enable persistence)",
+    );
+    // Don't exit - allow server to run without database for testing
+    // process.exit(1);
   }
 };
 

@@ -374,31 +374,31 @@
 - [x] Create ER diagram for documentation
 
 #### Authentication Backend
-- [ ] Create User model with Mongoose
-- [ ] Create auth routes (`/api/auth/...`)
-- [ ] Create auth controller:
-  - [ ] Register function (hash password, create user)
-  - [ ] Login function (verify password, generate JWT)
-  - [ ] Logout function
-  - [ ] Get current user function (`/me`)
-- [ ] Implement JWT token generation
-- [ ] Implement JWT verification middleware
-- [ ] Implement password hashing with bcrypt (12 salt rounds)
-- [ ] Create role-based middleware:
-  - [ ] `requireAuth` - verify token
-  - [ ] `requireInfluencer` - check role
-  - [ ] `requireBrand` - check role
-  - [ ] `requireAdmin` - check role
-- [ ] Add input validation with Joi:
-  - [ ] Email format
-  - [ ] Password strength (min 8 chars, etc.)
-  - [ ] Required fields
-- [ ] Test all auth endpoints with Postman:
-  - [ ] POST `/api/auth/register`
-  - [ ] POST `/api/auth/login`
-  - [ ] POST `/api/auth/logout`
-  - [ ] GET `/api/auth/me`
-- [ ] Auto-create profile on registration (InfluencerProfile or BrandProfile)
+- [x] Create User model with Mongoose
+- [x] Create auth routes (`/api/auth/...`)
+- [x] Create auth controller:
+  - [x] Register function (hash password, create user)
+  - [x] Login function (verify password, generate JWT)
+  - [x] Logout function
+  - [x] Get current user function (`/me`)
+- [x] Implement JWT token generation
+- [x] Implement JWT verification middleware
+- [x] Implement password hashing with bcrypt (12 salt rounds)
+- [x] Create role-based middleware:
+  - [x] `requireAuth` - verify token
+  - [x] `requireInfluencer` - check role
+  - [x] `requireBrand` - check role
+  - [x] `requireAdmin` - check role
+- [x] Add input validation with Joi:
+  - [x] Email format
+  - [x] Password strength (min 8 chars, etc.)
+  - [x] Required fields
+- [x] Test all auth endpoints with Postman:
+  - [x] POST `/api/auth/register`
+  - [x] POST `/api/auth/login`
+  - [x] POST `/api/auth/logout`
+  - [x] GET `/api/auth/me`
+- [x] Auto-create profile on registration (InfluencerProfile or BrandProfile)
 
 #### YouTube API Integration Backend
 - [ ] Get YouTube Data API v3 key from Google Cloud Console:

@@ -75,10 +75,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// ==================== API ROUTES (To be added) ====================
+// ==================== API ROUTES ====================
 
-// TODO: Add route imports here
-// app.use('/api/auth', require('./routes/auth.routes'));
+// Auth routes
+app.use('/api/auth', require('./routes/auth.routes'));
+
+// TODO: Add more routes as they are implemented
 // app.use('/api/influencers', require('./routes/influencer.routes'));
 // app.use('/api/campaigns', require('./routes/campaign.routes'));
 // app.use('/api/applications', require('./routes/application.routes'));
