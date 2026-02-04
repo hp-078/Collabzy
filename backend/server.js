@@ -86,8 +86,10 @@ app.use('/api/youtube', require('./routes/youtube.routes'));
 // Instagram routes
 app.use('/api/instagram', require('./routes/instagram.routes'));
 
+// Influencer routes
+app.use('/api/influencer', require('./routes/influencer.routes'));
+
 // TODO: Add more routes as they are implemented
-// app.use('/api/influencers', require('./routes/influencer.routes'));
 // app.use('/api/campaigns', require('./routes/campaign.routes'));
 // app.use('/api/applications', require('./routes/application.routes'));
 // app.use('/api/deals', require('./routes/deal.routes'));
