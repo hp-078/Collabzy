@@ -27,6 +27,8 @@ const Profile = () => {
     description: user?.description || '',
     niche: user?.niche || '',
     platform: user?.platform || 'Instagram',
+    youtubeUrl: user?.youtubeUrl || '',
+    instagramUrl: user?.instagramUrl || '',
     followers: user?.followers || '',
     location: user?.location || '',
     website: user?.website || '',
@@ -286,8 +288,7 @@ const Profile = () => {
                         <option value="Instagram">Instagram</option>
                         <option value="YouTube">YouTube</option>
                         <option value="TikTok">TikTok</option>
-                        <option value="Twitter">Twitter</option>
-                        <option value="LinkedIn">LinkedIn</option>
+                        <option value="Multiple">Multiple Platforms</option>
                       </select>
                     </div>
 
@@ -300,6 +301,41 @@ const Profile = () => {
                         value={formData.followers}
                         onChange={handleChange}
                         placeholder="e.g., 50K, 1M"
+                        className="input"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Social Media Links */}
+                  <div className="prof-form-grid">
+                    <div className="input-group prof-full-width">
+                      <label htmlFor="youtubeUrl">
+                        <Youtube size={16} />
+                        YouTube Channel URL
+                      </label>
+                      <input
+                        type="url"
+                        id="youtubeUrl"
+                        name="youtubeUrl"
+                        value={formData.youtubeUrl}
+                        onChange={handleChange}
+                        placeholder="https://youtube.com/@yourchannel"
+                        className="input"
+                      />
+                    </div>
+
+                    <div className="input-group prof-full-width">
+                      <label htmlFor="instagramUrl">
+                        <Instagram size={16} />
+                        Instagram Profile URL
+                      </label>
+                      <input
+                        type="url"
+                        id="instagramUrl"
+                        name="instagramUrl"
+                        value={formData.instagramUrl}
+                        onChange={handleChange}
+                        placeholder="https://instagram.com/yourusername"
                         className="input"
                       />
                     </div>

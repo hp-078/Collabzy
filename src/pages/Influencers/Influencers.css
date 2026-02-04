@@ -274,7 +274,28 @@
   font-size: 0.75rem;
   font-family: var(--body-font);
   color: var(--muted-text);
+  margin-bottom: 0.5rem;
+}
+
+.inf-social-handles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+.inf-handle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  color: var(--light-text);
+  font-family: var(--body-font);
+  padding: 0.25rem 0.625rem;
+  background: rgba(255, 181, 186, 0.15);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 181, 186, 0.2);
 }
 
 .inf-description {

@@ -166,6 +166,22 @@ const Influencers = () => {
                   <span>{influencer.location}</span>
                 </div>
 
+                {/* Social Media Handles */}
+                <div className="inf-social-handles">
+                  {influencer.instagramUsername && (
+                    <span className="inf-handle">
+                      <Instagram size={12} />
+                      @{influencer.instagramUsername}
+                    </span>
+                  )}
+                  {influencer.youtubeUrl && (
+                    <span className="inf-handle">
+                      <Youtube size={12} />
+                      YouTube
+                    </span>
+                  )}
+                </div>
+
                 <p className="inf-description">
                   {influencer.description.slice(0, 100)}...
                 </p>

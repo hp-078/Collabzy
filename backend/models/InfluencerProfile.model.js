@@ -48,6 +48,9 @@ const influencerProfileSchema = new mongoose.Schema({
   instagramUrl: {
     type: String,
   },
+  instagramUsername: {
+    type: String,
+  },
   tiktokUrl: {
     type: String,
   },
@@ -55,7 +58,26 @@ const influencerProfileSchema = new mongoose.Schema({
     type: String,
   },
   
-  // Auto-fetched Statistics
+  // Platform-Specific Stats
+  youtubeStats: {
+    subscribers: { type: Number, default: 0 },
+    totalViews: { type: Number, default: 0 },
+    videoCount: { type: Number, default: 0 },
+    averageViews: { type: Number, default: 0 },
+    engagementRate: { type: Number, default: 0 },
+    lastFetched: { type: Date },
+  },
+  instagramStats: {
+    followers: { type: Number, default: 0 },
+    following: { type: Number, default: 0 },
+    posts: { type: Number, default: 0 },
+    averageLikes: { type: Number, default: 0 },
+    averageComments: { type: Number, default: 0 },
+    engagementRate: { type: Number, default: 0 },
+    lastFetched: { type: Date },
+  },
+  
+  // Combined Statistics (for backward compatibility & easy querying)
   followers: {
     type: Number,
     default: 0,

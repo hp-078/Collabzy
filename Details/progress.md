@@ -401,38 +401,72 @@
 - [x] Auto-create profile on registration (InfluencerProfile or BrandProfile)
 
 #### YouTube API Integration Backend
-- [ ] Get YouTube Data API v3 key from Google Cloud Console:
-  - [ ] Create Google Cloud project
-  - [ ] Enable YouTube Data API v3
-  - [ ] Generate API key
-  - [ ] Restrict key to YouTube Data API only
-- [ ] Add API key to `.env` file (`YOUTUBE_API_KEY`)
-- [ ] Create YouTube service module (`services/youtube.service.js`)
-- [ ] Implement URL parsing for multiple YouTube formats:
-  - [ ] `youtube.com/channel/{channelId}` (direct)
-  - [ ] `youtube.com/c/{customName}` (resolve to channel ID)
-  - [ ] `youtube.com/@{handle}` (modern format, resolve to ID)
-  - [ ] `youtube.com/user/{username}` (legacy, resolve to ID)
-- [ ] Implement channel ID resolution from custom URLs
-- [ ] Implement channel statistics fetching:
-  - [ ] Subscriber count
-  - [ ] Total views
-  - [ ] Video count
-  - [ ] Channel thumbnail
-  - [ ] Channel description
-- [ ] Implement recent videos fetching (last 10 videos)
-- [ ] Implement video statistics fetching:
-  - [ ] Views, likes, comments per video
-- [ ] Calculate engagement rate:
-  - [ ] Formula: (likes + comments) / views * 100
-  - [ ] Average across recent videos
-- [ ] Calculate average views per video
-- [ ] Handle API errors gracefully
-- [ ] Handle API quota limits (10,000 units/day)
-- [ ] Create YouTube endpoints:
-  - [ ] POST `/api/youtube/fetch-profile` - fetch channel data by URL
-  - [ ] POST `/api/youtube/analyze-post` - analyze specific video
-- [ ] Test with real YouTube channels using Postman
+- [x] Get YouTube Data API v3 key from Google Cloud Console:
+  - [x] Create Google Cloud project
+  - [x] Enable YouTube Data API v3
+  - [x] Generate API key
+  - [x] Restrict key to YouTube Data API only
+- [x] Add API key to `.env` file (`YOUTUBE_API_KEY`)
+- [x] Create YouTube service module (`services/youtube.service.js`)
+- [x] Implement URL parsing for multiple YouTube formats:
+  - [x] `youtube.com/channel/{channelId}` (direct)
+  - [x] `youtube.com/c/{customName}` (resolve to channel ID)
+  - [x] `youtube.com/@{handle}` (modern format, resolve to ID)
+  - [x] `youtube.com/user/{username}` (legacy, resolve to ID)
+- [x] Implement channel ID resolution from custom URLs
+- [x] Implement channel statistics fetching:
+  - [x] Subscriber count
+  - [x] Total views
+  - [x] Video count
+  - [x] Channel thumbnail
+  - [x] Channel description
+- [x] Implement recent videos fetching (last 10 videos)
+- [x] Implement video statistics fetching:
+  - [x] Views, likes, comments per video
+- [x] Calculate engagement rate:
+  - [x] Formula: (likes + comments) / views * 100
+  - [x] Average across recent videos
+- [x] Calculate average views per video
+- [x] Handle API errors gracefully
+- [x] Handle API quota limits (10,000 units/day)
+- [x] Create YouTube endpoints:
+  - [x] POST `/api/youtube/fetch-profile` - fetch channel data by URL
+  - [x] POST `/api/youtube/analyze-video` - analyze specific video
+  - [x] GET `/api/youtube/quota` - get quota usage (admin only)
+- [x] Test with real YouTube channels using Postman
+- [x] Create comprehensive testing documentation
+
+#### Instagram API Integration Backend
+- [x] Create Instagram service module (`services/instagram.service.js`)
+- [x] Implement URL parsing for Instagram profiles
+- [x] Implement multiple fetching methods:
+  - [x] Instagram Graph API (for business accounts)
+  - [x] RapidAPI integration (third-party service)
+  - [x] Manual input fallback
+- [x] Implement profile statistics fetching:
+  - [x] Follower count
+  - [x] Following count
+  - [x] Post count
+  - [x] Profile picture and bio
+  - [x] Verification status
+- [x] Implement recent posts fetching (12 posts)
+- [x] Implement post statistics fetching:
+  - [x] Likes, comments per post
+  - [x] Video views
+- [x] Calculate engagement rate:
+  - [x] Formula: ((likes + comments) / followers) * 100
+  - [x] Average across recent posts
+- [x] Calculate average likes and comments
+- [x] Handle API errors gracefully
+- [x] Create Instagram endpoints:
+  - [x] POST `/api/instagram/fetch-profile` - fetch profile data by URL
+  - [x] POST `/api/instagram/manual-profile` - submit manual stats
+  - [x] POST `/api/instagram/analyze-post` - analyze specific post
+- [x] Update InfluencerProfile model with Instagram fields
+- [x] Update frontend Profile page with Instagram URL input
+- [x] Update DataContext with Instagram data for mock influencers
+- [x] Update Influencers listing to show Instagram handles
+- [x] Add configuration to .env.example
 
 #### Influencer Backend
 - [ ] Create InfluencerProfile model:

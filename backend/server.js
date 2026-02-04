@@ -80,12 +80,17 @@ app.get('/', (req, res) => {
 // Auth routes
 app.use('/api/auth', require('./routes/auth.routes'));
 
+// YouTube routes
+app.use('/api/youtube', require('./routes/youtube.routes'));
+
+// Instagram routes
+app.use('/api/instagram', require('./routes/instagram.routes'));
+
 // TODO: Add more routes as they are implemented
 // app.use('/api/influencers', require('./routes/influencer.routes'));
 // app.use('/api/campaigns', require('./routes/campaign.routes'));
 // app.use('/api/applications', require('./routes/application.routes'));
 // app.use('/api/deals', require('./routes/deal.routes'));
-// app.use('/api/youtube', require('./routes/youtube.routes'));
 // app.use('/api/messages', require('./routes/message.routes'));
 
 // ==================== ERROR HANDLING ====================
