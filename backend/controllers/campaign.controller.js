@@ -8,7 +8,7 @@ const InfluencerProfile = require('../models/InfluencerProfile.model');
  */
 exports.createCampaign = async (req, res) => {
   try {
-    const brandId = req.user.id;
+    const brandId = req.user._id;
 
     // Check if brand profile exists
     const brandProfile = await BrandProfile.findOne({ userId: brandId });
@@ -75,7 +75,7 @@ exports.createCampaign = async (req, res) => {
 exports.updateCampaign = async (req, res) => {
   try {
     const { id } = req.params;
-    const brandId = req.user.id;
+    const brandId = req.user._id;
 
     // Find campaign and verify ownership
     const campaign = await Campaign.findById(id);
@@ -150,7 +150,7 @@ exports.updateCampaign = async (req, res) => {
 exports.deleteCampaign = async (req, res) => {
   try {
     const { id } = req.params;
-    const brandId = req.user.id;
+    const brandId = req.user._id;
 
     const campaign = await Campaign.findById(id);
     if (!campaign) {
@@ -235,7 +235,7 @@ exports.getCampaignById = async (req, res) => {
  */
 exports.getMyCampaigns = async (req, res) => {
   try {
-    const brandId = req.user.id;
+    const brandId = req.user._id;
     const { status, page = 1, limit = 20 } = req.query;
 
     // Build filter
@@ -281,7 +281,7 @@ exports.getMyCampaigns = async (req, res) => {
  */
 exports.getEligibleCampaigns = async (req, res) => {
   try {
-    const influencerId = req.user.id;
+    const influencerId = req.user._id;
     const { category, platform, page = 1, limit = 20 } = req.query;
 
     // Get influencer profile
@@ -349,7 +349,7 @@ exports.getEligibleCampaigns = async (req, res) => {
  */
 exports.getRecommendedCampaigns = async (req, res) => {
   try {
-    const influencerId = req.user.id;
+    const influencerId = req.user._id;
     const { page = 1, limit = 20 } = req.query;
 
     // Get influencer profile

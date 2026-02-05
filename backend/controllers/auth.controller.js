@@ -160,7 +160,7 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id);
     
     if (!user) {
       return res.status(404).json({
@@ -239,7 +239,7 @@ exports.updatePassword = async (req, res) => {
     }
 
     // Get user with password
-    const user = await User.findById(req.user.id).select('+password');
+    const user = await User.findById(req.user._id).select('+password');
     
     // Verify current password
     const isPasswordCorrect = await user.comparePassword(currentPassword);

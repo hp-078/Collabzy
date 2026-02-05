@@ -7,7 +7,7 @@ const Notification = require('../models/Notification.model');
  */
 exports.getNotifications = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const { page = 1, limit = 20, isRead } = req.query;
     
     // Build filter
@@ -65,7 +65,7 @@ exports.getNotifications = async (req, res) => {
  */
 exports.getUnreadCount = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     
     const count = await Notification.countDocuments({
       recipient: userId,
@@ -93,7 +93,7 @@ exports.getUnreadCount = async (req, res) => {
 exports.markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user._id;
     
     const notification = await Notification.findOneAndUpdate(
       { _id: id, recipient: userId },
@@ -129,7 +129,7 @@ exports.markAsRead = async (req, res) => {
  */
 exports.markAllAsRead = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     
     const result = await Notification.updateMany(
       { recipient: userId, isRead: false },
@@ -158,7 +158,7 @@ exports.markAllAsRead = async (req, res) => {
 exports.deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user._id;
     
     const notification = await Notification.findOneAndDelete({
       _id: id,
@@ -192,7 +192,7 @@ exports.deleteNotification = async (req, res) => {
  */
 exports.clearReadNotifications = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     
     const result = await Notification.deleteMany({
       recipient: userId,
@@ -220,7 +220,7 @@ exports.clearReadNotifications = async (req, res) => {
  */
 exports.getPreferences = async (req, res) => {
   try {
-    const user = await require('../models/User.model').findById(req.user.userId);
+    const user = await require('../models/User.model').findById(req.user._id);
     
     res.json({
       success: true,
@@ -254,7 +254,7 @@ exports.getPreferences = async (req, res) => {
  */
 exports.updatePreferences = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
     const preferences = req.body;
     
     const user = await require('../models/User.model').findByIdAndUpdate(

@@ -67,7 +67,7 @@ const calculateTrustScore = (profile) => {
  */
 exports.createProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     // Check if profile already exists
     const existingProfile = await InfluencerProfile.findOne({ userId });
@@ -119,7 +119,7 @@ exports.createProfile = async (req, res) => {
  */
 exports.updateProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const profile = await InfluencerProfile.findOne({ userId });
     if (!profile) {
@@ -167,7 +167,7 @@ exports.updateProfile = async (req, res) => {
  */
 exports.getOwnProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const profile = await InfluencerProfile.findOne({ userId }).populate('userId', 'email role');
 
@@ -318,7 +318,7 @@ exports.listInfluencers = async (req, res) => {
  */
 exports.fetchYouTubeProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
     const { youtubeUrl } = req.body;
 
     if (!youtubeUrl) {
@@ -405,7 +405,7 @@ exports.fetchYouTubeProfile = async (req, res) => {
  */
 exports.fetchInstagramProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
     const { instagramUrl } = req.body;
 
     if (!instagramUrl) {
