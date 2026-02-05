@@ -92,8 +92,10 @@ app.use('/api/influencer', require('./routes/influencer.routes'));
 // Campaign routes
 app.use('/api/campaigns', require('./routes/campaign.routes'));
 
+// Application routes
+app.use('/api/applications', require('./routes/application.routes'));
+
 // TODO: Add more routes as they are implemented
-// app.use('/api/applications', require('./routes/application.routes'));
 // app.use('/api/deals', require('./routes/deal.routes'));
 // app.use('/api/messages', require('./routes/message.routes'));
 
