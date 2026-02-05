@@ -1,8 +1,8 @@
 const socketIO = require('socket.io');
 const jwt = require('jsonwebtoken');
-const Message = require('./models/Message.model');
-const User = require('./models/User.model');
-const { filterContent } = require('./controllers/message.controller');
+const Message = require('../models/Message.model');
+const User = require('../models/User.model');
+const { filterContent } = require('../controllers/message.controller');
 
 // Online users tracking
 const onlineUsers = new Map(); // userId -> socketId
@@ -102,7 +102,7 @@ const initializeSocket = (server) => {
         }
 
         // Check if users have an active deal (for content filtering)
-        const Deal = require('./models/Deal.model');
+        const Deal = require('../models/Deal.model');
         const hasDeal = await Deal.findOne({
           $or: [
             { influencer: userId, brand: receiverId },
