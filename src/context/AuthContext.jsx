@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import authService from '../services/auth.service';
+import socketService from '../services/socket.service';
 
 const AuthContext = createContext(null);
 
@@ -15,34 +17,83 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user on mount
-    const storedUser = localStorage.getItem('collabzy_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // Check authentication on mount
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          // Verify token with backend
+          const response = await authService.getMe();
+          setUser(response.data);
+          
+          // Connect to Socket.io
+          socketService.connect();
+        } catch (error) {
+          console.error('Token validation failed:', error);
+          // Token is invalid, clear storage
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('collabzy_user', JSON.stringify(userData));
+  const login = async (email, password) => {
+    try {
+      const response = await authService.login(email, password);
+      setUser(response.user);
+      
+      // Connect to Socket.io after login
+      socketService.connect();
+      
+      return { success: true, user: response.user };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || 'Login failed' 
+      };
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      const response = await authService.register(userData);
+      setUser(response.user);
+      
+      // Connect to Socket.io after registration
+      socketService.connect();
+      
+      return { success: true, user: response.user };
+    } catch (error) {
+      console.error('Registration error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || 'Registration failed' 
+      };
+    }
   };
 
   const logout = () => {
+    authService.logout();
+    socketService.disconnect();
     setUser(null);
-    localStorage.removeItem('collabzy_user');
   };
 
   const updateUser = (updates) => {
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
-    localStorage.setItem('collabzy_user', JSON.stringify(updatedUser));
+    localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
   const value = {
     user,
     loading,
     login,
+    register,
     logout,
     updateUser,
     isAuthenticated: !!user,

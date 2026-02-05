@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
 import { Eye, EyeOff, Mail, Lock, User, Building, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Auth.css';
@@ -18,10 +17,10 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const { login, isAuthenticated } = useAuth();
-  const { addInfluencer, addBrand } = useData();
+  const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,65 +34,151 @@ const Register = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    setError('');
+    // Clear errors when user starts typing
+    if (error) setError('');
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors({ ...fieldErrors, [e.target.name]: '' });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setError('');
+    setFieldErrors({});
 
-    if (!formData.name || !formData.email || !formData.password) {
-      toast.error('Please fill in all fields');
-      return;
+    // Detailed validation
+    const errors = {};
+
+    // Name validation
+    if (!formData.name || formData.name.trim().length === 0) {
+      errors.name = 'Name is required';
+    } else if (formData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters';
+    } else if (formData.name.trim().length > 50) {
+      errors.name = 'Name must be less than 50 characters';
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
+    // Email validation
+    if (!formData.email || formData.email.trim().length === 0) {
+      errors.email = 'Email is required';
+    } else if (!formData.email.includes('@')) {
+      errors.email = 'Please enter a valid email address';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
     }
 
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    // Password validation
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
+    } else if (formData.password.length > 50) {
+      errors.password = 'Password must be less than 50 characters';
+    } else if (!/(?=.*[a-z])/.test(formData.password)) {
+      errors.password = 'Password must contain at least one lowercase letter';
+    } else if (!/(?=.*[A-Z])/.test(formData.password)) {
+      errors.password = 'Password must contain at least one uppercase letter';
+    } else if (!/(?=.*[0-9])/.test(formData.password)) {
+      errors.password = 'Password must contain at least one number';
+    }
+
+    // Confirm password validation
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+
+    // If there are validation errors, display them
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      const firstError = Object.values(errors)[0];
+      setError(firstError);
+      toast.error(firstError);
       return;
     }
 
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const registerData = {
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        role: formData.role,
+      };
 
-      let newUser;
+      // Add role-specific fields
       if (formData.role === 'influencer') {
-        newUser = addInfluencer({
-          name: formData.name,
-          email: formData.email,
-          role: 'influencer',
-          niche: '',
-          description: '',
-          followers: '0',
-          platform: 'Instagram',
-          location: '',
-          services: [],
-          pastCollabs: [],
-        });
-      } else {
-        newUser = addBrand({
-          name: formData.name,
-          email: formData.email,
-          role: 'brand',
-          industry: '',
-          description: '',
-          website: '',
-          location: '',
-        });
+        registerData.name = formData.name.trim();
+      } else if (formData.role === 'brand') {
+        registerData.companyName = formData.name.trim();
       }
 
-      login(newUser);
-      toast.success(`Welcome to Collabzy, ${newUser.name}!`);
-      navigate('/dashboard');
+      const result = await register(registerData);
+
+      if (result && result.success) {
+        const userName = formData.name || 'there';
+        toast.success(`Welcome to Collabzy, ${userName}!`);
+        navigate('/dashboard');
+      } else {
+        // Handle specific backend errors
+        const errorMsg = result?.error || 'Registration failed. Please try again.';
+        
+        // Check for specific error types
+        if (errorMsg.toLowerCase().includes('email') && errorMsg.toLowerCase().includes('exist')) {
+          setFieldErrors({ email: 'This email is already registered' });
+          setError('This email is already registered. Please use a different email or try logging in.');
+        } else if (errorMsg.toLowerCase().includes('email') && errorMsg.toLowerCase().includes('invalid')) {
+          setFieldErrors({ email: 'Invalid email address' });
+          setError('Invalid email address. Please check and try again.');
+        } else if (errorMsg.toLowerCase().includes('password')) {
+          setFieldErrors({ password: errorMsg });
+          setError(errorMsg);
+        } else if (errorMsg.toLowerCase().includes('name')) {
+          setFieldErrors({ name: errorMsg });
+          setError(errorMsg);
+        } else {
+          setError(errorMsg);
+        }
+        
+        toast.error(errorMsg);
+      }
     } catch (err) {
-      toast.error('Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      
+      // Handle network and server errors
+      let errorMsg = 'An unexpected error occurred. Please try again.';
+      
+      if (err.code === 'ERR_NETWORK') {
+        errorMsg = 'Network error. Please check your internet connection and try again.';
+      } else if (err.response) {
+        const statusCode = err.response.status;
+        const backendMsg = err.response.data?.message || '';
+        
+        if (statusCode === 400) {
+          errorMsg = backendMsg || 'Invalid registration data. Please check your information.';
+          
+          // Parse backend validation errors if available
+          if (err.response.data?.errors) {
+            const backendErrors = {};
+            err.response.data.errors.forEach(e => {
+              backendErrors[e.field] = e.message;
+            });
+            setFieldErrors(backendErrors);
+          }
+        } else if (statusCode === 409) {
+          errorMsg = 'Email already exists. Please use a different email or try logging in.';
+          setFieldErrors({ email: 'This email is already registered' });
+        } else if (statusCode === 500) {
+          errorMsg = 'Server error. Please try again later.';
+        } else if (backendMsg) {
+          errorMsg = backendMsg;
+        }
+      }
+      
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -153,7 +238,11 @@ const Register = () => {
               <Link to="/login" className="auth-link">Sign in</Link>
             </p>
 
-            {error && <div className="auth-error">{error}</div>}
+            {error && (
+              <div className="auth-error" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fee', border: '1px solid #fcc', borderRadius: '0.5rem', color: '#c33' }}>
+                {error}
+              </div>
+            )}
 
             <div className="auth-role-selector">
               <button
@@ -188,9 +277,14 @@ const Register = () => {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder={formData.role === 'influencer' ? 'John Doe' : 'Acme Inc'}
-                    className="input"
+                    className={`input ${fieldErrors.name ? 'input-error' : ''}`}
                   />
                 </div>
+                {fieldErrors.name && (
+                  <span style={{ color: '#c33', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                    {fieldErrors.name}
+                  </span>
+                )}
               </div>
 
               <div className="input-group">
@@ -204,9 +298,14 @@ const Register = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="you@example.com"
-                    className="input"
+                    className={`input ${fieldErrors.email ? 'input-error' : ''}`}
                   />
                 </div>
+                {fieldErrors.email && (
+                  <span style={{ color: '#c33', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                    {fieldErrors.email}
+                  </span>
+                )}
               </div>
 
               <div className="input-group">
@@ -220,7 +319,7 @@ const Register = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Create a password"
-                    className="input"
+                    className={`input ${fieldErrors.password ? 'input-error' : ''}`}
                   />
                   <button
                     type="button"
@@ -230,6 +329,14 @@ const Register = () => {
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                {fieldErrors.password && (
+                  <span style={{ color: '#c33', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                    {fieldErrors.password}
+                  </span>
+                )}
+                <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>
+                  Must contain at least 8 characters with uppercase, lowercase, and number
+                </p>
               </div>
 
               <div className="input-group">
@@ -243,7 +350,7 @@ const Register = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Confirm your password"
-                    className="input"
+                    className={`input ${fieldErrors.confirmPassword ? 'input-error' : ''}`}
                   />
                   <button
                     type="button"
@@ -253,12 +360,17 @@ const Register = () => {
                     {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                {fieldErrors.confirmPassword && (
+                  <span style={{ color: '#c33', fontSize: '0.875rem', marginTop: '0.25rem', display: 'block' }}>
+                    {fieldErrors.confirmPassword}
+                  </span>
+                )}
               </div>
 
               <div className="auth-terms-checkbox">
                 <input type="checkbox" id="terms" required />
                 <label htmlFor="terms">
-                  I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                  I agree to the <a href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a> and <a href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
                 </label>
               </div>
 

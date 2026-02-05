@@ -34,8 +34,8 @@ const initializeSocket = (server) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Get user from database
-      const user = await User.findById(decoded.userId).select('-password');
+      // Get user from database (token has 'id' field, not 'userId')
+      const user = await User.findById(decoded.id).select('-password');
       
       if (!user) {
         return next(new Error('Authentication error: User not found'));

@@ -831,51 +831,70 @@
 
 ---
 
-### 2. Frontend-Backend Integration (PENDING 📋)
-**After Backend is Built**
+### 2. Frontend-Backend Integration (IN PROGRESS 🚧)
+**Backend is Built - Integration Started**
 
 #### API Service Layer Setup
-- [ ] Install axios in frontend: `npm install axios`
-- [ ] Create `src/services/api.js`:
-  - [ ] Configure axios instance with base URL
-  - [ ] Add request interceptor (attach JWT token from localStorage)
-  - [ ] Add response interceptor (handle errors, auto-logout on 401)
-- [ ] Create service modules:
-  - [ ] `auth.service.js` - login, register, logout, getUser
-  - [ ] `profile.service.js` - get, update profile
-  - [ ] `influencer.service.js` - list, get by ID, fetch YouTube
-  - [ ] `campaign.service.js` - CRUD, list eligible, recommended
-  - [ ] `application.service.js` - submit, list, update status
-  - [ ] `message.service.js` - get conversations, send message
-  - [ ] `notification.service.js` - get, mark read
+- [x] Install axios in frontend: `npm install axios`
+- [x] Install socket.io-client: `npm install socket.io-client`
+- [x] Create `.env` file with API URLs (VITE_API_URL, VITE_SOCKET_URL)
+- [x] Create `src/services/api.js`:
+  - [x] Configure axios instance with base URL
+  - [x] Add request interceptor (attach JWT token from localStorage)
+  - [x] Add response interceptor (handle errors, auto-logout on 401 with token check)
+- [x] Create service modules:
+  - [x] `auth.service.js` - login, register, logout, getMe, changePassword
+  - [x] `influencer.service.js` - getAllInfluencers, getProfile, createProfile, updateProfile, fetchYouTube, fetchInstagram
+  - [x] `campaign.service.js` - CRUD, getAllCampaigns, getMyCampaigns, getEligible, getRecommended
+  - [x] `application.service.js` - submit, getCampaignApplications, getMyApplications, updateStatus, withdraw
+  - [x] `message.service.js` - sendMessage, getConversation, getAllConversations, markAsRead, getUnreadCount
+  - [x] `notification.service.js` - getNotifications, getUnreadCount, markAsRead, markAllAsRead, delete, getPreferences
+  - [x] `socket.service.js` - Socket.io client with JWT auth, online users, typing indicators, real-time messages/notifications
 
 #### Connect Authentication
-- [ ] Update Login.jsx:
-  - [ ] Import auth service
-  - [ ] Call backend API on form submit
-  - [ ] Store JWT token in localStorage
-  - [ ] Store user data in AuthContext
-  - [ ] Handle login errors from backend
-  - [ ] Add loading spinner during API call
-- [ ] Update Register.jsx:
-  - [ ] Call backend register API
-  - [ ] Handle validation errors from backend
-  - [ ] Auto-login after successful registration
-- [ ] Update AuthContext:
-  - [ ] Load user from backend `/api/auth/me` on app start
-  - [ ] Implement token refresh logic
-  - [ ] Auto-logout on token expiration
-- [ ] Remove mock authentication logic
-- [ ] Test login/register/logout flow
+- [x] Update Login.jsx:
+  - [x] Import auth service
+  - [x] Call backend API on form submit
+  - [x] Store JWT token in localStorage (handled by service)
+  - [x] Store user data in AuthContext
+  - [x] Handle login errors from backend with specific error messages
+  - [x] Add loading spinner during API call
+  - [x] Fix page reload issue on error (401 interceptor with token check)
+  - [x] Add inline error display with red styling
+  - [x] Email validation before API call
+- [x] Update Register.jsx:
+  - [x] Call backend register API with correct field names (name/companyName based on role)
+  - [x] Handle validation errors from backend with field-specific errors
+  - [x] Auto-login after successful registration
+  - [x] Add comprehensive validation (8+ char password, uppercase, lowercase, number)
+  - [x] Add field-level error display (inline red messages)
+  - [x] Add password requirements hint
+  - [x] Handle specific backend errors (409 email exists, 400 validation, 500 server)
+  - [x] Trim and normalize data before submission
+- [x] Update AuthContext:
+  - [x] Load user from backend `/api/auth/me` on app start
+  - [x] Implement async login/register methods
+  - [x] Connect to Socket.io after successful login/register
+  - [x] Disconnect Socket.io on logout
+  - [x] Auto-logout on token expiration (handled by api.js interceptor)
+  - [x] Return success/error objects from auth methods
+- [x] Remove mock authentication logic from Login/Register
+- [x] Test login/register/logout flow ✅
 
 #### Connect Data Context
-- [ ] Update DataContext:
-  - [ ] Replace mock data with API calls
-  - [ ] Fetch influencers from `/api/influencer/list`
-  - [ ] Fetch campaigns from appropriate endpoints
-  - [ ] Implement data caching strategy
-  - [ ] Add loading states
-  - [ ] Add error handling
+- [x] Create new `DataContext.new.jsx`:
+  - [x] Replace mock data with API calls
+  - [x] Fetch influencers from `/api/influencer`
+  - [x] Fetch campaigns from appropriate endpoints (all, my, eligible)
+  - [x] Fetch applications from endpoints
+  - [x] Implement smart caching strategy (5-minute TTL)
+  - [x] Add loading states
+  - [x] Add comprehensive error handling
+  - [x] Methods: fetchInfluencers, fetchCampaigns, getCampaignById, getInfluencerById
+  - [x] Methods: createCampaign, updateCampaign, submitApplication, updateApplicationStatus
+  - [x] Cache invalidation on create/update operations
+- [ ] Replace old DataContext.jsx with new version
+- [ ] Update all components to use new DataContext methods
 - [ ] Update all components to handle loading/error states
 
 #### Connect Profile Page

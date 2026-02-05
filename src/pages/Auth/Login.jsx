@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Auth.css';
@@ -16,7 +15,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const { login, isAuthenticated } = useAuth();
-  const { influencers, brands } = useData();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,74 +28,51 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    setError('');
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setError('');
 
+    // Validation
     if (!formData.email || !formData.password) {
-      toast.error('Please fill in all fields');
+      const errorMsg = 'Please fill in all fields';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      return;
+    }
+
+    if (!formData.email.includes('@')) {
+      const errorMsg = 'Please enter a valid email address';
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Check if user exists (simplified auth)
-      const influencer = influencers.find(i => i.email === formData.email);
-      const brand = brands.find(b => b.email === formData.email);
+      const result = await login(formData.email, formData.password);
       
-      const user = influencer || brand;
-      
-      if (user) {
-        login(user);
-        toast.success(`Welcome back, ${user.name}!`);
+      if (result && result.success) {
+        toast.success(`Welcome back, ${result.user.name}!`);
         navigate('/dashboard');
       } else {
-        // For demo, create a demo user
-        const demoUser = {
-          id: 'demo-user',
-          name: 'Demo User',
-          email: formData.email,
-          role: 'influencer',
-          niche: 'Lifestyle',
-          followers: '50K',
-          platform: 'Instagram',
-        };
-        login(demoUser);
-        toast.success(`Welcome, ${demoUser.name}!`);
-        navigate('/dashboard');
+        const errorMsg = result?.error || 'Invalid email or password';
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (err) {
-      toast.error('Login failed. Please check your credentials.');
+      console.error('Login error:', err);
+      const errorMsg = err.response?.data?.message || 'An unexpected error occurred. Please try again.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoLogin = (role) => {
-    if (role === 'influencer') {
-      login(influencers[0]);
-      toast.success(`Logged in as ${influencers[0].name}`);
-    } else if (role === 'brand') {
-      login(brands[0]);
-      toast.success(`Logged in as ${brands[0].brandName || brands[0].name}`);
-    } else {
-      const adminUser = {
-        id: 'admin',
-        name: 'Admin User',
-        email: 'admin@collabzy.com',
-        role: 'admin',
-      };
-      login(adminUser);
-      toast.success('Logged in as Admin');
-    }
-    navigate('/dashboard');
   };
 
   return (
@@ -154,7 +129,11 @@ const Login = () => {
               <Link to="/register" className="auth-link">Create one</Link>
             </p>
 
-            {error && <div className="auth-error">{error}</div>}
+            {error && (
+              <div className="auth-error" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fee', border: '1px solid #fcc', borderRadius: '0.5rem', color: '#c33' }}>
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="input-group">
@@ -176,7 +155,7 @@ const Login = () => {
               <div className="input-group">
                 <div className="auth-label-row">
                   <label htmlFor="password">Password</label>
-                  <a href="#" className="auth-forgot-link">Forgot password?</a>
+                  <a href="#" className="auth-forgot-link" onClick={(e) => e.preventDefault()}>Forgot password?</a>
                 </div>
                 <div className="auth-input-wrapper">
                   <Lock size={20} className="auth-input-icon" />
@@ -209,30 +188,6 @@ const Login = () => {
                 <ArrowRight size={20} />
               </button>
             </form>
-
-            <div className="auth-demo-login">
-              <p className="auth-demo-title">Quick Demo Access</p>
-              <div className="auth-demo-buttons">
-                <button 
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => handleDemoLogin('influencer')}
-                >
-                  Login as Influencer
-                </button>
-                <button 
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => handleDemoLogin('brand')}
-                >
-                  Login as Brand
-                </button>
-                <button 
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => handleDemoLogin('admin')}
-                >
-                  Login as Admin
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
