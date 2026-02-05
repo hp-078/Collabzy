@@ -71,6 +71,10 @@ app.get('/', (req, res) => {
       influencers: '/api/influencers',
       campaigns: '/api/campaigns',
       applications: '/api/applications',
+      deals: '/api/deals',
+      reviews: '/api/reviews',
+      messages: '/api/messages',
+      notifications: '/api/notifications',
     },
   });
 });
@@ -95,9 +99,19 @@ app.use('/api/campaigns', require('./routes/campaign.routes'));
 // Application routes
 app.use('/api/applications', require('./routes/application.routes'));
 
+// Deal routes
+app.use('/api/deals', require('./routes/deal.routes'));
+
+// Review routes
+app.use('/api/reviews', require('./routes/review.routes'));
+
+// Message routes
+app.use('/api/messages', require('./routes/message.routes'));
+
+// Notification routes
+app.use('/api/notifications', require('./routes/notification.routes'));
+
 // TODO: Add more routes as they are implemented
-// app.use('/api/deals', require('./routes/deal.routes'));
-// app.use('/api/messages', require('./routes/message.routes'));
 
 // ==================== ERROR HANDLING ====================
 
@@ -140,6 +154,14 @@ const server = app.listen(PORT, () => {
   console.log('Press Ctrl+C to stop the server');
   console.log('');
 });
+
+// Initialize Socket.io
+const initializeSocket = require('./config/socket');
+const io = initializeSocket(server);
+
+// Make io accessible globally for notification service
+global.io = io;
+app.set('io', io);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
