@@ -3,6 +3,7 @@ const Application = require('../models/Application.model');
 const Campaign = require('../models/Campaign.model');
 const InfluencerProfile = require('../models/InfluencerProfile.model');
 const BrandProfile = require('../models/BrandProfile.model');
+const { createNotificationFromTemplate } = require('../services/notification.service');
 
 /**
  * Create deal from accepted application (Brand only)
@@ -68,6 +69,16 @@ exports.createDeal = async (req, res) => {
 
     await deal.populate('influencer', 'name email');
     await deal.populate('campaign', 'title');
+
+    // Notify influencer about new deal
+    try {
+      await createNotificationFromTemplate(application.influencer, 'DEAL_CONFIRMED', {
+        campaignTitle: application.campaign.title,
+        dealId: deal._id
+      }, { relatedId: deal._id, relatedType: 'deal' });
+    } catch (notifErr) {
+      console.error('Notification error:', notifErr);
+    }
 
     res.status(201).json({
       success: true,
@@ -231,8 +242,7 @@ exports.updateDealStatus = async (req, res) => {
       await BrandProfile.findOneAndUpdate(
         { user: deal.brand },
         {
-          $inc: { completedCampaigns: 1, totalSpent: deal.agreedRate },
-          $inc: { activeCampaigns: -1 }
+          $inc: { completedCampaigns: 1, totalSpent: deal.agreedRate, activeCampaigns: -1 }
         }
       );
     }
@@ -241,6 +251,27 @@ exports.updateDealStatus = async (req, res) => {
     }
 
     await deal.save();
+
+    // Notify the other party about deal status change
+    try {
+      const otherParty = deal.brand.toString() === req.user._id.toString()
+        ? deal.influencer : deal.brand;
+      const campaignData = await Campaign.findById(deal.campaign).select('title');
+      const templateMap = {
+        'completed': 'DEAL_COMPLETED',
+        'cancelled': 'DEAL_CANCELLED',
+        'in_progress': 'DEAL_STARTED'
+      };
+      const templateType = templateMap[status];
+      if (templateType) {
+        await createNotificationFromTemplate(otherParty, templateType, {
+          campaignTitle: campaignData?.title || 'Campaign',
+          dealId: deal._id
+        }, { relatedId: deal._id, relatedType: 'deal' });
+      }
+    } catch (notifErr) {
+      console.error('Notification error:', notifErr);
+    }
 
     res.json({
       success: true,

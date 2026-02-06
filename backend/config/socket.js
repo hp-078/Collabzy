@@ -22,6 +22,8 @@ const initializeSocket = (server) => {
       if (userId) {
         onlineUsers.set(userId, socket.id);
         socket.userId = userId;
+        // Join user-specific room for targeted emits
+        socket.join(`user:${userId}`);
         console.log(`👤 User ${userId} is online`);
 
         // Broadcast online status

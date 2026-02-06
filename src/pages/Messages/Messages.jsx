@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
+import socketService from '../../services/socket.service';
 import {
   Search,
   Send,
@@ -10,87 +11,93 @@ import {
   Image,
   Paperclip,
   Smile,
-  ChevronLeft
+  ChevronLeft,
+  Loader
 } from 'lucide-react';
 import './Messages.css';
 
 const Messages = () => {
   const { user } = useAuth();
-  const { collaborations, messages, sendMessage, getMessagesByUser } = useData();
-  const [selectedChat, setSelectedChat] = useState(null);
+  const { conversations, fetchConversations, getMessagesByUser, sendMessage, markMessagesAsRead } = useData();
+  const [selectedChat, setSelectedChat] = useState(null); // otherUser._id
+  const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [loadingConvs, setLoadingConvs] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Get unique conversations
-  const userMessages = getMessagesByUser(user?._id);
-  const conversations = [];
-  
-  userMessages.forEach(msg => {
-    const partnerId = msg.senderId === user?._id ? msg.receiverId : msg.senderId;
-    const partnerName = msg.senderId === user?._id ? msg.receiverName : msg.senderName;
-    
-    if (!conversations.find(c => c.partnerId === partnerId)) {
-      conversations.push({
-        partnerId,
-        partnerName,
-        lastMessage: msg.content,
-        timestamp: msg.timestamp,
-        collaborationId: msg.collaborationId,
-      });
+  // Load conversations on mount
+  useEffect(() => {
+    const load = async () => {
+      setLoadingConvs(true);
+      await fetchConversations();
+      setLoadingConvs(false);
+    };
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Listen for new messages via socket
+  useEffect(() => {
+    const handleNewMessage = (msg) => {
+      // If the message is in the currently open conversation, add it
+      const senderId = msg.sender?._id || msg.sender;
+      if (selectedChat && (senderId === selectedChat || msg.receiver === selectedChat)) {
+        setChatMessages(prev => [...prev, msg]);
+      }
+      // Refresh conversations to update last message
+      fetchConversations(true);
+    };
+
+    socketService.onNewMessage(handleNewMessage);
+
+    return () => {
+      socketService.off('message:receive', handleNewMessage);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChat]);
+
+  // Load messages when selecting a chat
+  const handleSelectChat = useCallback(async (otherUserId) => {
+    setSelectedChat(otherUserId);
+    setLoadingMessages(true);
+    const msgs = await getMessagesByUser(otherUserId);
+    setChatMessages(msgs);
+    setLoadingMessages(false);
+    // Mark as read
+    markMessagesAsRead(otherUserId);
+    // Join socket conversation room
+    if (user?._id) {
+      const convId = [user._id, otherUserId].sort().join('_');
+      socketService.joinConversation(convId);
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
-  // Also add conversations from collaborations without messages
-  collaborations.forEach(collab => {
-    const isUserInfluencer = collab.influencerId === user?._id;
-    const partnerId = isUserInfluencer ? collab.brandId : collab.influencerId;
-    const partnerName = isUserInfluencer ? collab.brandName : collab.influencerName;
-    
-    if (!conversations.find(c => c.partnerId === partnerId)) {
-      conversations.push({
-        partnerId,
-        partnerName,
-        lastMessage: 'No messages yet',
-        timestamp: collab.createdAt,
-        collaborationId: collab.id,
-      });
-    }
-  });
-
-  const filteredConversations = conversations.filter(c =>
-    c.partnerName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const selectedConversation = selectedChat 
-    ? conversations.find(c => c.partnerId === selectedChat)
-    : null;
-
-  const chatMessages = selectedChat
-    ? userMessages.filter(m => 
-      (m.senderId === selectedChat && m.receiverId === user?._id) ||
-      (m.receiverId === selectedChat && m.senderId === user?._id)
-      ).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-    : [];
-
+  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedChat) return;
 
-    sendMessage({
-      collaborationId: selectedConversation?.collaborationId,
-      senderId: user.id,
-      senderName: user.name,
-      receiverId: selectedChat,
-      receiverName: selectedConversation?.partnerName,
-      content: newMessage,
-    });
-
+    const content = newMessage.trim();
     setNewMessage('');
+
+    const result = await sendMessage(selectedChat, content);
+    if (result.success && result.data) {
+      setChatMessages(prev => [...prev, result.data]);
+      // Also emit via socket for real-time
+      if (user?._id) {
+        const convId = [user._id, selectedChat].sort().join('_');
+        socketService.sendMessage(convId, result.data);
+      }
+    }
+    // Refresh conversation list
+    fetchConversations(true);
   };
 
   const formatTime = (timestamp) => {
@@ -101,12 +108,22 @@ const Messages = () => {
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
     const today = new Date();
-    
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    }
+    if (date.toDateString() === today.toDateString()) return 'Today';
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
     return date.toLocaleDateString();
   };
+
+  // Filter conversations by search
+  const filteredConversations = conversations.filter(c =>
+    (c.otherUser?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Find selected conversation info
+  const selectedConversation = selectedChat
+    ? conversations.find(c => c.otherUser?._id === selectedChat)
+    : null;
 
   return (
     <div className="msg-page">
@@ -128,25 +145,39 @@ const Messages = () => {
           </div>
 
           <div className="msg-conversations-list">
-            {filteredConversations.length > 0 ? (
+            {loadingConvs ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+                <Loader size={24} className="spin-animation" />
+              </div>
+            ) : filteredConversations.length > 0 ? (
               filteredConversations.map((conv) => (
                 <div
-                  key={conv.partnerId}
-                  className={`msg-conversation-item ${selectedChat === conv.partnerId ? 'msg-active' : ''}`}
-                  onClick={() => setSelectedChat(conv.partnerId)}
+                  key={conv.otherUser?._id || conv.conversationId}
+                  className={`msg-conversation-item ${selectedChat === conv.otherUser?._id ? 'msg-active' : ''}`}
+                  onClick={() => handleSelectChat(conv.otherUser?._id)}
                 >
                   <div className="msg-conversation-avatar">
-                    {conv.partnerName.charAt(0)}
+                    {conv.otherUser?.avatar ? (
+                      <img src={conv.otherUser.avatar} alt={conv.otherUser.name} />
+                    ) : (
+                      conv.otherUser?.name?.charAt(0) || '?'
+                    )}
                   </div>
                   <div className="msg-conversation-info">
                     <div className="msg-conversation-header">
-                      <h4>{conv.partnerName}</h4>
+                      <h4>{conv.otherUser?.name || 'Unknown'}</h4>
                       <span className="msg-conversation-time">
-                        {formatTime(conv.timestamp)}
+                        {conv.lastMessage?.createdAt ? formatTime(conv.lastMessage.createdAt) : ''}
                       </span>
                     </div>
-                    <p className="msg-conversation-preview">{conv.lastMessage}</p>
+                    <p className="msg-conversation-preview">
+                      {conv.lastMessage?.isFromMe ? 'You: ' : ''}
+                      {conv.lastMessage?.content || 'No messages yet'}
+                    </p>
                   </div>
+                  {conv.unreadCount > 0 && (
+                    <span className="msg-unread-badge">{conv.unreadCount}</span>
+                  )}
                 </div>
               ))
             ) : (
@@ -170,11 +201,13 @@ const Messages = () => {
                 </button>
                 <div className="msg-chat-user">
                   <div className="msg-chat-avatar">
-                    {selectedConversation?.partnerName.charAt(0)}
+                    {selectedConversation?.otherUser?.name?.charAt(0) || '?'}
                   </div>
                   <div className="msg-chat-user-info">
-                    <h3>{selectedConversation?.partnerName}</h3>
-                    <span className="msg-online-status">Online</span>
+                    <h3>{selectedConversation?.otherUser?.name || 'Unknown'}</h3>
+                    <span className="msg-online-status">
+                      {selectedConversation?.otherUser?.role || ''}
+                    </span>
                   </div>
                 </div>
                 <div className="msg-chat-actions">
@@ -191,24 +224,30 @@ const Messages = () => {
               </div>
 
               <div className="msg-chat-messages">
-                {chatMessages.length > 0 ? (
+                {loadingMessages ? (
+                  <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+                    <Loader size={24} className="spin-animation" />
+                  </div>
+                ) : chatMessages.length > 0 ? (
                   chatMessages.map((msg, index) => {
-                    const isOwn = msg.senderId === user?._id;
+                    const senderId = msg.sender?._id || msg.sender;
+                    const isOwn = senderId === user?._id;
+                    const msgTime = msg.createdAt || msg.timestamp;
                     const showDate = index === 0 || 
-                      formatDate(msg.timestamp) !== formatDate(chatMessages[index - 1].timestamp);
+                      formatDate(msgTime) !== formatDate(chatMessages[index - 1].createdAt || chatMessages[index - 1].timestamp);
                     
                     return (
-                      <div key={msg.id}>
+                      <div key={msg._id || index}>
                         {showDate && (
                           <div className="msg-message-date">
-                            {formatDate(msg.timestamp)}
+                            {formatDate(msgTime)}
                           </div>
                         )}
                         <div className={`msg-message ${isOwn ? 'msg-own' : 'msg-other'}`}>
                           <div className="msg-message-bubble">
                             <p>{msg.content}</p>
                             <span className="msg-message-time">
-                              {formatTime(msg.timestamp)}
+                              {formatTime(msgTime)}
                             </span>
                           </div>
                         </div>

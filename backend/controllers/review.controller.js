@@ -2,6 +2,7 @@ const Review = require('../models/Review.model');
 const Deal = require('../models/Deal.model');
 const InfluencerProfile = require('../models/InfluencerProfile.model');
 const BrandProfile = require('../models/BrandProfile.model');
+const { createNotificationFromTemplate } = require('../services/notification.service');
 
 /**
  * Create review
@@ -99,6 +100,18 @@ exports.createReview = async (req, res) => {
 
     await review.populate('reviewer', 'name avatar');
 
+    // Notify reviewee about new review
+    try {
+      await createNotificationFromTemplate(reviewee, 'NEW_REVIEW', {
+        brandName: req.user.name,
+        influencerName: req.user.name,
+        rating: review.rating,
+        reviewId: review._id
+      }, { relatedId: review._id, relatedType: 'review' });
+    } catch (notifErr) {
+      console.error('Notification error:', notifErr);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Review submitted successfully',
@@ -136,7 +149,7 @@ exports.getReviewsForUser = async (req, res) => {
 
     // Calculate stats
     const stats = await Review.aggregate([
-      { $match: { reviewee: require('mongoose').Types.ObjectId(userId), isPublic: true } },
+      { $match: { reviewee: new require('mongoose').Types.ObjectId(userId), isPublic: true } },
       {
         $group: {
           _id: null,

@@ -1,6 +1,7 @@
 const Application = require('../models/Application.model');
 const Campaign = require('../models/Campaign.model');
 const InfluencerProfile = require('../models/InfluencerProfile.model');
+const { createNotificationFromTemplate } = require('../services/notification.service');
 
 /**
  * Submit application (Influencer only)
@@ -100,6 +101,17 @@ exports.submitApplication = async (req, res) => {
 
     await application.populate('campaign', 'title');
     await application.populate('influencerProfile', 'name avatar');
+
+    // Notify brand about new application
+    try {
+      await createNotificationFromTemplate(campaign.brand, 'APPLICATION_RECEIVED', {
+        influencerName: req.user.name,
+        campaignTitle: campaign.title,
+        applicationId: application._id
+      }, { relatedId: application._id, relatedType: 'application' });
+    } catch (notifErr) {
+      console.error('Notification error:', notifErr);
+    }
 
     res.status(201).json({
       success: true,
@@ -333,6 +345,25 @@ exports.updateApplicationStatus = async (req, res) => {
     if (status === 'accepted' && previousStatus !== 'accepted') {
       campaign.acceptedCount += 1;
       await campaign.save();
+    }
+
+    // Notify influencer about status change
+    try {
+      const templateMap = {
+        'shortlisted': 'APPLICATION_SHORTLISTED',
+        'accepted': 'APPLICATION_ACCEPTED',
+        'rejected': 'APPLICATION_REJECTED'
+      };
+      const templateType = templateMap[status];
+      if (templateType) {
+        await createNotificationFromTemplate(application.influencer, templateType, {
+          campaignTitle: campaign.title,
+          applicationId: application._id,
+          dealId: application._id
+        }, { relatedId: application._id, relatedType: 'application' });
+      }
+    } catch (notifErr) {
+      console.error('Notification error:', notifErr);
     }
 
     res.json({

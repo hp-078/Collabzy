@@ -24,18 +24,24 @@ export const AuthProvider = ({ children }) => {
         try {
           // Verify token with backend
           const response = await authService.getMe();
-          // Backend returns { success: true, user: {...} }
-          // So we need to extract the user object
+          // Backend returns { success: true, user: {...} } or { data: { success: true, user: {...} } }
+          let userData = null;
+          
           if (response && response.data && response.data.user) {
-            const userData = response.data.user;
+            userData = response.data.user;
+          } else if (response && response.user) {
+            userData = response.user;
+          }
+          
+          if (userData) {
             console.log('✅ User data loaded:', userData);
             setUser(userData);
 
             // Also update localStorage with fresh user data
             localStorage.setItem('user', JSON.stringify(userData));
 
-            // Connect to Socket.io
-            socketService.connect();
+            // Connect to Socket.io with userId
+            socketService.connect(userData._id);
           } else {
             console.error('❌ Invalid response format:', response);
             localStorage.removeItem('token');
@@ -57,35 +63,61 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await authService.login(email, password);
-      setUser(response.user);
+      console.log('✅ Login response:', response);
       
-      // Connect to Socket.io after login
-      socketService.connect();
-      
-      return { success: true, user: response.user };
+      if (response && response.user) {
+        setUser(response.user);
+        
+        // Connect to Socket.io after login with userId
+        socketService.connect(response.user._id);
+        
+        return { success: true, user: response.user };
+      } else {
+        console.error('❌ Invalid login response:', response);
+        return { 
+          success: false, 
+          error: 'Invalid response from server' 
+        };
+      }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Login failed' 
+        error: error.response?.data?.message || error.message || 'Login failed' 
       };
     }
   };
 
   const register = async (userData) => {
     try {
+      console.log('📝 Registering user:', { ...userData, password: '***' });
       const response = await authService.register(userData);
-      setUser(response.user);
+      console.log('✅ Registration response:', response);
       
-      // Connect to Socket.io after registration
-      socketService.connect();
-      
-      return { success: true, user: response.user };
+      if (response && response.user) {
+        setUser(response.user);
+        
+        // Connect to Socket.io after registration with userId
+        socketService.connect(response.user._id);
+        
+        return { success: true, user: response.user };
+      } else {
+        console.error('❌ Invalid registration response:', response);
+        return { 
+          success: false, 
+          error: 'Invalid response from server' 
+        };
+      }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('❌ Registration error:', error);
+      console.error('Error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Registration failed' 
+        error: error.response?.data?.message || error.message || 'Registration failed' 
       };
     }
   };

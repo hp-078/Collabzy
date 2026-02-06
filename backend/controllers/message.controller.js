@@ -1,6 +1,7 @@
 const Message = require('../models/Message.model');
 const User = require('../models/User.model');
 const { emitToConversation, emitToUser } = require('../config/socket');
+const { createNotification } = require('../services/notification.service');
 
 /**
  * Send a message
@@ -49,6 +50,21 @@ exports.sendMessage = async (req, res) => {
       title: 'New Message',
       message: `${req.user.name} sent you a message`
     });
+
+    // Persist notification in DB
+    try {
+      await createNotification({
+        userId: receiverId,
+        type: 'new_message',
+        title: 'New Message',
+        message: `${req.user.name}: ${content.substring(0, 100)}`,
+        actionUrl: `/messages?user=${senderId}`,
+        relatedId: message._id,
+        relatedType: 'message'
+      });
+    } catch (notifErr) {
+      console.error('Message notification error:', notifErr);
+    }
 
     res.status(201).json({
       success: true,

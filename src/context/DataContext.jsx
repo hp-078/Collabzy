@@ -3,6 +3,9 @@ import { useAuth } from './AuthContext';
 import influencerService from '../services/influencer.service';
 import campaignService from '../services/campaign.service';
 import applicationService from '../services/application.service';
+import messageService from '../services/message.service';
+import dealService from '../services/deal.service';
+import brandService from '../services/brand.service';
 
 const DataContext = createContext(null);
 
@@ -19,12 +22,16 @@ export const DataProvider = ({ children }) => {
   const [influencers, setInfluencers] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [deals, setDeals] = useState([]);
+  const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cache, setCache] = useState({
     influencers: { data: null, timestamp: null },
     campaigns: { data: null, timestamp: null },
     applications: { data: null, timestamp: null },
+    deals: { data: null, timestamp: null },
+    conversations: { data: null, timestamp: null },
   });
 
   // Cache duration: 5 minutes
@@ -132,13 +139,13 @@ export const DataProvider = ({ children }) => {
   };
 
   // Fetch recommended campaigns (influencer only)
-  const fetchRecommendedCampaigns = async (filters = {}) => {
+  const fetchRecommendedCampaigns = async (limit = 20) => {
     if (!isAuthenticated) return [];
 
     setLoading(true);
     setError(null);
     try {
-      const response = await campaignService.getRecommendedCampaigns(filters);
+      const response = await campaignService.getRecommendedCampaigns(limit);
       return response.data || [];
     } catch (error) {
       console.error('Failed to fetch recommended campaigns:', error);
@@ -296,22 +303,167 @@ export const DataProvider = ({ children }) => {
       influencers: { data: null, timestamp: null },
       campaigns: { data: null, timestamp: null },
       applications: { data: null, timestamp: null },
+      deals: { data: null, timestamp: null },
+      conversations: { data: null, timestamp: null },
     });
   };
 
-  // Backward compatibility helpers (for components still using old API)
-  const collaborations = applications; // Applications = Collaborations conceptually
-  const brands = []; // Not used in new version
-  const messages = []; // Will be handled separately
+  // ============ DEAL FUNCTIONS ============
+
+  // Fetch my deals
+  const fetchMyDeals = async (forceRefresh = false) => {
+    if (!isAuthenticated) return [];
+
+    if (!forceRefresh && isCacheValid('deals')) {
+      setDeals(cache.deals.data);
+      return cache.deals.data;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await dealService.getMyDeals();
+      const data = response.data || [];
+      setDeals(data);
+      updateCache('deals', data);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch deals:', error);
+      setError('Failed to load deals');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update deal status
+  const updateDealStatus = async (dealId, statusData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await dealService.updateDealStatus(dealId, statusData);
+      updateCache('deals', null);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to update deal:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to update deal';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ============ MESSAGE FUNCTIONS ============
+
+  // Fetch all conversations
+  const fetchConversations = async (forceRefresh = false) => {
+    if (!isAuthenticated) return [];
+
+    if (!forceRefresh && isCacheValid('conversations')) {
+      setConversations(cache.conversations.data);
+      return cache.conversations.data;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await messageService.getAllConversations();
+      const data = response.data || [];
+      setConversations(data);
+      updateCache('conversations', data);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error);
+      setError('Failed to load conversations');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get messages with a specific user
+  const getMessagesByUser = async (userId, page = 1) => {
+    if (!isAuthenticated) return [];
+    try {
+      const response = await messageService.getConversation(userId, page);
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+      return [];
+    }
+  };
+
+  // Send a message
+  const sendMessage = async (receiverId, content) => {
+    try {
+      const response = await messageService.sendMessage(receiverId, content);
+      // Invalidate conversations cache
+      updateCache('conversations', null);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to send message';
+      return { success: false, error: errorMsg };
+    }
+  };
+
+  // Mark messages as read
+  const markMessagesAsRead = async (userId) => {
+    try {
+      await messageService.markAsRead(userId);
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to mark messages as read:', error);
+      return { success: false };
+    }
+  };
+
+  // ============ BRAND FUNCTIONS ============
+
+  // Get own brand profile
+  const fetchBrandProfile = async () => {
+    if (!isAuthenticated) return null;
+    try {
+      const response = await brandService.getOwnProfile();
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch brand profile:', error);
+      return null;
+    }
+  };
+
+  // Update brand profile
+  const updateBrandProfile = async (profileData) => {
+    try {
+      const response = await brandService.updateProfile(profileData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to update brand profile:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to update brand profile';
+      return { success: false, error: errorMsg };
+    }
+  };
+
+  // Get brand's campaign applications
+  const fetchCampaignApplications = async (campaignId) => {
+    if (!isAuthenticated) return [];
+    try {
+      const response = await applicationService.getCampaignApplications(campaignId);
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch campaign applications:', error);
+      return [];
+    }
+  };
 
   const value = {
     // State
     influencers,
     campaigns,
     applications,
-    collaborations, // Alias for backward compatibility
-    brands, // Empty for backward compatibility
-    messages, // Empty for backward compatibility
+    deals,
+    conversations,
     loading,
     error,
 
@@ -322,18 +474,25 @@ export const DataProvider = ({ children }) => {
     fetchEligibleCampaigns,
     fetchRecommendedCampaigns,
     fetchMyApplications,
+    fetchMyDeals,
+    fetchConversations,
+    fetchCampaignApplications,
+    fetchBrandProfile,
 
     // Get single item
     getCampaignById,
     getInfluencerById,
+    getMessagesByUser,
 
     // Create/Update functions
     createCampaign,
     updateCampaign,
     submitApplication,
     updateApplicationStatus,
-
-
+    updateDealStatus,
+    sendMessage,
+    markMessagesAsRead,
+    updateBrandProfile,
 
     // Utility
     clearCache,

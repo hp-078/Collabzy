@@ -1,64 +1,44 @@
 const Notification = require('../models/Notification.model');
-const User = require('../models/User.model');
+const { emitToUser } = require('../config/socket');
 
 /**
  * Create a new notification
- * This function is used by other services to create notifications
+ * Fields match the Notification model: user, title, message, type, relatedId, relatedType, actionUrl
  */
 const createNotification = async ({ 
   userId, 
-  type, 
+  type = 'system', 
   title, 
   message, 
-  actionUrl = null, 
-  actionText = null,
-  sender = null,
-  priority = 'medium',
-  expiresAt = null,
-  relatedCampaign = null,
-  relatedApplication = null,
-  relatedDeal = null,
-  relatedReview = null,
-  relatedMessage = null
+  actionUrl = '',
+  relatedId = null,
+  relatedType = null
 }) => {
   try {
-    const notification = new Notification({
-      recipient: userId,
-      sender,
+    const notificationData = {
+      user: userId,
       type,
       title,
       message,
-      actionUrl,
-      actionText,
-      priority,
-      expiresAt,
-      relatedCampaign,
-      relatedApplication,
-      relatedDeal,
-      relatedReview,
-      relatedMessage
-    });
+      actionUrl
+    };
 
-    await notification.save();
+    if (relatedId) notificationData.relatedId = relatedId;
+    if (relatedType) notificationData.relatedType = relatedType;
 
-    // Populate sender info if exists
-    if (sender) {
-      await notification.populate('sender', 'name email role');
-    }
+    const notification = await Notification.create(notificationData);
 
-    // Emit Socket.io notification if user is online
-    const io = global.io;
-    if (io) {
-      const success = io.emitToUser(userId.toString(), 'new-notification', notification);
-      if (success) {
-        console.log(`📬 Notification sent to user ${userId} via Socket.io`);
-      }
+    // Emit via Socket.io if user is online
+    try {
+      emitToUser(userId.toString(), 'notification:new', notification);
+    } catch (socketError) {
+      // Socket may not be initialized yet, silently ignore
     }
 
     return notification;
   } catch (error) {
     console.error('Error creating notification:', error);
-    throw error;
+    return null;
   }
 };
 
@@ -67,20 +47,30 @@ const createNotification = async ({
  */
 const createBulkNotifications = async (notifications) => {
   try {
-    const createdNotifications = await Notification.insertMany(notifications);
+    // Map to match model fields
+    const mapped = notifications.map(n => ({
+      user: n.userId,
+      type: n.type || 'system',
+      title: n.title,
+      message: n.message,
+      actionUrl: n.actionUrl || '',
+      relatedId: n.relatedId || undefined,
+      relatedType: n.relatedType || undefined
+    }));
 
-    // Emit Socket.io notifications for online users
-    const io = global.io;
-    if (io) {
-      for (const notification of createdNotifications) {
-        io.emitToUser(notification.recipient.toString(), 'new-notification', notification);
-      }
+    const created = await Notification.insertMany(mapped);
+
+    // Emit via Socket.io
+    for (const notification of created) {
+      try {
+        emitToUser(notification.user.toString(), 'notification:new', notification);
+      } catch (e) { /* ignore */ }
     }
 
-    return createdNotifications;
+    return created;
   } catch (error) {
     console.error('Error creating bulk notifications:', error);
-    throw error;
+    return [];
   }
 };
 
@@ -188,28 +178,46 @@ const NOTIFICATION_TEMPLATES = {
 
 /**
  * Helper function to create notification from template
+ * Maps template types to the Notification model's type enum: 
+ *   application, campaign, deal, message, review, system, payment
  */
+const TYPE_MAP = {
+  'campaign_match': 'campaign',
+  'application_received': 'application',
+  'application_shortlisted': 'application',
+  'application_accepted': 'application',
+  'application_rejected': 'application',
+  'deal_confirmed': 'deal',
+  'deal_started': 'deal',
+  'content_submitted': 'deal',
+  'content_approved': 'deal',
+  'revision_requested': 'deal',
+  'deal_completed': 'deal',
+  'deal_cancelled': 'deal',
+  'new_review': 'review',
+  'review_response': 'review',
+  'new_message': 'message',
+  'profile_verified': 'system',
+  'trust_score_updated': 'system'
+};
+
 const createNotificationFromTemplate = async (userId, templateType, data, options = {}) => {
   const template = NOTIFICATION_TEMPLATES[templateType];
   
   if (!template) {
     throw new Error(`Unknown notification template: ${templateType}`);
   }
+
+  const mappedType = TYPE_MAP[templateType.toLowerCase()] || 'system';
   
   return createNotification({
     userId,
-    type: templateType.toLowerCase(),
+    type: mappedType,
     title: template.title,
     message: template.getMessage(data),
     actionUrl: template.getLink(data),
-    actionText: 'View Details',
-    sender: options.sender || null,
-    priority: options.priority || 'medium',
-    relatedCampaign: options.relatedCampaign || null,
-    relatedApplication: options.relatedApplication || null,
-    relatedDeal: options.relatedDeal || null,
-    relatedReview: options.relatedReview || null,
-    relatedMessage: options.relatedMessage || null
+    relatedId: options.relatedId || null,
+    relatedType: options.relatedType || null
   });
 };
 

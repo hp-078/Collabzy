@@ -22,6 +22,7 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: [
+      // Specific event types
       'application_received',
       'application_accepted',
       'application_rejected',
@@ -32,7 +33,14 @@ const notificationSchema = new mongoose.Schema({
       'review_received',
       'campaign_started',
       'campaign_ended',
-      'system'
+      'system',
+      // Generic category types (used by notification.service.js templates)
+      'application',
+      'campaign',
+      'deal',
+      'message',
+      'review',
+      'payment'
     ],
     default: 'system'
   },

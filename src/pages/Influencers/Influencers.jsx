@@ -41,13 +41,23 @@ const Influencers = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const niches = [...new Set(influencers.map(i => i.niche || i.category))].filter(Boolean);
+  const niches = [...new Set(influencers.flatMap(i => {
+    if (Array.isArray(i.niche)) return i.niche;
+    if (i.niche) return [i.niche];
+    if (i.category) return [i.category];
+    return [];
+  }))].filter(Boolean);
   const platforms = [...new Set(influencers.map(i => i.platform || i.platformType))].filter(Boolean);
 
   const filteredInfluencers = influencers.filter(influencer => {
+    const nicheStr = Array.isArray(influencer.niche) ? influencer.niche.join(' ') : (influencer.niche || influencer.category || '');
     const matchesSearch = influencer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (influencer.niche || influencer.category || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesNiche = !selectedNiche || (influencer.niche === selectedNiche || influencer.category === selectedNiche);
+                         nicheStr.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesNiche = !selectedNiche || (
+      Array.isArray(influencer.niche)
+        ? influencer.niche.includes(selectedNiche)
+        : (influencer.niche === selectedNiche || influencer.category === selectedNiche)
+    );
     const matchesPlatform = !selectedPlatform || (influencer.platform === selectedPlatform || influencer.platformType === selectedPlatform);
     
     return matchesSearch && matchesNiche && matchesPlatform;
@@ -207,7 +217,7 @@ const Influencers = () => {
               
               <div className="inf-card-body">
                 <h3 className="inf-name">{influencer.name}</h3>
-                <p className="inf-niche">{influencer.niche || influencer.category}</p>
+                <p className="inf-niche">{Array.isArray(influencer.niche) ? influencer.niche.join(', ') : (influencer.niche || influencer.category || '')}</p>
                 
                 <div className="inf-location">
                   <MapPin size={14} />

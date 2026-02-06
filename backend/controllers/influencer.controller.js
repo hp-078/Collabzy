@@ -1,4 +1,5 @@
 const InfluencerProfile = require('../models/InfluencerProfile.model');
+const User = require('../models/User.model');
 
 /**
  * Create influencer profile
@@ -112,6 +113,11 @@ exports.updateProfile = async (req, res) => {
     profile.updateCombinedStats();
 
     await profile.save();
+
+    // Sync name to User model so auth/me returns updated name
+    if (req.body.name && req.body.name !== req.user.name) {
+      await User.findByIdAndUpdate(req.user._id, { name: req.body.name });
+    }
 
     res.json({
       success: true,

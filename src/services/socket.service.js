@@ -7,7 +7,7 @@ class SocketService {
   }
 
   // Connect to Socket.io server
-  connect() {
+  connect(userId) {
     const token = localStorage.getItem('token');
     if (!token) {
       console.error('No token found, cannot connect to socket');
@@ -28,6 +28,10 @@ class SocketService {
     // Connection events
     this.socket.on('connect', () => {
       console.log('✅ Connected to Socket.io server');
+      // Tell backend who we are so it can track online status
+      if (userId) {
+        this.socket.emit('user:join', userId);
+      }
     });
 
     this.socket.on('connect_error', (error) => {
@@ -102,38 +106,56 @@ class SocketService {
     return this.socket && this.socket.connected;
   }
 
-  // Get online users
-  getOnlineUsers(callback) {
-    this.on('onlineUsers', callback);
+  // Join a conversation room (matches backend 'conversation:join')
+  joinConversation(conversationId) {
+    this.emit('conversation:join', conversationId);
   }
 
-  // Send typing indicator
-  startTyping(receiverId) {
-    this.emit('typing', { receiverId });
+  // Leave a conversation room
+  leaveConversation(conversationId) {
+    this.emit('conversation:leave', conversationId);
   }
 
-  stopTyping(receiverId) {
-    this.emit('stopTyping', { receiverId });
+  // Send a message through socket (matches backend 'message:send')
+  sendMessage(conversationId, message) {
+    this.emit('message:send', { conversationId, message });
   }
 
-  // Listen for typing indicators
-  onTyping(callback) {
-    this.on('userTyping', callback);
+  // Listen for online users (matches backend 'user:online' / 'user:offline')
+  onUserOnline(callback) {
+    this.on('user:online', callback);
   }
 
-  // Listen for new messages
+  onUserOffline(callback) {
+    this.on('user:offline', callback);
+  }
+
+  // Send typing indicator (matches backend 'typing:start' / 'typing:stop')
+  startTyping(conversationId) {
+    this.emit('typing:start', { conversationId });
+  }
+
+  stopTyping(conversationId) {
+    this.emit('typing:stop', { conversationId });
+  }
+
+  // Listen for typing indicators (matches backend 'typing:start' / 'typing:stop')
+  onTypingStart(callback) {
+    this.on('typing:start', callback);
+  }
+
+  onTypingStop(callback) {
+    this.on('typing:stop', callback);
+  }
+
+  // Listen for new messages (matches backend 'message:receive')
   onNewMessage(callback) {
-    this.on('newMessage', callback);
+    this.on('message:receive', callback);
   }
 
-  // Listen for message updates
-  onMessageUpdate(callback) {
-    this.on('messageUpdate', callback);
-  }
-
-  // Listen for notifications
+  // Listen for notifications (matches backend 'notification:new')
   onNotification(callback) {
-    this.on('notification', callback);
+    this.on('notification:new', callback);
   }
 }
 

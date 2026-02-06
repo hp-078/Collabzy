@@ -20,21 +20,26 @@ const generateToken = (userId) => {
  */
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, companyName, email, password, role } = req.body;
 
     // Validate required fields
-    if (!name || !email || !password || !role) {
+    // Accept either 'name' (for influencers) or 'companyName' (for brands)
+    const userName = role === 'brand' ? companyName : name;
+    
+    if (!userName || !email || !password || !role) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields: name, email, password, role'
+        message: 'Please provide all required fields: ' + 
+                 (role === 'brand' ? 'companyName' : 'name') + 
+                 ', email, password, role'
       });
     }
 
     // Validate role
-    if (!['influencer', 'brand'].includes(role)) {
+    if (!['influencer', 'brand', 'admin'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Role must be either "influencer" or "brand"'
+        message: 'Role must be either "influencer", "brand", or "admin"'
       });
     }
 
@@ -49,11 +54,54 @@ exports.register = async (req, res) => {
 
     // Create user
     const user = await User.create({
-      name,
+      name: userName,
       email: email.toLowerCase(),
       password,
       role
     });
+
+    // Auto-create profile based on role
+    let profile = null;
+    try {
+      if (role === 'influencer') {
+        profile = await InfluencerProfile.create({
+          user: user._id,
+          name: userName,
+          bio: '',
+          niche: [], // Changed from 'category' to 'niche' to match model
+          platformType: 'Instagram', // Provide default value from enum
+          youtubeUrl: '',
+          instagramUrl: ''
+        });
+        console.log('✅ Influencer profile created:', profile._id);
+      } else if (role === 'brand') {
+        profile = await BrandProfile.create({
+          user: user._id,
+          companyName: userName,
+          description: '',
+          // Don't include 'industry' - it has enum validation, leave it undefined
+          // Don't include 'companySize' - it has enum validation, leave it undefined
+          location: '',
+          logo: '',
+          websiteUrl: '',
+          contactPerson: {
+            name: '',
+            email: user.email, // Pre-fill with user's email
+            phone: ''
+          }
+        });
+        console.log('✅ Brand profile created:', profile._id);
+      }
+    } catch (profileError) {
+      console.error('⚠️ Profile creation error:', profileError);
+      console.error('⚠️ Error details:', {
+        message: profileError.message,
+        errors: profileError.errors,
+        stack: profileError.stack
+      });
+      // Don't fail registration if profile creation fails
+      // User can create/complete profile later
+    }
 
     // Generate token
     const token = generateToken(user._id);
@@ -69,7 +117,9 @@ exports.register = async (req, res) => {
         email: user.email,
         role: user.role,
         avatar: user.avatar,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        hasProfile: !!profile,
+        profile: profile || null
       }
     });
   } catch (error) {

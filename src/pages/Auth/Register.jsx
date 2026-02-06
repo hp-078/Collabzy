@@ -109,24 +109,41 @@ const Register = () => {
       };
 
       // Add role-specific fields
+      // Backend now accepts both 'name' (for influencers) and 'companyName' (for brands)
       if (formData.role === 'influencer') {
         registerData.name = formData.name.trim();
       } else if (formData.role === 'brand') {
         registerData.companyName = formData.name.trim();
       }
 
+      console.log('📝 Submitting registration:', { ...registerData, password: '***' });
+
       const result = await register(registerData);
 
+      console.log('📨 Registration result:', result);
+
       if (result && result.success) {
-        const userName = formData.name || 'there';
+        const userName = formData.role === 'brand' 
+          ? formData.name 
+          : (result.user?.name || formData.name || 'there');
+        
         toast.success(`Welcome to Collabzy, ${userName}!`);
-        navigate('/dashboard');
+        
+        // Small delay for better UX
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 500);
       } else {
         // Handle specific backend errors
         const errorMsg = result?.error || 'Registration failed. Please try again.';
         
+        console.error('❌ Registration failed:', errorMsg);
+        
         // Check for specific error types
         if (errorMsg.toLowerCase().includes('email') && errorMsg.toLowerCase().includes('exist')) {
+          setFieldErrors({ email: 'This email is already registered' });
+          setError('This email is already registered. Please use a different email or try logging in.');
+        } else if (errorMsg.toLowerCase().includes('email') && errorMsg.toLowerCase().includes('already')) {
           setFieldErrors({ email: 'This email is already registered' });
           setError('This email is already registered. Please use a different email or try logging in.');
         } else if (errorMsg.toLowerCase().includes('email') && errorMsg.toLowerCase().includes('invalid')) {
@@ -135,7 +152,7 @@ const Register = () => {
         } else if (errorMsg.toLowerCase().includes('password')) {
           setFieldErrors({ password: errorMsg });
           setError(errorMsg);
-        } else if (errorMsg.toLowerCase().includes('name')) {
+        } else if (errorMsg.toLowerCase().includes('name') || errorMsg.toLowerCase().includes('companyname')) {
           setFieldErrors({ name: errorMsg });
           setError(errorMsg);
         } else {
@@ -145,7 +162,7 @@ const Register = () => {
         toast.error(errorMsg);
       }
     } catch (err) {
-      console.error('Registration error:', err);
+      console.error('❌ Registration exception:', err);
       
       // Handle network and server errors
       let errorMsg = 'An unexpected error occurred. Please try again.';
@@ -167,14 +184,20 @@ const Register = () => {
             });
             setFieldErrors(backendErrors);
           }
-        } else if (statusCode === 409) {
-          errorMsg = 'Email already exists. Please use a different email or try logging in.';
-          setFieldErrors({ email: 'This email is already registered' });
+        } else if (statusCode === 409 || statusCode === 400) {
+          if (backendMsg.toLowerCase().includes('email')) {
+            errorMsg = 'Email already exists. Please use a different email or try logging in.';
+            setFieldErrors({ email: 'This email is already registered' });
+          } else {
+            errorMsg = backendMsg;
+          }
         } else if (statusCode === 500) {
           errorMsg = 'Server error. Please try again later.';
         } else if (backendMsg) {
           errorMsg = backendMsg;
         }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
       
       setError(errorMsg);

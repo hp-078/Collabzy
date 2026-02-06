@@ -19,60 +19,66 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const { user, isInfluencer, isBrand, isAdmin } = useAuth();
-  const { influencers, brands, collaborations, messages, loading, error, fetchInfluencers, fetchMyApplications } = useData();
+  const {
+    influencers,
+    applications,
+    campaigns,
+    deals,
+    loading,
+    error,
+    fetchInfluencers,
+    fetchMyApplications,
+    fetchMyCampaigns,
+    fetchMyDeals
+  } = useData();
   const [localLoading, setLocalLoading] = useState(true);
+  const [myCampaigns, setMyCampaigns] = useState([]);
 
-  // Debug: Log user data and collaborations
-  useEffect(() => {
-    console.log('📊 Dashboard - User:', user);
-    console.log('📊 Dashboard - User role:', user?.role);
-    console.log('📊 Dashboard - Is Influencer:', isInfluencer);
-    console.log('📊 Dashboard - Is Brand:', isBrand);
-    console.log('📊 Dashboard - Collaborations:', collaborations);
-    console.log('📊 Dashboard - Collaborations count:', collaborations.length);
-  }, [user, isInfluencer, isBrand, collaborations]);
-
-  // Fetch data on mount
+  // Fetch data on mount - different data based on role
   useEffect(() => {
     const loadData = async () => {
       setLocalLoading(true);
-      if (isInfluencer || isBrand) {
-        await fetchMyApplications();
+      try {
+        if (isInfluencer) {
+          await fetchMyApplications();
+          await fetchMyDeals();
+        } else if (isBrand) {
+          const campaignsData = await fetchMyCampaigns();
+          setMyCampaigns(campaignsData || []);
+          await fetchMyDeals();
+        }
+        await fetchInfluencers();
+      } catch (err) {
+        console.error('Dashboard load error:', err);
       }
-      await fetchInfluencers();
       setLocalLoading(false);
     };
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Get user-specific data
-  const userCollabs = collaborations.filter(c => 
-    isInfluencer ? (c.influencerId === user?._id || c.influencer?._id === user?._id) : (c.brandId === user?._id || c.brand?._id === user?._id)
-  );
-  const userMessages = messages.filter(m => 
-    m.senderId === user?._id || m.receiverId === user?._id
-  );
-
-  const pendingCollabs = userCollabs.filter(c => c.status === 'pending');
-  const activeCollabs = userCollabs.filter(c => c.status === 'active' || c.status === 'shortlisted');
-  const completedCollabs = userCollabs.filter(c => c.status === 'completed' || c.status === 'accepted');
+  // Compute stats from actual data
+  const pendingApps = applications.filter(a => a.status === 'pending');
+  const activeApps = applications.filter(a => a.status === 'shortlisted' || a.status === 'accepted');
+  const completedApps = applications.filter(a => a.status === 'accepted');
+  const activeDeals = deals.filter(d => d.status === 'in_progress' || d.status === 'confirmed');
+  const completedDeals = deals.filter(d => d.status === 'completed');
 
   const stats = isInfluencer ? [
-    { icon: <Briefcase size={24} />, label: 'Active Collabs', value: activeCollabs.length, color: 'primary' },
-    { icon: <Clock size={24} />, label: 'Pending Requests', value: pendingCollabs.length, color: 'warning' },
-    { icon: <CheckCircle size={24} />, label: 'Completed', value: completedCollabs.length, color: 'success' },
-    { icon: <MessageSquare size={24} />, label: 'Messages', value: userMessages.length, color: 'info' },
+    { icon: <Briefcase size={24} />, label: 'Active Deals', value: activeDeals.length, color: 'primary' },
+    { icon: <Clock size={24} />, label: 'Pending Apps', value: pendingApps.length, color: 'warning' },
+    { icon: <CheckCircle size={24} />, label: 'Completed', value: completedDeals.length, color: 'success' },
+    { icon: <TrendingUp size={24} />, label: 'Total Applied', value: applications.length, color: 'info' },
   ] : isBrand ? [
-    { icon: <Briefcase size={24} />, label: 'Active Collabs', value: activeCollabs.length, color: 'primary' },
-    { icon: <Clock size={24} />, label: 'Pending', value: pendingCollabs.length, color: 'warning' },
-    { icon: <CheckCircle size={24} />, label: 'Completed', value: completedCollabs.length, color: 'success' },
+    { icon: <Briefcase size={24} />, label: 'My Campaigns', value: myCampaigns.length, color: 'primary' },
+    { icon: <Clock size={24} />, label: 'Active Deals', value: activeDeals.length, color: 'warning' },
+    { icon: <CheckCircle size={24} />, label: 'Completed', value: completedDeals.length, color: 'success' },
     { icon: <Users size={24} />, label: 'Influencers', value: influencers.length, color: 'info' },
   ] : [
     { icon: <Users size={24} />, label: 'Influencers', value: influencers.length, color: 'primary' },
-    { icon: <Briefcase size={24} />, label: 'Brands', value: brands.length, color: 'warning' },
-    { icon: <CheckCircle size={24} />, label: 'Total Collabs', value: collaborations.length, color: 'success' },
-    { icon: <TrendingUp size={24} />, label: 'Active', value: collaborations.filter(c => c.status === 'active').length, color: 'info' },
+    { icon: <Briefcase size={24} />, label: 'Campaigns', value: campaigns.length, color: 'warning' },
+    { icon: <CheckCircle size={24} />, label: 'Total Apps', value: applications.length, color: 'success' },
+    { icon: <TrendingUp size={24} />, label: 'Active', value: activeDeals.length, color: 'info' },
   ];
 
   // Show loading state
@@ -150,30 +156,50 @@ const Dashboard = () => {
         {/* Main Content */}
         <div className="dash-content">
           <div className="dash-content-main">
-            {/* Recent Collaborations */}
+            {/* Recent Applications (Influencer) or Campaigns (Brand) */}
             <div className="dash-card">
               <div className="dash-card-header">
-                <h2>Recent Collaborations</h2>
+                <h2>{isInfluencer ? 'Recent Applications' : isBrand ? 'My Campaigns' : 'Recent Activity'}</h2>
                 <Link to="/collaborations" className="dash-view-all">
                   View All <ArrowRight size={16} />
                 </Link>
               </div>
               <div className="dash-card-body">
-                {userCollabs.length > 0 ? (
+                {isInfluencer && applications.length > 0 ? (
                   <div className="dash-collab-list">
-                    {userCollabs.slice(0, 5).map((collab) => (
-                      <div key={collab._id || collab.id} className="dash-collab-item">
+                    {applications.slice(0, 5).map((app) => (
+                      <div key={app._id} className="dash-collab-item">
                         <div className="dash-collab-info">
-                          <h4>{isInfluencer ? (collab.brand?.name || collab.brandName) : (collab.influencer?.name || collab.influencerName)}</h4>
-                          <p>{collab.campaign?.title || collab.service || 'Application'}</p>
+                          <h4>{app.campaign?.title || 'Campaign'}</h4>
+                          <p>{app.campaign?.brandProfile?.companyName || 'Brand'}</p>
                         </div>
                         <div className="dash-collab-meta">
-                          <span className={`dash-status-badge dash-status-${collab.status}`}>
-                            {collab.status}
+                          <span className={`dash-status-badge dash-status-${app.status}`}>
+                            {app.status}
                           </span>
                           <span className="dash-collab-budget">
                             <DollarSign size={14} />
-                            {collab.quotedPrice || collab.budget || 'N/A'}
+                            {app.proposedRate || app.campaign?.budget?.min || 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : isBrand && myCampaigns.length > 0 ? (
+                  <div className="dash-collab-list">
+                    {myCampaigns.slice(0, 5).map((campaign) => (
+                      <div key={campaign._id} className="dash-collab-item">
+                        <div className="dash-collab-info">
+                          <h4>{campaign.title}</h4>
+                          <p>{campaign.applicationCount || 0} applications</p>
+                        </div>
+                        <div className="dash-collab-meta">
+                          <span className={`dash-status-badge dash-status-${campaign.status}`}>
+                            {campaign.status}
+                          </span>
+                          <span className="dash-collab-budget">
+                            <DollarSign size={14} />
+                            {campaign.budget?.min || 0} - {campaign.budget?.max || 0}
                           </span>
                         </div>
                       </div>
@@ -182,7 +208,7 @@ const Dashboard = () => {
                 ) : (
                   <div className="dash-empty-state">
                     <Briefcase size={40} />
-                    <p>No collaborations yet</p>
+                    <p>{isInfluencer ? 'No applications yet' : 'No campaigns yet'}</p>
                     {isBrand && (
                       <Link to="/influencers" className="btn btn-primary btn-sm">
                         Find Influencers
@@ -193,24 +219,23 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Pending Actions */}
-            {pendingCollabs.length > 0 && isInfluencer && (
+            {/* Pending Actions for Influencer */}
+            {isInfluencer && pendingApps.length > 0 && (
               <div className="dash-card">
                 <div className="dash-card-header">
-                  <h2>Pending Requests</h2>
-                  <span className="dash-pending-count">{pendingCollabs.length}</span>
+                  <h2>Pending Applications</h2>
+                  <span className="dash-pending-count">{pendingApps.length}</span>
                 </div>
                 <div className="dash-card-body">
                   <div className="dash-collab-list">
-                    {pendingCollabs.slice(0, 3).map((collab) => (
-                      <div key={collab._id || collab.id} className="dash-collab-item dash-pending">
+                    {pendingApps.slice(0, 3).map((app) => (
+                      <div key={app._id} className="dash-collab-item dash-pending">
                         <div className="dash-collab-info">
-                          <h4>{collab.brand?.name || collab.brandName}</h4>
-                          <p>{collab.campaign?.title || collab.service} • ${collab.quotedPrice || collab.budget}</p>
+                          <h4>{app.campaign?.title || 'Campaign'}</h4>
+                          <p>{app.campaign?.brandProfile?.companyName || 'Brand'} &bull; ${app.proposedRate || 0}</p>
                         </div>
                         <div className="dash-collab-actions">
-                          <Link to="/collaborations" className="btn btn-primary btn-sm">Review</Link>
-                          <button className="btn btn-secondary btn-sm">Decline</button>
+                          <Link to="/collaborations" className="btn btn-primary btn-sm">View</Link>
                         </div>
                       </div>
                     ))}
@@ -237,12 +262,12 @@ const Dashboard = () => {
               {isInfluencer && (
                 <div className="dash-profile-stats">
                   <div className="dash-profile-stat">
-                    <span className="dash-value">{user?.followers || '0'}</span>
-                    <span className="dash-label">Followers</span>
+                    <span className="dash-value">{applications.length}</span>
+                    <span className="dash-label">Applications</span>
                   </div>
                   <div className="dash-profile-stat">
-                    <span className="dash-value">{user?.rating || '0'}</span>
-                    <span className="dash-label">Rating</span>
+                    <span className="dash-value">{completedDeals.length}</span>
+                    <span className="dash-label">Completed</span>
                   </div>
                 </div>
               )}
@@ -279,14 +304,26 @@ const Dashboard = () => {
             {/* Upcoming Deadlines */}
             <div className="dash-deadlines-card">
               <h3>Upcoming Deadlines</h3>
-              {activeCollabs.length > 0 ? (
+              {isInfluencer && activeApps.length > 0 ? (
                 <div className="dash-deadline-list">
-                  {activeCollabs.slice(0, 3).map((collab) => (
-                    <div key={collab._id || collab.id} className="dash-deadline-item">
+                  {activeApps.slice(0, 3).map((app) => (
+                    <div key={app._id} className="dash-deadline-item">
                       <Calendar size={16} />
                       <div>
-                        <p className="dash-deadline-title">{collab.campaign?.title || collab.service}</p>
-                        <p className="dash-deadline-date">{collab.campaign?.deadline ? new Date(collab.campaign.deadline).toLocaleDateString() : collab.deadline || 'No deadline set'}</p>
+                        <p className="dash-deadline-title">{app.campaign?.title || 'Campaign'}</p>
+                        <p className="dash-deadline-date">{app.campaign?.deadline ? new Date(app.campaign.deadline).toLocaleDateString() : 'No deadline set'}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : isBrand && myCampaigns.length > 0 ? (
+                <div className="dash-deadline-list">
+                  {myCampaigns.filter(c => c.deadline).slice(0, 3).map((campaign) => (
+                    <div key={campaign._id} className="dash-deadline-item">
+                      <Calendar size={16} />
+                      <div>
+                        <p className="dash-deadline-title">{campaign.title}</p>
+                        <p className="dash-deadline-date">{new Date(campaign.deadline).toLocaleDateString()}</p>
                       </div>
                     </div>
                   ))}

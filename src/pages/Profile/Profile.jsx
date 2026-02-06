@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import influencerService from '../../services/influencer.service';
+import brandService from '../../services/brand.service';
 import authService from '../../services/auth.service';
 import toast from 'react-hot-toast';
 import {
@@ -77,33 +78,35 @@ const Profile = () => {
     }
   }, [user]);
 
-  // Fetch profile data on mount (for influencers)
+  // Fetch profile data on mount
   useEffect(() => {
     const loadProfile = async () => {
-      console.log('Loading profile for influencer:', isInfluencer); // Debug log
+      console.log('Loading profile, isInfluencer:', isInfluencer, 'isBrand:', isBrand);
       if (isInfluencer) {
         try {
           const response = await influencerService.getOwnProfile();
-          const profileData = response.data || response; // Handle both wrapped and unwrapped responses
-          console.log('Profile loaded:', profileData); // Debug log
+          const profileData = response.data || response;
+          console.log('Influencer profile loaded:', profileData);
           setProfile(profileData);
 
-          // Update form data with fetched profile
           if (profileData) {
             setFormData(prev => {
+              const nicheValue = Array.isArray(profileData.niche)
+                ? (profileData.niche[0] || '')
+                : (profileData.niche || '');
               const newData = {
                 ...prev,
                 name: profileData.name || prev.name,
                 bio: profileData.bio || prev.bio,
-                category: profileData.niche || prev.category, // backend uses 'niche'
-                platformType: profileData.platform || prev.platformType, // backend uses 'platform'
+                category: nicheValue,
+                platformType: profileData.platformType || profileData.platform || prev.platformType,
                 youtubeUrl: profileData.youtubeUrl || prev.youtubeUrl,
                 instagramUrl: profileData.instagramUrl || prev.instagramUrl,
                 location: profileData.location || prev.location,
                 website: profileData.website || prev.website,
                 services: profileData.services || prev.services,
               };
-              console.log('Updated formData:', newData); // Debug log
+              console.log('Updated formData:', newData);
               return newData;
             });
 
@@ -112,7 +115,32 @@ const Profile = () => {
             }
           }
         } catch (error) {
-          console.log('No profile yet or error loading:', error);
+          console.log('No influencer profile yet or error loading:', error);
+        }
+      } else if (isBrand) {
+        try {
+          const response = await brandService.getOwnProfile();
+          const profileData = response.data || response;
+          console.log('Brand profile loaded:', profileData);
+          setProfile(profileData);
+
+          if (profileData) {
+            setFormData(prev => ({
+              ...prev,
+              name: profileData.companyName || prev.name,
+              bio: profileData.description || prev.bio,
+              location: profileData.location || prev.location,
+              website: profileData.websiteUrl || prev.website,
+              industry: profileData.industry || prev.industry,
+              instagramUrl: profileData.instagramUrl || prev.instagramUrl,
+            }));
+
+            if (profileData.logo) {
+              setPreviewImage(profileData.logo);
+            }
+          }
+        } catch (error) {
+          console.log('No brand profile yet or error loading:', error);
         }
       }
       setLoading(false);
@@ -120,7 +148,7 @@ const Profile = () => {
 
     loadProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInfluencer]);
+  }, [isInfluencer, isBrand]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -174,7 +202,7 @@ const Profile = () => {
   const handleRemoveService = (serviceId) => {
     setFormData({
       ...formData,
-      services: formData.services.filter(s => s.id !== serviceId),
+      services: formData.services.filter(s => (s.id || s._id) !== serviceId),
     });
   };
 
@@ -183,53 +211,63 @@ const Profile = () => {
     setSaving(true);
 
     try {
-      // Map frontend fields to backend fields
-      const updatedData = {
-        name: formData.name,
-        bio: formData.bio,
-        niche: formData.category, // frontend 'category' → backend 'niche'
-        platform: formData.platformType, // frontend 'platformType' → backend 'platform'
-        location: formData.location,
-        avatar: previewImage,
-        youtubeUrl: formData.youtubeUrl,
-        instagramUrl: formData.instagramUrl,
-        website: formData.website,
-        services: formData.services,
-      };
-
-      // Update profile based on role
       if (isInfluencer) {
+        // Map frontend fields to backend fields for influencer
+        const updatedData = {
+          name: formData.name,
+          bio: formData.bio,
+          niche: formData.category, // backend handles string-to-array conversion
+          platformType: formData.platformType,
+          location: formData.location,
+          avatar: previewImage,
+          youtubeUrl: formData.youtubeUrl,
+          instagramUrl: formData.instagramUrl,
+          website: formData.website,
+          services: formData.services,
+        };
+
         try {
-          // Try to update existing profile first
           await influencerService.updateProfile(updatedData);
           toast.success('Profile updated successfully!');
         } catch (updateError) {
-          // If profile doesn't exist (404), create a new one
           if (updateError.response?.status === 404) {
             await influencerService.createProfile(updatedData);
             toast.success('Profile created successfully!');
           } else {
-            // Re-throw other errors
             throw updateError;
           }
         }
 
-        // Update local user state
         updateUser({
           ...user,
-          ...formData,
+          name: formData.name,
           avatar: previewImage
         });
       } else if (isBrand) {
-        // For brands, update user info via auth service
-        // Note: Brand profile update endpoint would need to be created in backend
+        // Map frontend fields to backend BrandProfile fields
+        const brandData = {
+          companyName: formData.name,
+          description: formData.bio,
+          location: formData.location,
+          websiteUrl: formData.website,
+          industry: formData.industry,
+          instagramUrl: formData.instagramUrl,
+          logo: previewImage,
+        };
+
+        try {
+          await brandService.updateProfile(brandData);
+          toast.success('Brand profile updated successfully!');
+        } catch (updateError) {
+          console.error('Brand profile update error:', updateError);
+          throw updateError;
+        }
+
         updateUser({
           ...user,
-          ...updatedData,
+          name: formData.name,
           avatar: previewImage
         });
-
-        toast.success('Profile updated successfully!');
       }
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -495,7 +533,7 @@ const Profile = () => {
                   <div className="prof-services-list">
                     {formData.services.length > 0 ? (
                       formData.services.map((service) => (
-                        <div key={service.id} className="prof-service-item">
+                        <div key={service.id || service._id} className="prof-service-item">
                           <div className="prof-service-info">
                             <h4>{service.name}</h4>
                             <p>{service.description}</p>
@@ -508,7 +546,7 @@ const Profile = () => {
                             <button 
                               type="button"
                               className="prof-remove-btn"
-                              onClick={() => handleRemoveService(service.id)}
+                              onClick={() => handleRemoveService(service.id || service._id)}
                             >
                               <X size={16} />
                             </button>

@@ -12,59 +12,108 @@ import {
   MessageSquare,
   Filter,
   Search,
-  Loader
+  Loader,
+  Eye
 } from 'lucide-react';
 import './Collaborations.css';
 
 const Collaborations = () => {
-  const { user, isInfluencer } = useAuth();
-  const { collaborations, loading, error, fetchMyApplications, updateApplicationStatus } = useData();
+  const { user, isInfluencer, isBrand } = useAuth();
+  const {
+    applications,
+    loading,
+    error,
+    fetchMyApplications,
+    fetchMyCampaigns,
+    fetchCampaignApplications,
+    updateApplicationStatus
+  } = useData();
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [localLoading, setLocalLoading] = useState(true);
+  const [brandApplications, setBrandApplications] = useState([]);
 
-  // Fetch applications on mount
+  // Fetch data on mount
   useEffect(() => {
-    const loadApplications = async () => {
+    const loadData = async () => {
       setLocalLoading(true);
-      await fetchMyApplications();
+      if (isInfluencer) {
+        await fetchMyApplications();
+      } else if (isBrand) {
+        // Brands: get their campaigns, then fetch applications for each
+        const campaigns = await fetchMyCampaigns();
+        if (campaigns && campaigns.length > 0) {
+          const allApps = [];
+          for (const campaign of campaigns) {
+            const apps = await fetchCampaignApplications(campaign._id);
+            // Attach campaign info to each application
+            allApps.push(...apps.map(app => ({ ...app, campaign: app.campaign || campaign })));
+          }
+          setBrandApplications(allApps);
+        }
+      }
       setLocalLoading(false);
     };
-    loadApplications();
+    loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const userCollabs = collaborations.filter(c => 
-    isInfluencer ? (c.influencer?._id === user?._id || c.influencerId === user?._id) : (c.brand?._id === user?._id || c.brandId === user?._id)
-  );
+  // Use the right data source based on role
+  const items = isInfluencer ? applications : brandApplications;
 
-  const filteredCollabs = userCollabs.filter(c => {
-    const matchesFilter = filter === 'all' || c.status === filter;
-    const partnerName = isInfluencer ? (c.brand?.name || c.brandName) : (c.influencer?.name || c.influencerName);
-    const serviceName = c.campaign?.title || c.service || '';
-    const matchesSearch = 
-      (partnerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      serviceName.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredItems = items.filter(app => {
+    // Status filter
+    let matchesFilter = filter === 'all';
+    if (filter === 'pending') matchesFilter = app.status === 'pending' || app.status === 'reviewed';
+    else if (filter === 'active') matchesFilter = app.status === 'shortlisted' || app.status === 'accepted';
+    else if (filter === 'completed') matchesFilter = app.status === 'accepted';
+    else if (filter === 'rejected') matchesFilter = app.status === 'rejected' || app.status === 'withdrawn';
+    else if (filter === 'all') matchesFilter = true;
+
+    // Search filter
+    const campaignTitle = app.campaign?.title || '';
+    const brandName = app.campaign?.brandProfile?.companyName || '';
+    const influencerName = app.influencer?.name || app.influencerProfile?.name || '';
+    const matchesSearch = !searchTerm ||
+      campaignTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      brandName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      influencerName.toLowerCase().includes(searchTerm.toLowerCase());
+
     return matchesFilter && matchesSearch;
   });
 
-  const handleStatusChange = async (collabId, newStatus) => {
-    const result = await updateApplicationStatus(collabId, newStatus);
+  const handleStatusChange = async (appId, newStatus) => {
+    const result = await updateApplicationStatus(appId, newStatus);
     if (result.success) {
-      // Refresh applications
-      fetchMyApplications(null, true);
+      // Refresh data
+      if (isInfluencer) {
+        fetchMyApplications({}, true);
+      } else {
+        // Reload brand applications
+        const campaigns = await fetchMyCampaigns();
+        if (campaigns && campaigns.length > 0) {
+          const allApps = [];
+          for (const campaign of campaigns) {
+            const apps = await fetchCampaignApplications(campaign._id);
+            allApps.push(...apps.map(a => ({ ...a, campaign: a.campaign || campaign })));
+          }
+          setBrandApplications(allApps);
+        }
+      }
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
       case 'pending':
+      case 'reviewed':
         return <Clock size={16} />;
-      case 'active':
-        return <Briefcase size={16} />;
-      case 'completed':
+      case 'shortlisted':
+        return <Eye size={16} />;
+      case 'accepted':
         return <CheckCircle size={16} />;
       case 'rejected':
+      case 'withdrawn':
         return <XCircle size={16} />;
       default:
         return null;
@@ -72,10 +121,10 @@ const Collaborations = () => {
   };
 
   const statusCounts = {
-    all: userCollabs.length,
-    pending: userCollabs.filter(c => c.status === 'pending').length,
-    active: userCollabs.filter(c => c.status === 'active' || c.status === 'shortlisted').length,
-    completed: userCollabs.filter(c => c.status === 'completed' || c.status === 'accepted').length,
+    all: items.length,
+    pending: items.filter(a => a.status === 'pending' || a.status === 'reviewed').length,
+    active: items.filter(a => a.status === 'shortlisted' || a.status === 'accepted').length,
+    completed: items.filter(a => a.status === 'accepted').length,
   };
 
   // Show loading state
@@ -103,7 +152,7 @@ const Collaborations = () => {
         <div className="collab-page-header">
           <div>
             <h1>Collaborations</h1>
-            <p>Manage all your collaboration requests and projects</p>
+            <p>{isInfluencer ? 'Your campaign applications' : 'Applications to your campaigns'}</p>
           </div>
         </div>
 
@@ -152,82 +201,110 @@ const Collaborations = () => {
 
         {/* Collaborations List */}
         <div className="collab-list">
-          {filteredCollabs.length > 0 ? (
-            filteredCollabs.map((collab) => (
-              <div key={collab._id || collab.id} className="collab-card">
+          {filteredItems.length > 0 ? (
+            filteredItems.map((app) => (
+              <div key={app._id} className="collab-card">
                 <div className="collab-header">
                   <div className="collab-title">
-                    <h3>{isInfluencer ? (collab.brand?.name || collab.brandName) : (collab.influencer?.name || collab.influencerName)}</h3>
-                    <span className={`collab-status-badge collab-status-${collab.status}`}>
-                      {getStatusIcon(collab.status)}
-                      {collab.status}
+                    <h3>
+                      {isInfluencer
+                        ? (app.campaign?.brandProfile?.companyName || 'Brand')
+                        : (app.influencer?.name || app.influencerProfile?.name || 'Influencer')}
+                    </h3>
+                    <span className={`collab-status-badge collab-status-${app.status}`}>
+                      {getStatusIcon(app.status)}
+                      {app.status}
                     </span>
                   </div>
                   <div className="collab-service">
                     <Briefcase size={16} />
-                    {collab.campaign?.title || collab.service || 'Application'}
+                    {app.campaign?.title || 'Campaign'}
                   </div>
                 </div>
 
                 <div className="collab-body">
-                  <p className="collab-message">{collab.proposal || collab.message || 'No message'}</p>
+                  <p className="collab-message">{app.message || 'No message'}</p>
                   
                   <div className="collab-details">
                     <div className="collab-detail-item">
                       <DollarSign size={16} />
-                      <span>Budget: <strong>${collab.quotedPrice || collab.budget || 'N/A'}</strong></span>
+                      <span>Proposed Rate: <strong>${app.proposedRate || 'N/A'}</strong></span>
                     </div>
-                    {(collab.campaign?.deadline || collab.deadline) && (
+                    {app.campaign?.deadline && (
                       <div className="collab-detail-item">
                         <Calendar size={16} />
-                        <span>Deadline: <strong>{new Date(collab.campaign?.deadline || collab.deadline).toLocaleDateString()}</strong></span>
+                        <span>Deadline: <strong>{new Date(app.campaign.deadline).toLocaleDateString()}</strong></span>
                       </div>
                     )}
                     <div className="collab-detail-item">
                       <Clock size={16} />
-                      <span>Created: <strong>{new Date(collab.createdAt || collab.appliedAt).toLocaleDateString()}</strong></span>
+                      <span>Applied: <strong>{new Date(app.createdAt).toLocaleDateString()}</strong></span>
                     </div>
+                    {app.campaign?.budget && (
+                      <div className="collab-detail-item">
+                        <DollarSign size={16} />
+                        <span>Campaign Budget: <strong>${app.campaign.budget.min} - ${app.campaign.budget.max}</strong></span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="collab-footer">
-                  {collab.status === 'pending' && isInfluencer && (
+                  {/* Brand actions: can shortlist, accept, or reject pending applications */}
+                  {isBrand && (app.status === 'pending' || app.status === 'reviewed') && (
                     <div className="collab-action-buttons">
                       <button 
                         className="btn btn-primary btn-sm"
-                        onClick={() => handleStatusChange(collab.id, 'active')}
+                        onClick={() => handleStatusChange(app._id, 'shortlisted')}
                       >
+                        Shortlist
+                      </button>
+                      <button 
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleStatusChange(app._id, 'rejected')}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                  {isBrand && app.status === 'shortlisted' && (
+                    <div className="collab-action-buttons">
+                      <button 
+                        className="btn btn-primary btn-sm"
+                        onClick={() => handleStatusChange(app._id, 'accepted')}
+                      >
+                        <CheckCircle size={16} />
                         Accept
                       </button>
                       <button 
                         className="btn btn-secondary btn-sm"
-                        onClick={() => handleStatusChange(collab.id, 'rejected')}
+                        onClick={() => handleStatusChange(app._id, 'rejected')}
                       >
-                        Decline
+                        Reject
                       </button>
                     </div>
                   )}
-                  {collab.status === 'active' && (
+                  {/* Influencer: can withdraw pending applications */}
+                  {isInfluencer && app.status === 'pending' && (
                     <div className="collab-action-buttons">
-                      <Link to="/messages" className="btn btn-secondary btn-sm">
-                        <MessageSquare size={16} />
-                        Message
-                      </Link>
-                      {isInfluencer && (
-                        <button 
-                          className="btn btn-primary btn-sm"
-                          onClick={() => handleStatusChange(collab.id, 'completed')}
-                        >
-                          <CheckCircle size={16} />
-                          Mark Complete
-                        </button>
-                      )}
+                      <button 
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleStatusChange(app._id, 'withdrawn')}
+                      >
+                        Withdraw
+                      </button>
                     </div>
                   )}
-                  {collab.status === 'completed' && (
+                  {app.status === 'accepted' && (
                     <div className="collab-completed-info">
                       <CheckCircle size={18} />
-                      <span>Completed on {collab.completedAt || 'recently'}</span>
+                      <span>Accepted{app.acceptedAt ? ` on ${new Date(app.acceptedAt).toLocaleDateString()}` : ''}</span>
+                    </div>
+                  )}
+                  {(app.status === 'rejected' || app.status === 'withdrawn') && (
+                    <div className="collab-completed-info">
+                      <XCircle size={18} />
+                      <span>{app.status === 'withdrawn' ? 'Withdrawn' : 'Rejected'}{app.brandResponse?.message ? `: ${app.brandResponse.message}` : ''}</span>
                     </div>
                   )}
                 </div>
@@ -240,9 +317,11 @@ const Collaborations = () => {
               <p>
                 {filter !== 'all' 
                   ? `You don't have any ${filter} collaborations.` 
-                  : 'Start connecting with brands or influencers to create collaborations.'}
+                  : isInfluencer 
+                    ? 'Apply to campaigns to start collaborating!'
+                    : 'Create campaigns to receive applications.'}
               </p>
-              {!isInfluencer && (
+              {isBrand && (
                 <Link to="/influencers" className="btn btn-primary">
                   Find Influencers
                 </Link>
