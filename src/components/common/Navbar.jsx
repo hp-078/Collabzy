@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import notificationService from '../../services/notification.service';
+import messageService from '../../services/message.service';
+import socketService from '../../services/socket.service';
 import { 
   Menu, 
   X, 
@@ -14,7 +17,11 @@ import {
     Bell,
     ArrowUpRight,
     Sparkles,
-    LayoutDashboard
+    LayoutDashboard,
+    Megaphone,
+    Check,
+    CheckCheck,
+    Trash2
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -23,6 +30,11 @@ const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
     const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+  const [unreadMsgCount, setUnreadMsgCount] = useState(0);
+  const notifRef = useRef(null);
     const { user, logout, isAuthenticated, isInfluencer } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -71,6 +83,105 @@ const Navbar = () => {
 
         return () => observer.disconnect();
     }, [location.pathname]);
+
+  // Fetch notification count + message count
+  const fetchCounts = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const [notifRes, msgRes] = await Promise.all([
+        notificationService.getUnreadCount().catch(() => ({ data: { unreadCount: 0 } })),
+        messageService.getUnreadCount().catch(() => ({ data: { unreadCount: 0 } })),
+      ]);
+      setUnreadNotifCount(notifRes.data?.unreadCount ?? 0);
+      setUnreadMsgCount(msgRes.data?.unreadCount ?? 0);
+    } catch (e) {
+      console.error('Failed to fetch counts', e);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 30000); // refresh every 30s
+    return () => clearInterval(interval);
+  }, [fetchCounts]);
+
+  // Listen for real-time notifications via socket
+  useEffect(() => {
+    if (!isAuthenticated || !socketService.socket) return;
+    const handler = (notification) => {
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadNotifCount(prev => prev + 1);
+    };
+    socketService.socket.on('notification:new', handler);
+    return () => {
+      socketService.socket?.off('notification:new', handler);
+    };
+  }, [isAuthenticated]);
+
+  // Close notification dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Load notifications when dropdown opens
+  const toggleNotifications = async () => {
+    const willShow = !showNotifications;
+    setShowNotifications(willShow);
+    if (willShow && isAuthenticated) {
+      try {
+        const res = await notificationService.getNotifications(1, 15);
+        setNotifications(res.data || []);
+      } catch (e) {
+        console.error('Failed to load notifications', e);
+      }
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadNotifCount(0);
+    } catch (e) {
+      console.error('Failed to mark all as read', e);
+    }
+  };
+
+  const handleMarkOneRead = async (notifId) => {
+    try {
+      await notificationService.markAsRead(notifId);
+      setNotifications(prev => prev.map(n => n._id === notifId ? { ...n, isRead: true } : n));
+      setUnreadNotifCount(prev => Math.max(0, prev - 1));
+    } catch (e) {
+      console.error('Failed to mark as read', e);
+    }
+  };
+
+  const handleDeleteNotif = async (notifId) => {
+    try {
+      await notificationService.deleteNotification(notifId);
+      const wasUnread = notifications.find(n => n._id === notifId && !n.isRead);
+      setNotifications(prev => prev.filter(n => n._id !== notifId));
+      if (wasUnread) setUnreadNotifCount(prev => Math.max(0, prev - 1));
+    } catch (e) {
+      console.error('Failed to delete notification', e);
+    }
+  };
+
+  const getTimeSince = (date) => {
+    if (!date) return '';
+    const secs = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+    if (secs < 60) return 'just now';
+    if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
+    if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`;
+    return `${Math.floor(secs / 86400)}d ago`;
+  };
 
   const handleLogout = () => {
     logout();
@@ -181,6 +292,14 @@ const Navbar = () => {
                                       <span>Dashboard</span>
                                   </Link>
                                   <Link 
+                                      to="/campaigns"
+                                      className={`nav-pill ${isActive('/campaigns') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <Megaphone size={16} />
+                                      <span>Campaigns</span>
+                                  </Link>
+                                  <Link 
                                       to="/collaborations"
                                       className={`nav-pill ${isActive('/collaborations') ? 'nav-active' : ''}`}
                                       onClick={closeMenu}
@@ -199,12 +318,48 @@ const Navbar = () => {
                           <div className="nav-user-section">
                               <Link to="/messages" className="nav-icon-btn nav-messages-btn">
                                   <MessageSquare size={18} />
-                                  <span className="nav-badge">2</span>
+                                  {unreadMsgCount > 0 && <span className="nav-badge">{unreadMsgCount > 9 ? '9+' : unreadMsgCount}</span>}
                               </Link>
-                              <button className="nav-icon-btn nav-notification-btn">
-                                  <Bell size={18} />
-                                  <span className="nav-badge">3</span>
-                </button>
+                              <div className="nav-notif-wrapper" ref={notifRef}>
+                                <button className="nav-icon-btn nav-notification-btn" onClick={toggleNotifications}>
+                                    <Bell size={18} />
+                                    {unreadNotifCount > 0 && <span className="nav-badge">{unreadNotifCount > 9 ? '9+' : unreadNotifCount}</span>}
+                                </button>
+                                {showNotifications && (
+                                  <div className="nav-notif-dropdown">
+                                    <div className="nav-notif-header">
+                                      <span className="nav-notif-title">Notifications</span>
+                                      {unreadNotifCount > 0 && (
+                                        <button className="nav-notif-mark-all" onClick={handleMarkAllRead}>
+                                          <CheckCheck size={14} /> Mark all read
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div className="nav-notif-list">
+                                      {notifications.length === 0 ? (
+                                        <div className="nav-notif-empty">
+                                          <Bell size={24} style={{ opacity: 0.3 }} />
+                                          <p>No notifications yet</p>
+                                        </div>
+                                      ) : (
+                                        notifications.map(n => (
+                                          <div key={n._id} className={`nav-notif-item ${!n.isRead ? 'nav-notif-unread' : ''}`}
+                                            onClick={() => { if (!n.isRead) handleMarkOneRead(n._id); if (n.actionUrl) { navigate(n.actionUrl); setShowNotifications(false); } }}>
+                                            <div className="nav-notif-content">
+                                              <span className="nav-notif-text">{n.title || n.message}</span>
+                                              {n.message && n.title && <span className="nav-notif-sub">{n.message}</span>}
+                                              <span className="nav-notif-time">{getTimeSince(n.createdAt)}</span>
+                                            </div>
+                                            <button className="nav-notif-del" onClick={(e) => { e.stopPropagation(); handleDeleteNotif(n._id); }}>
+                                              <X size={14} />
+                                            </button>
+                                          </div>
+                                        ))
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                 <div 
                                   className="nav-user-avatar-container"
                   onClick={() => setShowDropdown(!showDropdown)}
@@ -308,6 +463,14 @@ const Navbar = () => {
                           >
                               <LayoutDashboard size={20} />
                               <span>Dashboard</span>
+                          </Link>
+                          <Link
+                              to="/campaigns"
+                              className={`nav-mobile-item ${isActive('/campaigns') ? 'nav-active' : ''}`}
+                              onClick={closeMenu}
+                          >
+                              <Megaphone size={20} />
+                              <span>Campaigns</span>
                           </Link>
                           <Link
                               to="/collaborations"

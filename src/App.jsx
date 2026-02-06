@@ -18,6 +18,8 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import Collaborations from './pages/Collaborations/Collaborations';
 import Messages from './pages/Messages/Messages';
 import Profile from './pages/Profile/Profile';
+import Campaigns from './pages/Campaigns/Campaigns';
+import CampaignDetail from './pages/CampaignDetail/CampaignDetail';
 
 import './App.css';
 
@@ -76,6 +78,16 @@ function AppRoutes() {
       <Route path="/profile" element={
         <ProtectedRoute>
           <Layout><Profile /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/campaigns" element={
+        <ProtectedRoute>
+          <Layout><Campaigns /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/campaigns/:id" element={
+        <ProtectedRoute>
+          <Layout><CampaignDetail /></Layout>
         </ProtectedRoute>
       } />
 

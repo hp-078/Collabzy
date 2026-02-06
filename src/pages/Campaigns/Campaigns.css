@@ -1,0 +1,564 @@
+/* ============= CAMPAIGNS PAGE ============= */
+.camp-page {
+  min-height: 100vh;
+  padding: 6rem 1.5rem 3rem;
+  background: var(--bg-primary, #0a0a0f);
+}
+
+.camp-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.camp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.camp-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.camp-header p {
+  color: #94a3b8;
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.camp-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.camp-create-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* Filters */
+.camp-filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.camp-filter-select,
+.camp-search-input {
+  padding: 0.65rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.camp-filter-select:focus,
+.camp-search-input:focus {
+  border-color: #6366f1;
+}
+
+.camp-search-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.camp-filter-select option {
+  background: #1e293b;
+  color: #fff;
+}
+
+/* Tabs */
+.camp-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0;
+  overflow-x: auto;
+}
+
+.camp-tab {
+  padding: 0.65rem 1.25rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.camp-tab:hover {
+  color: #e2e8f0;
+}
+
+.camp-tab.active {
+  color: #6366f1;
+  border-bottom-color: #6366f1;
+}
+
+/* Campaign Grid */
+.camp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Campaign Card */
+.camp-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.25s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.camp-card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.camp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.camp-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.camp-card-brand {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+
+.camp-card-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  flex-shrink: 0;
+}
+
+.camp-status-active { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.camp-status-draft { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+.camp-status-paused { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.camp-status-completed { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.camp-status-cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+.camp-card-desc {
+  color: #94a3b8;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.camp-card-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.camp-tag {
+  padding: 0.2rem 0.6rem;
+  background: rgba(99, 102, 241, 0.1);
+  color: #818cf8;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.camp-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.camp-card-budget {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.camp-card-deadline {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.camp-card-stats {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.camp-card-stat {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.camp-card-stat strong {
+  color: #e2e8f0;
+}
+
+.camp-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.camp-apply-btn,
+.camp-view-btn {
+  flex: 1;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+}
+
+.camp-apply-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}
+
+.camp-apply-btn:hover {
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.camp-apply-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.camp-view-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.camp-view-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Match Score Badge */
+.camp-match-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.3rem 0.7rem;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Empty State */
+.camp-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #94a3b8;
+}
+
+.camp-empty svg {
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.camp-empty h3 {
+  color: #e2e8f0;
+  margin-bottom: 0.5rem;
+}
+
+/* ============= CREATE CAMPAIGN MODAL ============= */
+.camp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.camp-modal {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.camp-modal h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1.5rem;
+}
+
+.camp-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.camp-form-group label {
+  display: block;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+}
+
+.camp-form-input,
+.camp-form-textarea,
+.camp-form-select {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.camp-form-input:focus,
+.camp-form-textarea:focus,
+.camp-form-select:focus {
+  border-color: #6366f1;
+}
+
+.camp-form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.camp-form-select option {
+  background: #1e293b;
+  color: #fff;
+}
+
+.camp-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.camp-form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  justify-content: flex-end;
+}
+
+.camp-form-submit,
+.camp-form-cancel {
+  padding: 0.7rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.camp-form-submit {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}
+
+.camp-form-submit:hover {
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+}
+
+.camp-form-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.camp-form-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.camp-form-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ============= APPLY MODAL ============= */
+.camp-apply-modal {
+  max-width: 500px;
+}
+
+.camp-apply-modal h3 {
+  font-size: 1.25rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.camp-apply-modal .camp-apply-campaign-info {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ============= CAMPAIGN DETAIL MODAL ============= */
+.camp-detail-modal {
+  max-width: 700px;
+}
+
+.camp-detail-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+
+.camp-detail-brand {
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.camp-detail-section {
+  margin-bottom: 1.5rem;
+}
+
+.camp-detail-section h4 {
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.camp-detail-section p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.camp-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.camp-detail-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 0.85rem;
+}
+
+.camp-detail-item .label {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  display: block;
+}
+
+.camp-detail-item .value {
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.camp-deliverables-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.camp-deliverables-list li {
+  color: #94a3b8;
+  padding: 0.4rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.camp-deliverables-list li svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .camp-page {
+    padding: 5rem 1rem 2rem;
+  }
+  .camp-header {
+    flex-direction: column;
+  }
+  .camp-grid {
+    grid-template-columns: 1fr;
+  }
+  .camp-form-row {
+    grid-template-columns: 1fr;
+  }
+  .camp-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .camp-modal {
+    padding: 1.5rem;
+  }
+}
