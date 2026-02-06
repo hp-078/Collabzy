@@ -10,26 +10,19 @@ exports.createCampaign = async (req, res) => {
   try {
     const brandId = req.user._id;
 
-    // Check if brand profile exists
-    const brandProfile = await BrandProfile.findOne({ userId: brandId });
-    if (!brandProfile) {
-      return res.status(404).json({
-        success: false,
-        message: 'Brand profile not found. Please create your profile first.'
-      });
-    }
+    // Get brand profile
+    const brandProfile = await BrandProfile.findOne({ user: brandId });
 
-    // Create campaign with brand info
     const campaignData = {
       brand: brandId,
-      brandProfile: brandProfile._id,
+      brandProfile: brandProfile?._id,
       title: req.body.title,
       description: req.body.description,
       category: req.body.category,
-      platformType: req.body.platformType,
+      platformType: req.body.platformType || 'Any',
       budget: {
-        min: req.body.budgetMin || req.body.budget?.min,
-        max: req.body.budgetMax || req.body.budget?.max
+        min: req.body.budgetMin || req.body.budget?.min || 0,
+        max: req.body.budgetMax || req.body.budget?.max || 0
       },
       deliverables: req.body.deliverables || [],
       startDate: req.body.startDate || new Date(),
@@ -37,21 +30,25 @@ exports.createCampaign = async (req, res) => {
       eligibility: {
         minFollowers: req.body.eligibility?.minFollowers || req.body.minFollowers || 0,
         maxFollowers: req.body.eligibility?.maxFollowers || req.body.maxFollowers || 10000000,
-        minEngagementRate: req.body.eligibility?.minEngagementRate || req.body.minEngagementRate || 0,
-        requiredNiches: req.body.eligibility?.requiredNiches || req.body.requiredNiches || [],
-        minTrustScore: req.body.eligibility?.minTrustScore || req.body.minTrustScore || 0,
-        requiredPlatforms: req.body.eligibility?.requiredPlatforms || req.body.requiredPlatforms || []
+        minEngagementRate: req.body.eligibility?.minEngagementRate || 0,
+        requiredNiches: req.body.eligibility?.requiredNiches || [],
+        minTrustScore: req.body.eligibility?.minTrustScore || 0,
+        requiredPlatforms: req.body.eligibility?.requiredPlatforms || []
       },
       status: req.body.status || 'active',
       termsAndConditions: req.body.termsAndConditions || '',
-      tags: req.body.tags || []
+      tags: req.body.tags || [],
+      maxInfluencers: req.body.maxInfluencers || 10
     };
 
     const campaign = await Campaign.create(campaignData);
-
-    // Populate brand info for response
     await campaign.populate('brand', 'name email');
-    await campaign.populate('brandProfile', 'brandName industry');
+
+    // Update brand profile stats
+    if (brandProfile) {
+      brandProfile.activeCampaigns += 1;
+      await brandProfile.save();
+    }
 
     res.status(201).json({
       success: true,
@@ -60,149 +57,112 @@ exports.createCampaign = async (req, res) => {
     });
   } catch (error) {
     console.error('Create campaign error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create campaign',
-      error: error.message
-    });
-  }
-};
 
-/**
- * Update campaign (Brand only, owner only)
- * PUT /api/campaigns/:id
- */
-exports.updateCampaign = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const brandId = req.user._id;
-
-    // Find campaign and verify ownership
-    const campaign = await Campaign.findById(id);
-    if (!campaign) {
-      return res.status(404).json({
-        success: false,
-        message: 'Campaign not found'
-      });
-    }
-
-    // Check ownership
-    if (campaign.brand.toString() !== brandId) {
-      return res.status(403).json({
-        success: false,
-        message: 'You are not authorized to update this campaign'
-      });
-    }
-
-    // Update allowed fields
-    const allowedUpdates = [
-      'title', 'description', 'category', 'platformType',
-      'deliverables', 'deadline', 'status', 'termsAndConditions', 'tags'
-    ];
-
-    allowedUpdates.forEach(field => {
-      if (req.body[field] !== undefined) {
-        campaign[field] = req.body[field];
-      }
-    });
-
-    // Update budget if provided
-    if (req.body.budgetMin !== undefined || req.body.budget?.min !== undefined) {
-      campaign.budget.min = req.body.budgetMin || req.body.budget.min;
-    }
-    if (req.body.budgetMax !== undefined || req.body.budget?.max !== undefined) {
-      campaign.budget.max = req.body.budgetMax || req.body.budget.max;
-    }
-
-    // Update eligibility criteria
-    if (req.body.eligibility) {
-      Object.keys(req.body.eligibility).forEach(key => {
-        if (req.body.eligibility[key] !== undefined) {
-          campaign.eligibility[key] = req.body.eligibility[key];
-        }
-      });
-    }
-
-    await campaign.save();
-
-    await campaign.populate('brand', 'name email');
-    await campaign.populate('brandProfile', 'brandName industry');
-
-    res.json({
-      success: true,
-      message: 'Campaign updated successfully',
-      data: campaign
-    });
-  } catch (error) {
-    console.error('Update campaign error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update campaign',
-      error: error.message
-    });
-  }
-};
-
-/**
- * Delete campaign (Brand only, owner only)
- * DELETE /api/campaigns/:id
- */
-exports.deleteCampaign = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const brandId = req.user._id;
-
-    const campaign = await Campaign.findById(id);
-    if (!campaign) {
-      return res.status(404).json({
-        success: false,
-        message: 'Campaign not found'
-      });
-    }
-
-    // Check ownership
-    if (campaign.brand.toString() !== brandId) {
-      return res.status(403).json({
-        success: false,
-        message: 'You are not authorized to delete this campaign'
-      });
-    }
-
-    // Check if campaign has active applications/deals
-    if (campaign.acceptedCount > 0) {
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
       return res.status(400).json({
         success: false,
-        message: 'Cannot delete campaign with active deals. Please close the campaign instead.'
+        message: messages.join(', ')
       });
     }
 
-    await Campaign.findByIdAndDelete(id);
-
-    res.json({
-      success: true,
-      message: 'Campaign deleted successfully'
-    });
-  } catch (error) {
-    console.error('Delete campaign error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete campaign',
-      error: error.message
+      message: 'Failed to create campaign'
     });
   }
 };
 
 /**
- * Get campaign by ID (Public)
+ * Get all campaigns with filtering
+ * GET /api/campaigns
+ */
+exports.getAllCampaigns = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      category,
+      platform,
+      status,
+      minBudget,
+      maxBudget,
+      search,
+      sortBy = 'createdAt',
+      order = 'desc'
+    } = req.query;
+
+    // Build filter
+    const filter = {
+      status: status || 'active',
+      deadline: { $gt: new Date() }
+    };
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (platform && platform !== 'all' && platform !== 'Any') {
+      filter.platformType = { $in: [platform, 'Any', 'Multiple'] };
+    }
+
+    if (minBudget) {
+      filter['budget.min'] = { $gte: parseInt(minBudget) };
+    }
+
+    if (maxBudget) {
+      filter['budget.max'] = { $lte: parseInt(maxBudget) };
+    }
+
+    if (search) {
+      filter.$text = { $search: search };
+    }
+
+    // Build sort
+    const sortOptions = {};
+    sortOptions[sortBy] = order === 'asc' ? 1 : -1;
+
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [campaigns, total] = await Promise.all([
+      Campaign.find(filter)
+        .populate('brand', 'name email')
+        .populate('brandProfile', 'companyName logo industry')
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Campaign.countDocuments(filter)
+    ]);
+
+    res.json({
+      success: true,
+      data: campaigns,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Get all campaigns error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch campaigns'
+    });
+  }
+};
+
+/**
+ * Get campaign by ID
  * GET /api/campaigns/:id
  */
 exports.getCampaignById = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const campaign = await Campaign.findById(id)
+    const campaign = await Campaign.findById(req.params.id)
       .populate('brand', 'name email')
-      .populate('brandProfile', 'brandName industry logo website');
+      .populate('brandProfile', 'companyName logo industry websiteUrl');
 
     if (!campaign) {
       return res.status(404).json({
@@ -223,37 +183,146 @@ exports.getCampaignById = async (req, res) => {
     console.error('Get campaign error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch campaign',
-      error: error.message
+      message: 'Failed to fetch campaign'
     });
   }
 };
 
 /**
- * Get brand's campaigns (Brand only)
+ * Update campaign (Brand only, owner only)
+ * PUT /api/campaigns/:id
+ */
+exports.updateCampaign = async (req, res) => {
+  try {
+    const campaign = await Campaign.findById(req.params.id);
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: 'Campaign not found'
+      });
+    }
+
+    // Check ownership
+    if (campaign.brand.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this campaign'
+      });
+    }
+
+    // Update allowed fields
+    const allowedUpdates = [
+      'title', 'description', 'category', 'platformType',
+      'deliverables', 'deadline', 'status', 'termsAndConditions',
+      'tags', 'maxInfluencers'
+    ];
+
+    allowedUpdates.forEach(field => {
+      if (req.body[field] !== undefined) {
+        campaign[field] = req.body[field];
+      }
+    });
+
+    // Update budget
+    if (req.body.budget || req.body.budgetMin || req.body.budgetMax) {
+      campaign.budget = {
+        min: req.body.budgetMin || req.body.budget?.min || campaign.budget.min,
+        max: req.body.budgetMax || req.body.budget?.max || campaign.budget.max
+      };
+    }
+
+    // Update eligibility
+    if (req.body.eligibility) {
+      campaign.eligibility = { ...campaign.eligibility, ...req.body.eligibility };
+    }
+
+    await campaign.save();
+    await campaign.populate('brand', 'name email');
+
+    res.json({
+      success: true,
+      message: 'Campaign updated successfully',
+      data: campaign
+    });
+  } catch (error) {
+    console.error('Update campaign error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update campaign'
+    });
+  }
+};
+
+/**
+ * Delete campaign (Brand only, owner only)
+ * DELETE /api/campaigns/:id
+ */
+exports.deleteCampaign = async (req, res) => {
+  try {
+    const campaign = await Campaign.findById(req.params.id);
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: 'Campaign not found'
+      });
+    }
+
+    // Check ownership
+    if (campaign.brand.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this campaign'
+      });
+    }
+
+    // Check for active deals
+    if (campaign.acceptedCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete campaign with active deals'
+      });
+    }
+
+    await Campaign.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Campaign deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete campaign error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete campaign'
+    });
+  }
+};
+
+/**
+ * Get brand's campaigns
  * GET /api/campaigns/brand/my-campaigns
  */
 exports.getMyCampaigns = async (req, res) => {
   try {
-    const brandId = req.user._id;
     const { status, page = 1, limit = 20 } = req.query;
 
-    // Build filter
-    const filter = { brand: brandId };
+    const filter = { brand: req.user._id };
     if (status && status !== 'all') {
       filter.status = status;
     }
 
-    // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const campaigns = await Campaign.find(filter)
-      .populate('brandProfile', 'brandName')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Campaign.countDocuments(filter);
+    const [campaigns, total] = await Promise.all([
+      Campaign.find(filter)
+        .populate('brandProfile', 'companyName')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Campaign.countDocuments(filter)
+    ]);
 
     res.json({
       success: true,
@@ -269,23 +338,21 @@ exports.getMyCampaigns = async (req, res) => {
     console.error('Get my campaigns error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch campaigns',
-      error: error.message
+      message: 'Failed to fetch campaigns'
     });
   }
 };
 
 /**
- * Get eligible campaigns for influencer (Influencer only)
+ * Get eligible campaigns for influencer
  * GET /api/campaigns/influencer/eligible
  */
 exports.getEligibleCampaigns = async (req, res) => {
   try {
-    const influencerId = req.user._id;
     const { category, platform, page = 1, limit = 20 } = req.query;
 
     // Get influencer profile
-    const influencerProfile = await InfluencerProfile.findOne({ userId: influencerId });
+    const influencerProfile = await InfluencerProfile.findOne({ user: req.user._id });
     if (!influencerProfile) {
       return res.status(404).json({
         success: false,
@@ -293,30 +360,24 @@ exports.getEligibleCampaigns = async (req, res) => {
       });
     }
 
-    // Build filter for active campaigns
+    // Build filter
     const filter = {
       status: 'active',
       deadline: { $gt: new Date() }
     };
 
-    if (category) {
-      filter.category = category;
-    }
+    if (category) filter.category = category;
+    if (platform && platform !== 'all') filter.platformType = platform;
 
-    if (platform && platform !== 'all') {
-      filter.platformType = platform;
-    }
-
-    // Get all active campaigns
+    // Get campaigns and filter by eligibility
     const allCampaigns = await Campaign.find(filter)
       .populate('brand', 'name')
-      .populate('brandProfile', 'brandName logo')
+      .populate('brandProfile', 'companyName logo')
       .sort({ createdAt: -1 });
 
-    // Filter campaigns where influencer is eligible
     const eligibleCampaigns = allCampaigns.filter(campaign => {
-      const eligibilityCheck = campaign.isEligible(influencerProfile);
-      return eligibilityCheck.eligible;
+      const check = campaign.isEligible(influencerProfile);
+      return check.eligible;
     });
 
     // Pagination
@@ -337,23 +398,21 @@ exports.getEligibleCampaigns = async (req, res) => {
     console.error('Get eligible campaigns error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch eligible campaigns',
-      error: error.message
+      message: 'Failed to fetch eligible campaigns'
     });
   }
 };
 
 /**
- * Get recommended campaigns with match scores (Influencer only)
+ * Get recommended campaigns with match scores
  * GET /api/campaigns/influencer/recommended
  */
 exports.getRecommendedCampaigns = async (req, res) => {
   try {
-    const influencerId = req.user._id;
     const { page = 1, limit = 20 } = req.query;
 
     // Get influencer profile
-    const influencerProfile = await InfluencerProfile.findOne({ userId: influencerId });
+    const influencerProfile = await InfluencerProfile.findOne({ user: req.user._id });
     if (!influencerProfile) {
       return res.status(404).json({
         success: false,
@@ -361,36 +420,29 @@ exports.getRecommendedCampaigns = async (req, res) => {
       });
     }
 
-    // Get all active campaigns
+    // Get active campaigns
     const allCampaigns = await Campaign.find({
       status: 'active',
       deadline: { $gt: new Date() }
     })
       .populate('brand', 'name')
-      .populate('brandProfile', 'brandName logo')
-      .lean();
+      .populate('brandProfile', 'companyName logo');
 
-    // Filter eligible campaigns and calculate match scores
+    // Filter eligible and calculate match scores
     const campaignsWithScores = allCampaigns
       .map(campaign => {
-        // Create a Mongoose document instance for methods
-        const campaignDoc = new Campaign(campaign);
-        const eligibilityCheck = campaignDoc.isEligible(influencerProfile);
-        
-        if (!eligibilityCheck.eligible) {
-          return null;
-        }
+        const eligibilityCheck = campaign.isEligible(influencerProfile);
+        if (!eligibilityCheck.eligible) return null;
 
-        const matchScore = campaignDoc.calculateMatchScore(influencerProfile);
-        
+        const matchScore = campaign.calculateMatchScore(influencerProfile);
         return {
-          ...campaign,
+          ...campaign.toObject(),
           matchScore,
           eligible: true
         };
       })
       .filter(c => c !== null)
-      .sort((a, b) => b.matchScore - a.matchScore); // Sort by match score descending
+      .sort((a, b) => b.matchScore - a.matchScore);
 
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -410,10 +462,7 @@ exports.getRecommendedCampaigns = async (req, res) => {
     console.error('Get recommended campaigns error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch recommended campaigns',
-      error: error.message
+      message: 'Failed to fetch recommended campaigns'
     });
   }
 };
-
-module.exports = exports;

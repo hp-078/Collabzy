@@ -1,136 +1,73 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
-  // Conversation participants
+  // Conversation reference
   conversationId: {
     type: String,
     required: true,
-    index: true,
+    index: true
   },
+
+  // Participants
   sender: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: true
   },
-  recipient: {
+  receiver: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: true
   },
-  
-  // Message Content
+
+  // Message content
   content: {
     type: String,
     required: [true, 'Message content is required'],
-    maxlength: [5000, 'Message cannot exceed 5000 characters'],
+    maxlength: [5000, 'Message cannot exceed 5000 characters']
   },
-  messageType: {
+
+  // Message type
+  type: {
     type: String,
-    enum: ['text', 'image', 'file', 'link'],
-    default: 'text',
+    enum: ['text', 'image', 'file', 'system'],
+    default: 'text'
   },
-  
+
   // Attachments
   attachments: [{
-    type: {
-      type: String,
-      enum: ['image', 'video', 'document', 'audio', 'other'],
-    },
-    url: String,
-    filename: String,
-    size: Number, // in bytes
-    mimeType: String,
+    name: { type: String },
+    url: { type: String },
+    type: { type: String },
+    size: { type: Number }
   }],
-  
-  // Message Status
+
+  // Status
   isRead: {
     type: Boolean,
-    default: false,
+    default: false
   },
-  readAt: {
-    type: Date,
-  },
-  isDelivered: {
-    type: Boolean,
-    default: false,
-  },
-  deliveredAt: {
-    type: Date,
-  },
-  
-  // Related to deal/campaign
-  relatedDeal: {
+  readAt: { type: Date },
+
+  // Optional deal reference
+  deal: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Deal',
-  },
-  relatedCampaign: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Campaign',
-  },
-  
-  // Message Actions
-  isDeleted: {
-    type: Boolean,
-    default: false,
-  },
-  deletedAt: {
-    type: Date,
-  },
-  deletedBy: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  }],
-  
-  // Reply to another message
-  replyTo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Message',
-  },
-  
+    ref: 'Deal'
+  }
 }, {
-  timestamps: true,
+  timestamps: true
 });
+
+// Create conversation ID from two user IDs (sorted for consistency)
+messageSchema.statics.createConversationId = function (userId1, userId2) {
+  const sorted = [userId1.toString(), userId2.toString()].sort();
+  return `${sorted[0]}_${sorted[1]}`;
+};
 
 // Indexes
+messageSchema.index({ sender: 1 });
+messageSchema.index({ receiver: 1 });
 messageSchema.index({ conversationId: 1, createdAt: -1 });
-messageSchema.index({ sender: 1, recipient: 1 });
-messageSchema.index({ recipient: 1, isRead: 1 });
-
-// Static method to create conversation ID
-messageSchema.statics.createConversationId = function(userId1, userId2) {
-  // Sort IDs to ensure consistent conversation ID regardless of order
-  const ids = [userId1.toString(), userId2.toString()].sort();
-  return `${ids[0]}_${ids[1]}`;
-};
-
-// Pre-save middleware to set conversation ID
-messageSchema.pre('save', function(next) {
-  if (!this.conversationId) {
-    this.conversationId = messageSchema.statics.createConversationId(
-      this.sender,
-      this.recipient
-    );
-  }
-  next();
-});
-
-// Method to mark as read
-messageSchema.methods.markAsRead = function() {
-  if (!this.isRead) {
-    this.isRead = true;
-    this.readAt = new Date();
-  }
-  return this.save();
-};
-
-// Method to mark as delivered
-messageSchema.methods.markAsDelivered = function() {
-  if (!this.isDelivered) {
-    this.isDelivered = true;
-    this.deliveredAt = new Date();
-  }
-  return this.save();
-};
 
 const Message = mongoose.model('Message', messageSchema);
 

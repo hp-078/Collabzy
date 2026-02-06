@@ -1,218 +1,172 @@
 const mongoose = require('mongoose');
 
 const campaignSchema = new mongoose.Schema({
+  // Brand info
   brand: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: true
   },
   brandProfile: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'BrandProfile',
-    required: true,
+    ref: 'BrandProfile'
   },
-  
-  // Campaign Details
+
+  // Basic Info
   title: {
     type: String,
     required: [true, 'Campaign title is required'],
     trim: true,
+    maxlength: [200, 'Title cannot exceed 200 characters']
   },
   description: {
     type: String,
     required: [true, 'Campaign description is required'],
+    maxlength: [5000, 'Description cannot exceed 5000 characters']
   },
+
+  // Category & Platform
   category: {
     type: String,
-    enum: ['Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel', 
-           'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports', 'Other'],
-    required: true,
+    enum: [
+      'Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel',
+      'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports', 'Other',
+      'Fashion & Lifestyle', 'Tech & Gadgets', 'Fitness & Health',
+      'Food & Cooking', 'Beauty & Skincare', 'Travel & Adventure'
+    ],
+    required: true
   },
-  
-  // Platform Requirements
   platformType: {
     type: String,
-    enum: ['YouTube', 'Instagram', 'TikTok', 'Multiple'],
-    required: true,
+    enum: ['YouTube', 'Instagram', 'TikTok', 'Multiple', 'Any'],
+    default: 'Any'
   },
-  
+
   // Budget
   budget: {
-    min: {
-      type: Number,
-      required: true,
-    },
-    max: {
-      type: Number,
-      required: true,
-    },
+    min: { type: Number, required: true },
+    max: { type: Number, required: true },
+    currency: { type: String, default: 'USD' }
   },
-  
+
   // Deliverables
   deliverables: [{
-    type: {
-      type: String,
-      enum: ['Video', 'Post', 'Reel', 'Story', 'Short', 'Review', 'Unboxing', 'Tutorial', 'Other'],
-    },
-    quantity: {
-      type: Number,
-      default: 1,
-    },
-    description: String,
+    type: { type: String },
+    quantity: { type: Number, default: 1 },
+    description: { type: String }
   }],
-  
+
   // Timeline
   startDate: {
     type: Date,
+    default: Date.now
   },
   deadline: {
     type: Date,
-    required: [true, 'Campaign deadline is required'],
+    required: [true, 'Deadline is required']
   },
-  
+
   // Eligibility Criteria
   eligibility: {
-    minFollowers: {
-      type: Number,
-      default: 0,
-    },
-    maxFollowers: {
-      type: Number,
-      default: 10000000, // 10M
-    },
-    minEngagementRate: {
-      type: Number, // Percentage
-      default: 0,
-    },
-    requiredNiches: [{
-      type: String,
-      enum: ['Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel', 
-             'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports', 'Other'],
-    }],
-    minTrustScore: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
-    },
-    requiredPlatforms: [{
-      type: String,
-      enum: ['YouTube', 'Instagram', 'TikTok'],
-    }],
+    minFollowers: { type: Number, default: 0 },
+    maxFollowers: { type: Number, default: 10000000 },
+    minEngagementRate: { type: Number, default: 0 },
+    requiredNiches: [{ type: String }],
+    minTrustScore: { type: Number, default: 0 },
+    requiredPlatforms: [{ type: String }]
   },
-  
-  // Campaign Status
+
+  // Status
   status: {
     type: String,
-    enum: ['draft', 'active', 'paused', 'closed', 'completed'],
-    default: 'active',
+    enum: ['draft', 'active', 'paused', 'completed', 'cancelled'],
+    default: 'active'
   },
-  
-  // Statistics
-  applicationCount: {
-    type: Number,
-    default: 0,
-  },
-  acceptedCount: {
-    type: Number,
-    default: 0,
-  },
-  viewCount: {
-    type: Number,
-    default: 0,
-  },
-  
+
   // Additional Info
-  termsAndConditions: {
-    type: String,
-  },
-  tags: [String],
-  
+  termsAndConditions: { type: String, default: '' },
+  tags: [{ type: String }],
+
+  // Statistics
+  viewCount: { type: Number, default: 0 },
+  applicationCount: { type: Number, default: 0 },
+  acceptedCount: { type: Number, default: 0 },
+  maxInfluencers: { type: Number, default: 10 }
 }, {
-  timestamps: true,
+  timestamps: true
 });
 
-// Indexes
-campaignSchema.index({ brand: 1, status: 1 });
-campaignSchema.index({ category: 1, platformType: 1 });
-campaignSchema.index({ 'eligibility.minFollowers': 1, 'eligibility.maxFollowers': 1 });
-campaignSchema.index({ deadline: 1, status: 1 });
+// Check if influencer is eligible for campaign
+campaignSchema.methods.isEligible = function (influencerProfile) {
+  const reasons = [];
+  const elig = this.eligibility;
 
-// Method to check if influencer is eligible
-campaignSchema.methods.isEligible = function(influencerProfile) {
-  const { eligibility } = this;
-  
-  // Check follower count
-  if (influencerProfile.followers < eligibility.minFollowers ||
-      influencerProfile.followers > eligibility.maxFollowers) {
-    return { eligible: false, reason: 'Follower count not in range' };
+  // Check followers
+  const followers = influencerProfile.totalFollowers || 0;
+  if (followers < elig.minFollowers) {
+    reasons.push(`Minimum ${elig.minFollowers} followers required`);
   }
-  
+  if (followers > elig.maxFollowers) {
+    reasons.push(`Maximum ${elig.maxFollowers} followers allowed`);
+  }
+
   // Check engagement rate
-  if (influencerProfile.engagementRate < eligibility.minEngagementRate) {
-    return { eligible: false, reason: 'Engagement rate too low' };
+  if (influencerProfile.averageEngagementRate < elig.minEngagementRate) {
+    reasons.push(`Minimum ${elig.minEngagementRate}% engagement rate required`);
   }
-  
+
   // Check trust score
-  if (influencerProfile.trustScore < eligibility.minTrustScore) {
-    return { eligible: false, reason: 'Trust score too low' };
+  if (influencerProfile.trustScore < elig.minTrustScore) {
+    reasons.push(`Minimum trust score of ${elig.minTrustScore} required`);
   }
-  
-  // Check niche match
-  if (eligibility.requiredNiches && eligibility.requiredNiches.length > 0) {
-    const hasMatchingNiche = influencerProfile.niche.some(n => 
-      eligibility.requiredNiches.includes(n)
-    );
-    if (!hasMatchingNiche) {
-      return { eligible: false, reason: 'Niche does not match' };
+
+  // Check platform
+  if (elig.requiredPlatforms && elig.requiredPlatforms.length > 0) {
+    if (!elig.requiredPlatforms.includes(influencerProfile.platformType)) {
+      reasons.push(`Platform must be one of: ${elig.requiredPlatforms.join(', ')}`);
     }
   }
-  
-  // Check platform match
-  if (eligibility.requiredPlatforms && eligibility.requiredPlatforms.length > 0) {
-    const platformMatches = influencerProfile.platformType === 'Multiple' ||
-      eligibility.requiredPlatforms.includes(influencerProfile.platformType);
-    if (!platformMatches) {
-      return { eligible: false, reason: 'Platform type does not match' };
-    }
-  }
-  
-  return { eligible: true };
+
+  return {
+    eligible: reasons.length === 0,
+    reasons
+  };
 };
 
-// Method to calculate match score
-campaignSchema.methods.calculateMatchScore = function(influencerProfile) {
+// Calculate match score between campaign and influencer
+campaignSchema.methods.calculateMatchScore = function (influencerProfile) {
   let score = 0;
-  
-  // Niche match (0-40 points)
-  const hasExactNicheMatch = influencerProfile.niche.includes(this.category);
-  if (hasExactNicheMatch) score += 40;
-  else if (this.eligibility.requiredNiches?.some(n => influencerProfile.niche.includes(n))) {
+
+  // Niche match (+40)
+  const campaignNiche = this.category;
+  const influencerNiches = influencerProfile.niche || [];
+  if (influencerNiches.includes(campaignNiche)) {
+    score += 40;
+  }
+
+  // Platform match (+20)
+  if (this.platformType === 'Any' ||
+    this.platformType === influencerProfile.platformType ||
+    this.platformType === 'Multiple') {
     score += 20;
   }
-  
-  // Follower range fit (0-20 points)
-  const followerMidpoint = (this.eligibility.minFollowers + this.eligibility.maxFollowers) / 2;
-  const followerDiff = Math.abs(influencerProfile.followers - followerMidpoint);
-  const followerRange = this.eligibility.maxFollowers - this.eligibility.minFollowers;
-  const followerFitRatio = 1 - (followerDiff / followerRange);
-  score += Math.max(0, Math.round(followerFitRatio * 20));
-  
-  // Engagement rate (0-15 points)
-  if (influencerProfile.engagementRate >= 5) score += 15;
-  else if (influencerProfile.engagementRate >= 3) score += 10;
-  else if (influencerProfile.engagementRate >= 2) score += 5;
-  
-  // Trust score (0-10 points)
-  if (influencerProfile.trustScore >= 80) score += 10;
-  else if (influencerProfile.trustScore >= 60) score += 5;
-  
-  // Platform match (0-15 points)
-  if (influencerProfile.platformType === this.platformType) score += 15;
-  else if (influencerProfile.platformType === 'Multiple') score += 10;
-  
-  return Math.min(100, score);
+
+  // Trust score bonus (+20 max)
+  score += Math.min(20, influencerProfile.trustScore / 5);
+
+  // Engagement rate bonus (+20 max)
+  score += Math.min(20, influencerProfile.averageEngagementRate * 4);
+
+  return Math.round(score);
 };
+
+// Indexes
+campaignSchema.index({ brand: 1 });
+campaignSchema.index({ status: 1 });
+campaignSchema.index({ category: 1 });
+campaignSchema.index({ deadline: 1 });
+campaignSchema.index({ createdAt: -1 });
+campaignSchema.index({ 'title': 'text', 'description': 'text' });
 
 const Campaign = mongoose.model('Campaign', campaignSchema);
 

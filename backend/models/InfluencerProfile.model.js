@@ -5,68 +5,70 @@ const influencerProfileSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    unique: true,
+    unique: true
   },
+
   // Basic Info
   name: {
     type: String,
     required: [true, 'Name is required'],
-    trim: true,
+    trim: true
   },
   bio: {
     type: String,
-    maxlength: [500, 'Bio cannot exceed 500 characters'],
+    maxlength: [1000, 'Bio cannot exceed 1000 characters'],
+    default: ''
   },
   avatar: {
     type: String,
-    default: 'https://via.placeholder.com/150',
+    default: ''
   },
   location: {
     type: String,
+    default: ''
   },
-  
+  website: {
+    type: String,
+    default: ''
+  },
+
   // Niche & Platform
   niche: {
     type: [String],
-    enum: ['Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel', 
-           'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports', 'Other'],
-    default: [],
+    enum: [
+      // Single-word niches
+      'Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel',
+      'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports', 'Other',
+      // Composite niches (from frontend)
+      'Fashion & Lifestyle', 'Tech & Gadgets', 'Fitness & Health',
+      'Food & Cooking', 'Beauty & Skincare', 'Travel & Adventure'
+    ],
+    default: []
   },
   platformType: {
     type: String,
     enum: ['YouTube', 'Instagram', 'TikTok', 'Multiple'],
-    required: true,
+    default: 'Instagram'
   },
-  
+
   // Social Media Links
-  youtubeUrl: {
-    type: String,
-  },
-  youtubeChannelId: {
-    type: String,
-  },
-  instagramUrl: {
-    type: String,
-  },
-  instagramUsername: {
-    type: String,
-  },
-  tiktokUrl: {
-    type: String,
-  },
-  websiteUrl: {
-    type: String,
-  },
-  
-  // Platform-Specific Stats
+  youtubeUrl: { type: String, default: '' },
+  youtubeChannelId: { type: String, default: '' },
+  instagramUrl: { type: String, default: '' },
+  instagramUsername: { type: String, default: '' },
+  tiktokUrl: { type: String, default: '' },
+
+  // YouTube Stats
   youtubeStats: {
     subscribers: { type: Number, default: 0 },
     totalViews: { type: Number, default: 0 },
     videoCount: { type: Number, default: 0 },
     averageViews: { type: Number, default: 0 },
     engagementRate: { type: Number, default: 0 },
-    lastFetched: { type: Date },
+    lastFetched: { type: Date }
   },
+
+  // Instagram Stats
   instagramStats: {
     followers: { type: Number, default: 0 },
     following: { type: Number, default: 0 },
@@ -74,129 +76,105 @@ const influencerProfileSchema = new mongoose.Schema({
     averageLikes: { type: Number, default: 0 },
     averageComments: { type: Number, default: 0 },
     engagementRate: { type: Number, default: 0 },
-    lastFetched: { type: Date },
+    lastFetched: { type: Date }
   },
-  
-  // Combined Statistics (for backward compatibility & easy querying)
-  followers: {
-    type: Number,
-    default: 0,
-  },
-  totalViews: {
-    type: Number,
-    default: 0,
-  },
-  videoCount: {
-    type: Number,
-    default: 0,
-  },
-  averageViews: {
-    type: Number,
-    default: 0,
-  },
-  engagementRate: {
-    type: Number, // Percentage (0-100)
-    default: 0,
-  },
-  
-  // Trust Score & Verification
+
+  // Combined Statistics
+  totalFollowers: { type: Number, default: 0 },
+  totalEngagement: { type: Number, default: 0 },
+  averageEngagementRate: { type: Number, default: 0 },
+
+  // Trust Score (0-100)
   trustScore: {
     type: Number,
     min: 0,
     max: 100,
-    default: 50,
+    default: 50
   },
-  isVerified: {
-    type: Boolean,
-    default: false,
-  },
-  verifiedAt: {
-    type: Date,
-  },
-  
-  // Services Offered
+
+  // Verification
+  isVerified: { type: Boolean, default: false },
+  verifiedAt: { type: Date },
+
+  // Services offered
   services: [{
-    name: {
-      type: String,
-      required: true,
-    },
-    description: {
-      type: String,
-    },
-    price: {
-      type: Number,
-      required: true,
-    },
+    name: { type: String, required: true },
+    description: { type: String },
+    price: { type: Number, required: true },
+    currency: { type: String, default: 'USD' }
   }],
-  
-  // Portfolio & Past Work
-  portfolioLinks: [{
+
+  // Portfolio
+  portfolio: [{
     title: String,
-    url: String,
-    thumbnail: String,
+    description: String,
+    imageUrl: String,
+    link: String,
+    platform: String
   }],
-  
+
   // Statistics
-  completedCollaborations: {
-    type: Number,
-    default: 0,
-  },
-  averageRating: {
-    type: Number,
-    min: 0,
-    max: 5,
-    default: 0,
-  },
-  totalReviews: {
-    type: Number,
-    default: 0,
-  },
-  
-  // Last data fetch
-  lastDataFetch: {
-    type: Date,
-  },
+  campaignsCompleted: { type: Number, default: 0 },
+  totalEarnings: { type: Number, default: 0 },
+  averageRating: { type: Number, min: 0, max: 5, default: 0 },
+  totalReviews: { type: Number, default: 0 }
 }, {
-  timestamps: true,
+  timestamps: true
 });
 
-// Index for searching
-influencerProfileSchema.index({ name: 'text', bio: 'text' });
-influencerProfileSchema.index({ niche: 1, platformType: 1 });
-influencerProfileSchema.index({ trustScore: -1, followers: -1 });
-
-// Method to calculate trust score
-influencerProfileSchema.methods.calculateTrustScore = function() {
+// Calculate trust score based on profile data
+influencerProfileSchema.methods.calculateTrustScore = function () {
   let score = 50; // Base score
-  
-  // Engagement rate bonus
-  if (this.engagementRate >= 5) score += 20;
-  else if (this.engagementRate >= 3) score += 10;
-  else if (this.engagementRate < 1) score -= 10;
-  
-  // Verification bonus
+
+  // Profile completeness (+20 max)
+  if (this.bio && this.bio.length > 50) score += 5;
+  if (this.avatar) score += 3;
+  if (this.location) score += 2;
+  if (this.niche && this.niche.length > 0) score += 5;
+  if (this.services && this.services.length > 0) score += 5;
+
+  // Social proof (+20 max)
+  if (this.totalFollowers > 1000) score += 5;
+  if (this.totalFollowers > 10000) score += 5;
+  if (this.totalFollowers > 100000) score += 5;
+  if (this.averageEngagementRate > 2) score += 5;
+
+  // Verification (+10)
   if (this.isVerified) score += 10;
-  
-  // Past collaborations bonus
-  score += Math.min(this.completedCollaborations * 2, 20);
-  
-  // Rating bonus
-  if (this.averageRating >= 4.5) score += 10;
-  else if (this.averageRating >= 4) score += 5;
-  else if (this.averageRating < 3 && this.totalReviews > 0) score -= 10;
-  
-  // Profile completeness
-  const hasServices = this.services && this.services.length > 0;
-  const hasSocialLinks = this.youtubeUrl || this.instagramUrl || this.tiktokUrl;
-  const hasPortfolio = this.portfolioLinks && this.portfolioLinks.length > 0;
-  
-  if (!hasServices || !hasSocialLinks) score -= 15;
-  if (hasPortfolio) score += 5;
-  
-  // Cap between 0-100
-  this.trustScore = Math.max(0, Math.min(100, score));
-  return this.trustScore;
+
+  // Experience (+10 max)
+  if (this.campaignsCompleted > 0) score += 3;
+  if (this.campaignsCompleted > 5) score += 3;
+  if (this.campaignsCompleted > 10) score += 4;
+
+  // Rating (+10 max)
+  score += Math.min(10, this.averageRating * 2);
+
+  return Math.min(100, Math.max(0, Math.round(score)));
 };
+
+// Update combined stats
+influencerProfileSchema.methods.updateCombinedStats = function () {
+  const ytSubs = this.youtubeStats?.subscribers || 0;
+  const igFollowers = this.instagramStats?.followers || 0;
+
+  this.totalFollowers = ytSubs + igFollowers;
+
+  const ytEng = this.youtubeStats?.engagementRate || 0;
+  const igEng = this.instagramStats?.engagementRate || 0;
+  const count = (ytEng > 0 ? 1 : 0) + (igEng > 0 ? 1 : 0);
+
+  this.averageEngagementRate = count > 0 ? (ytEng + igEng) / count : 0;
+  this.trustScore = this.calculateTrustScore();
+};
+
+// Indexes
+influencerProfileSchema.index({ user: 1 });
+influencerProfileSchema.index({ niche: 1 });
+influencerProfileSchema.index({ platformType: 1 });
+influencerProfileSchema.index({ totalFollowers: -1 });
+influencerProfileSchema.index({ trustScore: -1 });
+influencerProfileSchema.index({ 'name': 'text', 'bio': 'text' });
 
 const InfluencerProfile = mongoose.model('InfluencerProfile', influencerProfileSchema);
 

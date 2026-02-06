@@ -1,121 +1,71 @@
 const mongoose = require('mongoose');
 
 const applicationSchema = new mongoose.Schema({
+  // References
   campaign: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Campaign',
-    required: true,
+    required: true
   },
   influencer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: true
   },
   influencerProfile: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'InfluencerProfile',
-    required: true,
+    ref: 'InfluencerProfile'
   },
-  brand: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  
+
   // Application Details
-  proposalText: {
+  message: {
     type: String,
-    required: [true, 'Proposal text is required'],
+    maxlength: [2000, 'Message cannot exceed 2000 characters'],
+    default: ''
   },
-  quotedPrice: {
+  proposedRate: {
     type: Number,
-    required: [true, 'Quoted price is required'],
+    default: 0
   },
-  deliveryPlan: {
-    type: String,
-  },
-  estimatedDeliveryTime: {
-    type: Number, // Days
-  },
-  
-  // Application Status
+  proposedDeliverables: [{
+    type: { type: String },
+    quantity: { type: Number },
+    description: { type: String }
+  }],
+
+  // Portfolio links for this application
+  portfolioLinks: [{
+    title: { type: String },
+    url: { type: String }
+  }],
+
+  // Status
   status: {
     type: String,
-    enum: ['pending', 'shortlisted', 'accepted', 'rejected', 'withdrawn'],
-    default: 'pending',
+    enum: ['pending', 'reviewed', 'shortlisted', 'accepted', 'rejected', 'withdrawn'],
+    default: 'pending'
   },
-  
-  // Match Score
-  matchScore: {
-    type: Number,
-    min: 0,
-    max: 100,
+
+  // Brand response
+  brandResponse: {
+    message: { type: String, default: '' },
+    respondedAt: { type: Date }
   },
-  
-  // Additional Info
-  coverLetter: {
-    type: String,
-  },
-  portfolioSamples: [{
-    title: String,
-    url: String,
-    thumbnail: String,
-  }],
-  
-  // Status History
-  statusHistory: [{
-    status: {
-      type: String,
-      enum: ['pending', 'shortlisted', 'accepted', 'rejected', 'withdrawn'],
-    },
-    changedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    changedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-    note: String,
-  }],
-  
-  // Timestamps for status changes
-  shortlistedAt: Date,
-  acceptedAt: Date,
-  rejectedAt: Date,
-  withdrawnAt: Date,
-  
+
+  // Timestamps for tracking
+  reviewedAt: { type: Date },
+  acceptedAt: { type: Date },
+  rejectedAt: { type: Date },
+  withdrawnAt: { type: Date }
 }, {
-  timestamps: true,
+  timestamps: true
 });
 
-// Indexes
-applicationSchema.index({ campaign: 1, influencer: 1 }, { unique: true }); // Prevent duplicate applications
-applicationSchema.index({ campaign: 1, status: 1, matchScore: -1 });
-applicationSchema.index({ influencer: 1, status: 1 });
-applicationSchema.index({ brand: 1, status: 1 });
-
-// Pre-save middleware to update status timestamps
-applicationSchema.pre('save', function(next) {
-  if (this.isModified('status')) {
-    const now = new Date();
-    switch (this.status) {
-      case 'shortlisted':
-        this.shortlistedAt = now;
-        break;
-      case 'accepted':
-        this.acceptedAt = now;
-        break;
-      case 'rejected':
-        this.rejectedAt = now;
-        break;
-      case 'withdrawn':
-        this.withdrawnAt = now;
-        break;
-    }
-  }
-  next();
-});
+// Prevent duplicate applications
+applicationSchema.index({ campaign: 1, influencer: 1 }, { unique: true });
+applicationSchema.index({ influencer: 1 });
+applicationSchema.index({ campaign: 1 });
+applicationSchema.index({ status: 1 });
 
 const Application = mongoose.model('Application', applicationSchema);
 

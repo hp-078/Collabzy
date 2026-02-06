@@ -1,68 +1,7 @@
 const InfluencerProfile = require('../models/InfluencerProfile.model');
-const User = require('../models/User.model');
-const youtubeService = require('../services/youtube.service');
-const instagramService = require('../services/instagram.service');
 
 /**
- * Calculate trust score for an influencer profile
- * Base: 50 points
- * + Engagement rate bonus: 0-20 points
- * + Verified account: 10 points
- * + Past collaborations: 5 points each (max 20)
- * + Reviews: 1 point per positive, -5 per negative
- * - Low engagement: -10 points
- * - Incomplete profile: -15 points
- * Range: 0-100
- */
-const calculateTrustScore = (profile) => {
-  let score = 50; // Base score
-
-  // Engagement rate bonus (0-20 points)
-  if (profile.engagementRate > 0) {
-    if (profile.engagementRate >= 8) {
-      score += 20; // Excellent engagement (8%+)
-    } else if (profile.engagementRate >= 5) {
-      score += 15; // Good engagement (5-8%)
-    } else if (profile.engagementRate >= 3) {
-      score += 10; // Average engagement (3-5%)
-    } else if (profile.engagementRate >= 1) {
-      score += 5; // Low engagement (1-3%)
-    } else {
-      score -= 10; // Very low engagement (<1%)
-    }
-  }
-
-  // Verified account bonus
-  if (profile.verified) {
-    score += 10;
-  }
-
-  // Past collaborations bonus (5 points each, max 20)
-  const collabBonus = Math.min((profile.pastCollaborations || 0) * 5, 20);
-  score += collabBonus;
-
-  // Reviews impact
-  if (profile.totalReviews > 0) {
-    const positiveReviews = Math.floor((profile.averageRating || 0) >= 4 ? profile.totalReviews * 0.7 : 0);
-    const negativeReviews = Math.floor((profile.averageRating || 0) < 3 ? profile.totalReviews * 0.3 : 0);
-    
-    score += positiveReviews;
-    score -= negativeReviews * 5;
-  }
-
-  // Incomplete profile penalty
-  const requiredFields = [profile.name, profile.bio, profile.niche, profile.platform];
-  const missingFields = requiredFields.filter(field => !field || field.length === 0);
-  if (missingFields.length > 0) {
-    score -= 15;
-  }
-
-  // Cap score between 0 and 100
-  return Math.max(0, Math.min(100, Math.round(score)));
-};
-
-/**
- * Create or initialize influencer profile
+ * Create influencer profile
  * POST /api/influencer/profile
  */
 exports.createProfile = async (req, res) => {
@@ -70,31 +9,34 @@ exports.createProfile = async (req, res) => {
     const userId = req.user._id;
 
     // Check if profile already exists
-    const existingProfile = await InfluencerProfile.findOne({ userId });
+    const existingProfile = await InfluencerProfile.findOne({ user: userId });
     if (existingProfile) {
       return res.status(400).json({
         success: false,
-        message: 'Profile already exists. Use PUT /api/influencer/profile to update.'
+        message: 'Profile already exists. Use update instead.'
       });
     }
 
-    // Create new profile
+    // Prepare profile data
     const profileData = {
-      userId,
+      user: userId,
       name: req.body.name || req.user.name,
-      email: req.body.email || req.user.email,
       bio: req.body.bio || '',
-      niche: req.body.niche || '',
-      platform: req.body.platform || 'Multiple Platforms',
-      location: req.body.location || '',
       avatar: req.body.avatar || '',
+      location: req.body.location || '',
+      website: req.body.website || '',
+      platformType: req.body.platformType || req.body.platform || 'Instagram',
       youtubeUrl: req.body.youtubeUrl || '',
       instagramUrl: req.body.instagramUrl || '',
-      website: req.body.website || '',
-      services: req.body.services || [],
-      verified: false,
-      trustScore: 50 // Initial base score
+      services: req.body.services || []
     };
+
+    // Handle niche (can be string or array)
+    if (req.body.niche) {
+      profileData.niche = Array.isArray(req.body.niche)
+        ? req.body.niche
+        : [req.body.niche];
+    }
 
     const profile = await InfluencerProfile.create(profileData);
 
@@ -105,10 +47,18 @@ exports.createProfile = async (req, res) => {
     });
   } catch (error) {
     console.error('Create profile error:', error);
+
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({
+        success: false,
+        message: messages.join(', ')
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Failed to create profile',
-      error: error.message
+      message: 'Failed to create profile'
     });
   }
 };
@@ -121,28 +71,45 @@ exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const profile = await InfluencerProfile.findOne({ userId });
+    let profile = await InfluencerProfile.findOne({ user: userId });
+
     if (!profile) {
-      return res.status(404).json({
-        success: false,
-        message: 'Profile not found. Create a profile first.'
+      // Create new profile if doesn't exist
+      profile = new InfluencerProfile({
+        user: userId,
+        name: req.body.name || req.user.name
       });
     }
 
-    // Update allowed fields
-    const allowedUpdates = [
-      'name', 'bio', 'niche', 'platform', 'location', 'avatar',
-      'youtubeUrl', 'instagramUrl', 'website', 'services'
-    ];
+    // Update basic fields
+    const basicFields = ['name', 'bio', 'avatar', 'location', 'website',
+      'youtubeUrl', 'instagramUrl', 'tiktokUrl', 'services'];
 
-    allowedUpdates.forEach(field => {
+    basicFields.forEach(field => {
       if (req.body[field] !== undefined) {
         profile[field] = req.body[field];
       }
     });
 
-    // Recalculate trust score
-    profile.trustScore = calculateTrustScore(profile);
+    // Handle niche (can be string or array from frontend)
+    if (req.body.niche !== undefined) {
+      if (Array.isArray(req.body.niche)) {
+        profile.niche = req.body.niche;
+      } else if (typeof req.body.niche === 'string' && req.body.niche) {
+        profile.niche = [req.body.niche];
+      }
+    }
+
+    // Handle platform field (frontend sends 'platform', model uses 'platformType')
+    if (req.body.platform) {
+      profile.platformType = req.body.platform;
+    }
+    if (req.body.platformType) {
+      profile.platformType = req.body.platformType;
+    }
+
+    // Update combined stats and trust score
+    profile.updateCombinedStats();
 
     await profile.save();
 
@@ -153,23 +120,30 @@ exports.updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error('Update profile error:', error);
+
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({
+        success: false,
+        message: messages.join(', ')
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Failed to update profile',
-      error: error.message
+      message: 'Failed to update profile'
     });
   }
 };
 
 /**
- * Get own profile (authenticated influencer)
+ * Get own profile
  * GET /api/influencer/profile/me
  */
 exports.getOwnProfile = async (req, res) => {
   try {
-    const userId = req.user._id;
-
-    const profile = await InfluencerProfile.findOne({ userId }).populate('userId', 'email role');
+    const profile = await InfluencerProfile.findOne({ user: req.user._id })
+      .populate('user', 'name email role');
 
     if (!profile) {
       return res.status(404).json({
@@ -186,23 +160,19 @@ exports.getOwnProfile = async (req, res) => {
     console.error('Get own profile error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch profile',
-      error: error.message
+      message: 'Failed to fetch profile'
     });
   }
 };
 
 /**
- * Get influencer profile by ID (public)
+ * Get influencer by ID
  * GET /api/influencer/:id
  */
-exports.getInfluencerById = async (req, res) => {
+exports.getProfileById = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const profile = await InfluencerProfile.findById(id)
-      .populate('userId', 'email')
-      .select('-__v');
+    const profile = await InfluencerProfile.findById(req.params.id)
+      .populate('user', 'name email');
 
     if (!profile) {
       return res.status(404).json({
@@ -216,81 +186,80 @@ exports.getInfluencerById = async (req, res) => {
       data: profile
     });
   } catch (error) {
-    console.error('Get influencer error:', error);
+    console.error('Get profile by ID error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch influencer',
-      error: error.message
+      message: 'Failed to fetch influencer'
     });
   }
 };
 
 /**
- * List influencers with filters (public)
+ * List all influencers with filters
  * GET /api/influencer/list
- * Query params: niche, platform, minFollowers, maxFollowers, minEngagement, minTrustScore, search
  */
 exports.listInfluencers = async (req, res) => {
   try {
     const {
+      page = 1,
+      limit = 20,
       niche,
       platform,
       minFollowers,
       maxFollowers,
-      minEngagement,
       minTrustScore,
-      search,
-      page = 1,
-      limit = 20
+      verified,
+      sortBy = 'trustScore',
+      order = 'desc',
+      search
     } = req.query;
 
-    // Build filter object
+    // Build filter
     const filter = {};
 
-    // Niche filter
     if (niche) {
-      filter.niche = { $regex: niche, $options: 'i' };
+      filter.niche = niche;
     }
 
-    // Platform filter
-    if (platform && platform !== 'All') {
-      filter.platform = { $regex: platform, $options: 'i' };
+    if (platform && platform !== 'all') {
+      filter.platformType = platform;
     }
 
-    // Follower range filter
-    if (minFollowers || maxFollowers) {
-      filter.followers = {};
-      if (minFollowers) filter.followers.$gte = parseInt(minFollowers);
-      if (maxFollowers) filter.followers.$lte = parseInt(maxFollowers);
+    if (minFollowers) {
+      filter.totalFollowers = { $gte: parseInt(minFollowers) };
     }
 
-    // Engagement rate filter
-    if (minEngagement) {
-      filter.engagementRate = { $gte: parseFloat(minEngagement) };
+    if (maxFollowers) {
+      filter.totalFollowers = { ...filter.totalFollowers, $lte: parseInt(maxFollowers) };
     }
 
-    // Trust score filter
     if (minTrustScore) {
       filter.trustScore = { $gte: parseInt(minTrustScore) };
     }
 
-    // Search by name
-    if (search) {
-      filter.name = { $regex: search, $options: 'i' };
+    if (verified === 'true') {
+      filter.isVerified = true;
     }
+
+    if (search) {
+      filter.$text = { $search: search };
+    }
+
+    // Build sort
+    const sortOptions = {};
+    sortOptions[sortBy] = order === 'asc' ? 1 : -1;
 
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Execute query
-    const influencers = await InfluencerProfile.find(filter)
-      .select('-__v')
-      .sort({ trustScore: -1, followers: -1 }) // Sort by trust score, then followers
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    // Get total count for pagination
-    const total = await InfluencerProfile.countDocuments(filter);
+    const [influencers, total] = await Promise.all([
+      InfluencerProfile.find(filter)
+        .populate('user', 'name email')
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(parseInt(limit)),
+      InfluencerProfile.countDocuments(filter)
+    ]);
 
     res.json({
       success: true,
@@ -306,19 +275,17 @@ exports.listInfluencers = async (req, res) => {
     console.error('List influencers error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch influencers',
-      error: error.message
+      message: 'Failed to fetch influencers'
     });
   }
 };
 
 /**
- * Fetch YouTube profile data and update influencer profile
+ * Fetch YouTube data (placeholder - would need YouTube API integration)
  * POST /api/influencer/fetch-youtube
  */
 exports.fetchYouTubeProfile = async (req, res) => {
   try {
-    const userId = req.user._id;
     const { youtubeUrl } = req.body;
 
     if (!youtubeUrl) {
@@ -328,84 +295,41 @@ exports.fetchYouTubeProfile = async (req, res) => {
       });
     }
 
-    // Find or create profile
-    let profile = await InfluencerProfile.findOne({ userId });
+    const profile = await InfluencerProfile.findOne({ user: req.user._id });
     if (!profile) {
       return res.status(404).json({
         success: false,
-        message: 'Profile not found. Create a profile first.'
+        message: 'Profile not found. Create profile first.'
       });
     }
 
-    // Fetch YouTube data
-    const youtubeData = await youtubeService.fetchCompleteProfile(youtubeUrl);
-
-    if (!youtubeData.success) {
-      return res.status(400).json({
-        success: false,
-        message: youtubeData.error || 'Failed to fetch YouTube profile'
-      });
-    }
-
-    // Update profile with YouTube data
+    // In a real implementation, this would call YouTube API
+    // For now, just save the URL
     profile.youtubeUrl = youtubeUrl;
-    profile.youtubeStats = {
-      subscribers: youtubeData.subscribers,
-      totalViews: youtubeData.totalViews,
-      videoCount: youtubeData.videoCount,
-      averageViews: youtubeData.averageViews,
-      engagementRate: youtubeData.engagementRate,
-      lastFetched: new Date()
-    };
-
-    // Update combined stats for backward compatibility
-    profile.followers = Math.max(profile.followers || 0, youtubeData.subscribers);
-    profile.totalViews = (profile.totalViews || 0) + youtubeData.totalViews;
-    profile.engagementRate = youtubeData.engagementRate;
-
-    // Auto-verify on successful fetch
-    profile.verified = true;
-
-    // Update avatar if not set
-    if (!profile.avatar && youtubeData.channelThumbnail) {
-      profile.avatar = youtubeData.channelThumbnail;
-    }
-
-    // Update bio if not set
-    if (!profile.bio && youtubeData.channelDescription) {
-      profile.bio = youtubeData.channelDescription.substring(0, 500);
-    }
-
-    // Recalculate trust score
-    profile.trustScore = calculateTrustScore(profile);
+    profile.youtubeStats.lastFetched = new Date();
 
     await profile.save();
 
     res.json({
       success: true,
-      message: 'YouTube profile fetched and updated successfully',
-      data: {
-        profile,
-        youtubeData
-      }
+      message: 'YouTube profile linked successfully',
+      data: profile
     });
   } catch (error) {
-    console.error('Fetch YouTube profile error:', error);
+    console.error('Fetch YouTube error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch YouTube profile',
-      error: error.message
+      message: 'Failed to fetch YouTube data'
     });
   }
 };
 
 /**
- * Fetch Instagram profile data and update influencer profile
+ * Fetch Instagram data (placeholder - would need Instagram API integration)
  * POST /api/influencer/fetch-instagram
  */
 exports.fetchInstagramProfile = async (req, res) => {
   try {
-    const userId = req.user._id;
     const { instagramUrl } = req.body;
 
     if (!instagramUrl) {
@@ -415,77 +339,31 @@ exports.fetchInstagramProfile = async (req, res) => {
       });
     }
 
-    // Find profile
-    let profile = await InfluencerProfile.findOne({ userId });
+    const profile = await InfluencerProfile.findOne({ user: req.user._id });
     if (!profile) {
       return res.status(404).json({
         success: false,
-        message: 'Profile not found. Create a profile first.'
+        message: 'Profile not found. Create profile first.'
       });
     }
 
-    // Fetch Instagram data
-    const instagramData = await instagramService.fetchCompleteProfile(instagramUrl);
-
-    if (!instagramData.success) {
-      return res.status(400).json({
-        success: false,
-        message: instagramData.error || 'Failed to fetch Instagram profile',
-        requiresManualInput: instagramData.requiresManualInput || false
-      });
-    }
-
-    // Update profile with Instagram data
+    // In a real implementation, this would call Instagram API
+    // For now, just save the URL
     profile.instagramUrl = instagramUrl;
-    profile.instagramUsername = instagramData.username;
-    profile.instagramStats = {
-      followers: instagramData.followers,
-      following: instagramData.following,
-      posts: instagramData.posts,
-      averageLikes: instagramData.averageLikes,
-      averageComments: instagramData.averageComments,
-      engagementRate: instagramData.engagementRate,
-      lastFetched: new Date()
-    };
-
-    // Update combined stats for backward compatibility
-    profile.followers = Math.max(profile.followers || 0, instagramData.followers);
-    profile.engagementRate = Math.max(profile.engagementRate || 0, instagramData.engagementRate);
-
-    // Auto-verify on successful fetch
-    profile.verified = true;
-
-    // Update avatar if not set
-    if (!profile.avatar && instagramData.profilePicture) {
-      profile.avatar = instagramData.profilePicture;
-    }
-
-    // Update bio if not set
-    if (!profile.bio && instagramData.bio) {
-      profile.bio = instagramData.bio.substring(0, 500);
-    }
-
-    // Recalculate trust score
-    profile.trustScore = calculateTrustScore(profile);
+    profile.instagramStats.lastFetched = new Date();
 
     await profile.save();
 
     res.json({
       success: true,
-      message: 'Instagram profile fetched and updated successfully',
-      data: {
-        profile,
-        instagramData
-      }
+      message: 'Instagram profile linked successfully',
+      data: profile
     });
   } catch (error) {
-    console.error('Fetch Instagram profile error:', error);
+    console.error('Fetch Instagram error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch Instagram profile',
-      error: error.message
+      message: 'Failed to fetch Instagram data'
     });
   }
 };
-
-module.exports = exports;

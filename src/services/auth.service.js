@@ -35,7 +35,7 @@ const authService = {
 
   // Change password
   changePassword: async (currentPassword, newPassword) => {
-    const response = await api.put('/auth/change-password', {
+    const response = await api.put('/auth/password', {
       currentPassword,
       newPassword,
     });

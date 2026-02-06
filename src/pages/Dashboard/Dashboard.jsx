@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
@@ -11,25 +12,51 @@ import {
   CheckCircle,
   ArrowRight,
   Star,
-  Calendar
+  Calendar,
+  Loader
 } from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const { user, isInfluencer, isBrand, isAdmin } = useAuth();
-  const { influencers, brands, collaborations, messages } = useData();
+  const { influencers, brands, collaborations, messages, loading, error, fetchInfluencers, fetchMyApplications } = useData();
+  const [localLoading, setLocalLoading] = useState(true);
+
+  // Debug: Log user data and collaborations
+  useEffect(() => {
+    console.log('📊 Dashboard - User:', user);
+    console.log('📊 Dashboard - User role:', user?.role);
+    console.log('📊 Dashboard - Is Influencer:', isInfluencer);
+    console.log('📊 Dashboard - Is Brand:', isBrand);
+    console.log('📊 Dashboard - Collaborations:', collaborations);
+    console.log('📊 Dashboard - Collaborations count:', collaborations.length);
+  }, [user, isInfluencer, isBrand, collaborations]);
+
+  // Fetch data on mount
+  useEffect(() => {
+    const loadData = async () => {
+      setLocalLoading(true);
+      if (isInfluencer || isBrand) {
+        await fetchMyApplications();
+      }
+      await fetchInfluencers();
+      setLocalLoading(false);
+    };
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Get user-specific data
   const userCollabs = collaborations.filter(c => 
-    isInfluencer ? c.influencerId === user?.id : c.brandId === user?.id
+    isInfluencer ? (c.influencerId === user?._id || c.influencer?._id === user?._id) : (c.brandId === user?._id || c.brand?._id === user?._id)
   );
   const userMessages = messages.filter(m => 
-    m.senderId === user?.id || m.receiverId === user?.id
+    m.senderId === user?._id || m.receiverId === user?._id
   );
 
   const pendingCollabs = userCollabs.filter(c => c.status === 'pending');
-  const activeCollabs = userCollabs.filter(c => c.status === 'active');
-  const completedCollabs = userCollabs.filter(c => c.status === 'completed');
+  const activeCollabs = userCollabs.filter(c => c.status === 'active' || c.status === 'shortlisted');
+  const completedCollabs = userCollabs.filter(c => c.status === 'completed' || c.status === 'accepted');
 
   const stats = isInfluencer ? [
     { icon: <Briefcase size={24} />, label: 'Active Collabs', value: activeCollabs.length, color: 'primary' },
@@ -48,9 +75,45 @@ const Dashboard = () => {
     { icon: <TrendingUp size={24} />, label: 'Active', value: collaborations.filter(c => c.status === 'active').length, color: 'info' },
   ];
 
+  // Show loading state
+  if (loading || localLoading) {
+    return (
+      <div className="dash-page">
+        <div className="dash-container" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          gap: '1rem'
+        }}>
+          <Loader size={48} className="spin-animation" />
+          <p>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="dash-page">
       <div className="dash-container">
+        {/* Error Message */}
+        {error && (
+          <div style={{
+            background: '#fee',
+            color: '#c33',
+            padding: '1rem',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
+
         {/* Welcome Section */}
         <div className="dash-welcome-section">
           <div className="dash-welcome-content">
@@ -99,10 +162,10 @@ const Dashboard = () => {
                 {userCollabs.length > 0 ? (
                   <div className="dash-collab-list">
                     {userCollabs.slice(0, 5).map((collab) => (
-                      <div key={collab.id} className="dash-collab-item">
+                      <div key={collab._id || collab.id} className="dash-collab-item">
                         <div className="dash-collab-info">
-                          <h4>{isInfluencer ? collab.brandName : collab.influencerName}</h4>
-                          <p>{collab.service}</p>
+                          <h4>{isInfluencer ? (collab.brand?.name || collab.brandName) : (collab.influencer?.name || collab.influencerName)}</h4>
+                          <p>{collab.campaign?.title || collab.service || 'Application'}</p>
                         </div>
                         <div className="dash-collab-meta">
                           <span className={`dash-status-badge dash-status-${collab.status}`}>
@@ -110,7 +173,7 @@ const Dashboard = () => {
                           </span>
                           <span className="dash-collab-budget">
                             <DollarSign size={14} />
-                            {collab.budget}
+                            {collab.quotedPrice || collab.budget || 'N/A'}
                           </span>
                         </div>
                       </div>
@@ -140,13 +203,13 @@ const Dashboard = () => {
                 <div className="dash-card-body">
                   <div className="dash-collab-list">
                     {pendingCollabs.slice(0, 3).map((collab) => (
-                      <div key={collab.id} className="dash-collab-item dash-pending">
+                      <div key={collab._id || collab.id} className="dash-collab-item dash-pending">
                         <div className="dash-collab-info">
-                          <h4>{collab.brandName}</h4>
-                          <p>{collab.service} • ${collab.budget}</p>
+                          <h4>{collab.brand?.name || collab.brandName}</h4>
+                          <p>{collab.campaign?.title || collab.service} • ${collab.quotedPrice || collab.budget}</p>
                         </div>
                         <div className="dash-collab-actions">
-                          <button className="btn btn-primary btn-sm">Accept</button>
+                          <Link to="/collaborations" className="btn btn-primary btn-sm">Review</Link>
                           <button className="btn btn-secondary btn-sm">Decline</button>
                         </div>
                       </div>
@@ -219,11 +282,11 @@ const Dashboard = () => {
               {activeCollabs.length > 0 ? (
                 <div className="dash-deadline-list">
                   {activeCollabs.slice(0, 3).map((collab) => (
-                    <div key={collab.id} className="dash-deadline-item">
+                    <div key={collab._id || collab.id} className="dash-deadline-item">
                       <Calendar size={16} />
                       <div>
-                        <p className="dash-deadline-title">{collab.service}</p>
-                        <p className="dash-deadline-date">{collab.deadline || 'No deadline set'}</p>
+                        <p className="dash-deadline-title">{collab.campaign?.title || collab.service}</p>
+                        <p className="dash-deadline-date">{collab.campaign?.deadline ? new Date(collab.campaign.deadline).toLocaleDateString() : collab.deadline || 'No deadline set'}</p>
                       </div>
                     </div>
                   ))}

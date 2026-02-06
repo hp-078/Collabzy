@@ -1,191 +1,91 @@
 const mongoose = require('mongoose');
 
 const dealSchema = new mongoose.Schema({
-  application: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Application',
-    required: true,
-    unique: true,
-  },
+  // References
   campaign: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Campaign',
-    required: true,
+    required: true
   },
-  influencer: {
+  application: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+    ref: 'Application',
+    required: true
   },
   brand: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: true
   },
-  
+  influencer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+
   // Deal Terms
-  agreedPrice: {
+  agreedRate: {
     type: Number,
-    required: true,
+    required: true
+  },
+  currency: {
+    type: String,
+    default: 'USD'
   },
   deliverables: [{
-    type: {
-      type: String,
-      enum: ['Video', 'Post', 'Reel', 'Story', 'Short', 'Review', 'Unboxing', 'Tutorial', 'Other'],
-    },
-    description: String,
-    quantity: {
-      type: Number,
-      default: 1,
-    },
+    type: { type: String },
+    quantity: { type: Number },
+    description: { type: String },
     status: {
       type: String,
-      enum: ['pending', 'in-progress', 'submitted', 'approved', 'revision-requested'],
-      default: 'pending',
+      enum: ['pending', 'in_progress', 'submitted', 'approved', 'rejected'],
+      default: 'pending'
     },
+    submittedAt: { type: Date },
+    approvedAt: { type: Date }
   }],
+
+  // Timeline
+  startDate: {
+    type: Date,
+    default: Date.now
+  },
   deadline: {
     type: Date,
-    required: true,
+    required: true
   },
-  
-  // Deal Status
+
+  // Status
   status: {
     type: String,
-    enum: ['confirmed', 'in-progress', 'content-submitted', 'approved', 'completed', 'cancelled', 'disputed'],
-    default: 'confirmed',
+    enum: ['active', 'in_progress', 'pending_review', 'completed', 'cancelled', 'disputed'],
+    default: 'active'
   },
-  
-  // Milestones
-  milestones: [{
-    title: String,
-    description: String,
-    dueDate: Date,
-    completed: {
-      type: Boolean,
-      default: false,
-    },
-    completedAt: Date,
-  }],
-  
-  // Content Submission
-  submissions: [{
-    submittedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    contentLinks: [{
-      type: String,
-    }],
-    description: String,
-    proofOfWork: [{
-      type: String, // URLs to screenshots, videos, etc.
-    }],
-    status: {
-      type: String,
-      enum: ['pending-review', 'approved', 'revision-requested'],
-      default: 'pending-review',
-    },
-    feedback: String,
-    reviewedAt: Date,
-    reviewedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-  }],
-  
-  // Revision Requests
-  revisionRequests: [{
-    requestedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    reason: String,
-    requestedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-    resolved: {
-      type: Boolean,
-      default: false,
-    },
-    resolvedAt: Date,
-  }],
-  
-  // Payment Status
-  payment: {
-    status: {
-      type: String,
-      enum: ['pending', 'processing', 'completed', 'refunded', 'disputed'],
-      default: 'pending',
-    },
-    method: String,
-    transactionId: String,
-    paidAt: Date,
+
+  // Payment
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'processing', 'paid', 'refunded'],
+    default: 'pending'
   },
-  
-  // Notes & Communication
-  notes: [{
-    author: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-    text: String,
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-  }],
-  
+  paidAt: { type: Date },
+
+  // Notes
+  brandNotes: { type: String, default: '' },
+  influencerNotes: { type: String, default: '' },
+
   // Completion
-  completedAt: Date,
-  cancelledAt: Date,
-  cancellationReason: String,
-  
+  completedAt: { type: Date },
+  cancelledAt: { type: Date }
 }, {
-  timestamps: true,
+  timestamps: true
 });
 
 // Indexes
-dealSchema.index({ influencer: 1, status: 1 });
-dealSchema.index({ brand: 1, status: 1 });
 dealSchema.index({ campaign: 1 });
-dealSchema.index({ status: 1, deadline: 1 });
-
-// Pre-save middleware to update timestamps
-dealSchema.pre('save', function(next) {
-  if (this.isModified('status')) {
-    const now = new Date();
-    switch (this.status) {
-      case 'completed':
-        this.completedAt = now;
-        break;
-      case 'cancelled':
-        this.cancelledAt = now;
-        break;
-    }
-  }
-  next();
-});
-
-// Method to check if deal is overdue
-dealSchema.methods.isOverdue = function() {
-  if (this.status === 'completed' || this.status === 'cancelled') {
-    return false;
-  }
-  return this.deadline < new Date();
-};
-
-// Method to calculate progress
-dealSchema.methods.getProgress = function() {
-  if (this.deliverables.length === 0) return 0;
-  
-  const completedDeliverables = this.deliverables.filter(
-    d => d.status === 'approved'
-  ).length;
-  
-  return Math.round((completedDeliverables / this.deliverables.length) * 100);
-};
+dealSchema.index({ brand: 1 });
+dealSchema.index({ influencer: 1 });
+dealSchema.index({ status: 1 });
 
 const Deal = mongoose.model('Deal', dealSchema);
 

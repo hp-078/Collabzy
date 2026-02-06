@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { 
@@ -10,7 +10,8 @@ import {
   MapPin,
   Instagram,
   Youtube,
-  Twitter
+  Twitter,
+  Loader
 } from 'lucide-react';
 import './Influencers.css';
 
@@ -22,20 +23,32 @@ const platformIcons = {
 };
 
 const Influencers = () => {
-  const { influencers } = useData();
+  const { influencers, loading, error, fetchInfluencers } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNiche, setSelectedNiche] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [localLoading, setLocalLoading] = useState(true);
 
-  const niches = [...new Set(influencers.map(i => i.niche))];
-  const platforms = [...new Set(influencers.map(i => i.platform))];
+  // Fetch influencers on mount
+  useEffect(() => {
+    const loadInfluencers = async () => {
+      setLocalLoading(true);
+      await fetchInfluencers();
+      setLocalLoading(false);
+    };
+    loadInfluencers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const niches = [...new Set(influencers.map(i => i.niche || i.category))].filter(Boolean);
+  const platforms = [...new Set(influencers.map(i => i.platform || i.platformType))].filter(Boolean);
 
   const filteredInfluencers = influencers.filter(influencer => {
-    const matchesSearch = influencer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         influencer.niche.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesNiche = !selectedNiche || influencer.niche === selectedNiche;
-    const matchesPlatform = !selectedPlatform || influencer.platform === selectedPlatform;
+    const matchesSearch = influencer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (influencer.niche || influencer.category || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesNiche = !selectedNiche || (influencer.niche === selectedNiche || influencer.category === selectedNiche);
+    const matchesPlatform = !selectedPlatform || (influencer.platform === selectedPlatform || influencer.platformType === selectedPlatform);
     
     return matchesSearch && matchesNiche && matchesPlatform;
   });
@@ -63,8 +76,43 @@ const Influencers = () => {
           </div>
         </div>
 
-        {/* Search and Filters */}
-        <div className="inf-filters-section">
+        {/* Error State */}
+        {error && (
+          <div className="inf-error-message" style={{
+            background: '#fee',
+            color: '#c33',
+            padding: '1rem',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {(loading || localLoading) && (
+          <div className="inf-loading" style={{
+            textAlign: 'center',
+            padding: '4rem 2rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem'
+          }}>
+            <Loader size={48} className="spin-animation" />
+            <p>Loading influencers...</p>
+          </div>
+        )}
+
+        {/* Content - only show when not loading */}
+        {!loading && !localLoading && (
+          <>
+            {/* Search and Filters */}
+            <div className="inf-filters-section">
           <div className="inf-search-bar">
             <Search size={20} className="inf-search-icon" />
             <input
@@ -135,14 +183,14 @@ const Influencers = () => {
         <div className="inf-grid">
           {filteredInfluencers.map((influencer) => (
             <Link 
-              key={influencer.id} 
-              to={`/influencer/${influencer.id}`}
+              key={influencer._id || influencer.id} 
+              to={`/influencer/${influencer.userId || influencer._id || influencer.id}`}
               className="inf-card"
             >
               <div className="inf-card-header">
                 <div className="inf-avatar-wrapper">
                   <img 
-                    src={influencer.avatar} 
+                    src={influencer.avatar || influencer.profilePicture || 'https://via.placeholder.com/200'} 
                     alt={influencer.name}
                     className="inf-avatar"
                   />
@@ -153,25 +201,25 @@ const Influencers = () => {
                   )}
                 </div>
                 <div className="inf-platform-badge">
-                  {platformIcons[influencer.platform] || influencer.platform}
+                  {platformIcons[influencer.platform || influencer.platformType] || (influencer.platform || influencer.platformType)}
                 </div>
               </div>
               
               <div className="inf-card-body">
                 <h3 className="inf-name">{influencer.name}</h3>
-                <p className="inf-niche">{influencer.niche}</p>
+                <p className="inf-niche">{influencer.niche || influencer.category}</p>
                 
                 <div className="inf-location">
                   <MapPin size={14} />
-                  <span>{influencer.location}</span>
+                  <span>{influencer.location || 'Location not specified'}</span>
                 </div>
 
                 {/* Social Media Handles */}
                 <div className="inf-social-handles">
-                  {influencer.instagramUsername && (
+                  {(influencer.instagramUsername || influencer.instagramUrl) && (
                     <span className="inf-handle">
                       <Instagram size={12} />
-                      @{influencer.instagramUsername}
+                      @{influencer.instagramUsername || 'Instagram'}
                     </span>
                   )}
                   {influencer.youtubeUrl && (
@@ -183,17 +231,18 @@ const Influencers = () => {
                 </div>
 
                 <p className="inf-description">
-                  {influencer.description.slice(0, 100)}...
+                  {(influencer.description || influencer.bio || '').slice(0, 100)}
+                  {(influencer.description || influencer.bio || '').length > 100 ? '...' : ''}
                 </p>
 
                 <div className="inf-stats">
                   <div className="inf-stat">
                     <Users size={16} />
-                    <span>{influencer.followers}</span>
+                    <span>{influencer.followers || influencer.totalFollowers || 'N/A'}</span>
                   </div>
                   <div className="inf-stat">
                     <Star size={16} fill="currentColor" />
-                    <span>{influencer.rating}</span>
+                    <span>{influencer.rating || influencer.averageRating || influencer.trustScore || 'N/A'}</span>
                   </div>
                 </div>
 
@@ -220,6 +269,8 @@ const Influencers = () => {
               Clear Filters
             </button>
           </div>
+        )}
+          </>
         )}
       </div>
     </div>

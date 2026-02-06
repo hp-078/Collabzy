@@ -1,22 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const influencerController = require('../controllers/influencer.controller');
-const { requireAuth, requireInfluencer } = require('../middleware/auth.middleware');
+const { requireAuth, requireInfluencer, optionalAuth } = require('../middleware/auth.middleware');
 
-// Public routes - anyone can view influencer profiles
-router.get('/list', influencerController.listInfluencers);
-router.get('/:id', influencerController.getInfluencerById);
+// Public routes
+router.get('/list', optionalAuth, influencerController.listInfluencers);
+router.get('/:id', influencerController.getProfileById);
 
-// Protected routes - require authentication
-router.use(requireAuth);
+// Protected routes (require influencer role)
+router.post('/profile', requireAuth, requireInfluencer, influencerController.createProfile);
+router.put('/profile', requireAuth, requireInfluencer, influencerController.updateProfile);
+router.get('/profile/me', requireAuth, requireInfluencer, influencerController.getOwnProfile);
 
-// Influencer-only routes - require influencer role
-router.get('/profile/me', requireInfluencer, influencerController.getOwnProfile);
-router.put('/profile', requireInfluencer, influencerController.updateProfile);
-router.post('/profile', requireInfluencer, influencerController.createProfile);
-
-// Profile fetching routes - influencer only
-router.post('/fetch-youtube', requireInfluencer, influencerController.fetchYouTubeProfile);
-router.post('/fetch-instagram', requireInfluencer, influencerController.fetchInstagramProfile);
+// Social media integration
+router.post('/fetch-youtube', requireAuth, requireInfluencer, influencerController.fetchYouTubeProfile);
+router.post('/fetch-instagram', requireAuth, requireInfluencer, influencerController.fetchInstagramProfile);
 
 module.exports = router;

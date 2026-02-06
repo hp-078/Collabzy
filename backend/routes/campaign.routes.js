@@ -1,22 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const campaignController = require('../controllers/campaign.controller');
-const { requireAuth, requireBrand, requireInfluencer } = require('../middleware/auth.middleware');
+const { requireAuth, requireBrand, requireInfluencer, optionalAuth } = require('../middleware/auth.middleware');
 
-// Public routes - anyone can view active campaigns
-router.get('/:id', campaignController.getCampaignById);
-
-// Protected routes - require authentication
+// All routes require authentication
 router.use(requireAuth);
 
-// Brand-only routes - campaign management
-router.post('/', requireBrand, campaignController.createCampaign);
-router.put('/:id', requireBrand, campaignController.updateCampaign);
-router.delete('/:id', requireBrand, campaignController.deleteCampaign);
+// Brand-specific routes (MUST be before /:id to prevent pattern conflicts)
 router.get('/brand/my-campaigns', requireBrand, campaignController.getMyCampaigns);
+router.post('/', requireBrand, campaignController.createCampaign);
 
-// Influencer-only routes - discover campaigns
+// Influencer-specific routes (MUST be before /:id)
 router.get('/influencer/eligible', requireInfluencer, campaignController.getEligibleCampaigns);
 router.get('/influencer/recommended', requireInfluencer, campaignController.getRecommendedCampaigns);
+
+// General campaign routes (/:id pattern comes LAST)
+router.get('/', campaignController.getAllCampaigns);
+router.get('/:id', campaignController.getCampaignById);
+router.put('/:id', requireBrand, campaignController.updateCampaign);
+router.delete('/:id', requireBrand, campaignController.deleteCampaign);
 
 module.exports = router;

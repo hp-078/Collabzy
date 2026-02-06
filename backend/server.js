@@ -3,181 +3,142 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const http = require('http');
 require('dotenv').config();
 
+// Import database connection
 const connectDB = require('./config/db');
+const { initializeSocket } = require('./config/socket');
 
-// Initialize Express app
+// Create Express app
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.io
+const io = initializeSocket(server);
 
 // Connect to MongoDB
 connectDB();
 
-// ==================== MIDDLEWARE ====================
+// ===========================================
+// MIDDLEWARE
+// ===========================================
 
 // Security headers
 app.use(helmet());
 
 // CORS configuration
-const corsOptions = {
+app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
-  optionsSuccessStatus: 200,
-};
-app.use(cors(corsOptions));
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-// Body parser middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsing
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// HTTP request logger (only in development)
-if (process.env.NODE_ENV === 'development') {
+// Logging
+if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { success: false, message: 'Too many requests, please try again later.' }
 });
-
-// Apply rate limiting to all API routes
 app.use('/api/', limiter);
 
-// ==================== ROUTES ====================
+// Make io accessible to routes
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
-// Health check endpoint
+// ===========================================
+// API ROUTES
+// ===========================================
+
+// Health check
 app.get('/api/health', (req, res) => {
-  res.status(200).json({
+  res.json({
     success: true,
     message: 'Collabzy API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// Welcome route
-app.get('/', (req, res) => {
-  res.json({
-    message: '🚀 Welcome to Collabzy API',
-    version: '1.0.0',
-    status: 'active',
-    endpoints: {
-      health: '/api/health',
-      auth: '/api/auth',
-      influencers: '/api/influencers',
-      campaigns: '/api/campaigns',
-      applications: '/api/applications',
-      deals: '/api/deals',
-      reviews: '/api/reviews',
-      messages: '/api/messages',
-      notifications: '/api/notifications',
-    },
-  });
-});
+// Import routes
+const authRoutes = require('./routes/auth.routes');
+const influencerRoutes = require('./routes/influencer.routes');
+const campaignRoutes = require('./routes/campaign.routes');
+const applicationRoutes = require('./routes/application.routes');
+const dealRoutes = require('./routes/deal.routes');
+const messageRoutes = require('./routes/message.routes');
+const notificationRoutes = require('./routes/notification.routes');
+const reviewRoutes = require('./routes/review.routes');
 
-// ==================== API ROUTES ====================
+// Mount routes
+app.use('/api/auth', authRoutes);
+app.use('/api/influencer', influencerRoutes);
+app.use('/api/campaigns', campaignRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/deals', dealRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/reviews', reviewRoutes);
 
-// Auth routes
-app.use('/api/auth', require('./routes/auth.routes'));
+// ===========================================
+// ERROR HANDLING
+// ===========================================
 
-// YouTube routes
-app.use('/api/youtube', require('./routes/youtube.routes'));
-
-// Instagram routes
-app.use('/api/instagram', require('./routes/instagram.routes'));
-
-// Influencer routes
-app.use('/api/influencer', require('./routes/influencer.routes'));
-
-// Campaign routes
-app.use('/api/campaigns', require('./routes/campaign.routes'));
-
-// Application routes
-app.use('/api/applications', require('./routes/application.routes'));
-
-// Deal routes
-app.use('/api/deals', require('./routes/deal.routes'));
-
-// Review routes
-app.use('/api/reviews', require('./routes/review.routes'));
-
-// Message routes
-app.use('/api/messages', require('./routes/message.routes'));
-
-// Notification routes
-app.use('/api/notifications', require('./routes/notification.routes'));
-
-// TODO: Add more routes as they are implemented
-
-// ==================== ERROR HANDLING ====================
-
-// 404 handler - catch all undefined routes
-app.use((req, res, next) => {
+// 404 handler
+app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: `Route not found: ${req.originalUrl}`,
+    message: `Route ${req.originalUrl} not found`
   });
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.stack);
-  
-  res.status(err.statusCode || 500).json({
+  console.error('Error:', err);
+
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+
+  res.status(statusCode).json({
     success: false,
-    message: err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
 
-// ==================== SERVER STARTUP ====================
+// ===========================================
+// START SERVER
+// ===========================================
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log('');
-  console.log('╔════════════════════════════════════════════════╗');
-  console.log('║                                                ║');
-  console.log('║        🚀 COLLABZY API SERVER STARTED 🚀       ║');
-  console.log('║                                                ║');
-  console.log('╚════════════════════════════════════════════════╝');
-  console.log('');
-  console.log(`📡 Server running in ${process.env.NODE_ENV} mode`);
-  console.log(`🌐 Listening on port: ${PORT}`);
-  console.log(`🔗 API URL: http://localhost:${PORT}`);
-  console.log(`💚 Health Check: http://localhost:${PORT}/api/health`);
-  console.log('');
-  console.log('Press Ctrl+C to stop the server');
-  console.log('');
+server.listen(PORT, () => {
+  console.log(`
+╔════════════════════════════════════════════════╗
+║                                                ║
+║        🚀 COLLABZY API SERVER STARTED 🚀       ║
+║                                                ║
+╚════════════════════════════════════════════════╝
+
+📡 Server running in ${process.env.NODE_ENV || 'development'} mode
+🌐 Listening on port: ${PORT}
+🔗 API URL: http://localhost:${PORT}
+💚 Health Check: http://localhost:${PORT}/api/health
+
+Press Ctrl+C to stop the server
+`);
 });
 
-// Initialize Socket.io
-const initializeSocket = require('./config/socket');
-const io = initializeSocket(server);
-
-// Make io accessible globally for notification service
-global.io = io;
-app.set('io', io);
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.error('❌ UNHANDLED REJECTION! Shutting down...');
-  console.error(err.name, err.message);
-  server.close(() => {
-    process.exit(1);
-  });
-});
-
-// Handle SIGTERM
-process.on('SIGTERM', () => {
-  console.log('👋 SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('💀 Process terminated!');
-  });
-});
-
-module.exports = app;
+module.exports = { app, server, io };

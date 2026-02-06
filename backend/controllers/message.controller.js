@@ -1,65 +1,24 @@
 const Message = require('../models/Message.model');
 const User = require('../models/User.model');
-const Deal = require('../models/Deal.model');
-
-// Content filtering regex patterns
-const PHONE_REGEX = /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
-const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-const EXTERNAL_URL_REGEX = /(whatsapp|telegram|skype|discord|slack|wechat|viber|line|signal|kik|snapchat|messenger)\.com|wa\.me|t\.me/gi;
+const { emitToConversation, emitToUser } = require('../config/socket');
 
 /**
- * Check if content contains filtered patterns
+ * Send a message
+ * POST /api/messages
  */
-const filterContent = (content, hasDeal = false) => {
-  const violations = [];
-  
-  // Check for phone numbers
-  if (PHONE_REGEX.test(content)) {
-    violations.push('phone numbers');
-  }
-  
-  // Check for emails
-  if (EMAIL_REGEX.test(content)) {
-    violations.push('email addresses');
-  }
-  
-  // Check for external messaging URLs (only restrict if no deal confirmed)
-  if (!hasDeal && EXTERNAL_URL_REGEX.test(content)) {
-    violations.push('external messaging links');
-  }
-  
-  return {
-    filtered: violations.length > 0,
-    violations,
-    message: violations.length > 0 
-      ? `Your message contains restricted content: ${violations.join(', ')}. This is not allowed ${!hasDeal ? 'before deal confirmation' : ''}.`
-      : null
-  };
-};
-
-// ==========================================
-// SEND MESSAGE
-// ==========================================
 exports.sendMessage = async (req, res) => {
   try {
-    const { receiverId, content } = req.body;
     const senderId = req.user._id;
+    const { receiverId, content, type, attachments } = req.body;
 
     if (!receiverId || !content) {
       return res.status(400).json({
         success: false,
-        message: 'Receiver ID and message content are required'
+        message: 'Receiver ID and content are required'
       });
     }
 
-    if (!content.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Message content cannot be empty'
-      });
-    }
-
-    // Check if receiver exists
+    // Verify receiver exists
     const receiver = await User.findById(receiverId);
     if (!receiver) {
       return res.status(404).json({
@@ -68,107 +27,74 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
-    // Check if users have an active deal
-    const hasDeal = await Deal.findOne({
-      $or: [
-        { influencer: senderId, brand: receiverId },
-        { influencer: receiverId, brand: senderId }
-      ],
-      status: { $in: ['confirmed', 'in-progress', 'content-submitted', 'approved', 'completed'] }
-    });
-
-    // Filter content
-    const filterResult = filterContent(content, !!hasDeal);
-    if (filterResult.filtered) {
-      // Log the attempt
-      console.warn(`Content filtering triggered by user ${senderId}:`, filterResult.violations);
-      
-      return res.status(400).json({
-        success: false,
-        message: filterResult.message,
-        violations: filterResult.violations
-      });
-    }
-
-    // Generate conversation ID (consistent between two users)
-    const conversationId = [senderId.toString(), receiverId.toString()].sort().join('_');
+    // Create conversation ID
+    const conversationId = Message.createConversationId(senderId, receiverId);
 
     // Create message
-    const message = new Message({
+    const message = await Message.create({
       conversationId,
       sender: senderId,
-      recipient: receiverId,
-      content: content.trim(),
-      isRead: false
+      receiver: receiverId,
+      content,
+      type: type || 'text',
+      attachments: attachments || []
     });
 
-    await message.save();
+    await message.populate('sender', 'name avatar');
 
-    // Populate sender and recipient info
-    await message.populate([
-      { path: 'sender', select: 'name email role' },
-      { path: 'recipient', select: 'name email role' }
-    ]);
-
-    // TODO: Emit Socket.io event to receiver
-    // io.to(receiverId).emit('new-message', message);
+    // Emit via Socket.io
+    emitToConversation(conversationId, 'message:receive', message);
+    emitToUser(receiverId, 'notification:new', {
+      type: 'new_message',
+      title: 'New Message',
+      message: `${req.user.name} sent you a message`
+    });
 
     res.status(201).json({
       success: true,
-      message: 'Message sent successfully',
+      message: 'Message sent',
       data: message
     });
-
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.error('Send message error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to send message',
-      error: error.message
+      message: 'Failed to send message'
     });
   }
 };
 
-// ==========================================
-// GET CONVERSATION HISTORY
-// ==========================================
+/**
+ * Get conversation messages
+ * GET /api/messages/conversation/:userId
+ */
 exports.getConversation = async (req, res) => {
   try {
-    const { otherUserId } = req.params;
-    const userId = req.user._id;
+    const { userId } = req.params;
     const { page = 1, limit = 50 } = req.query;
 
-    // Generate conversation ID
-    const conversationId = [userId.toString(), otherUserId].sort().join('_');
+    const conversationId = Message.createConversationId(req.user._id, userId);
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Fetch messages
-    const messages = await Message.find({ conversationId })
-      .populate('sender', 'name email role')
-      .populate('recipient', 'name email role')
-      .sort({ createdAt: -1 }) // Most recent first
-      .skip(skip)
-      .limit(parseInt(limit));
+    const [messages, total] = await Promise.all([
+      Message.find({ conversationId })
+        .populate('sender', 'name avatar')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Message.countDocuments({ conversationId })
+    ]);
 
-    const total = await Message.countDocuments({ conversationId });
-
-    // Mark messages as read (where current user is recipient)
+    // Mark messages as read
     await Message.updateMany(
-      {
-        conversationId,
-        recipient: userId,
-        isRead: false
-      },
-      {
-        isRead: true,
-        readAt: new Date()
-      }
+      { conversationId, receiver: req.user._id, isRead: false },
+      { isRead: true, readAt: new Date() }
     );
 
-    res.status(200).json({
+    res.json({
       success: true,
-      data: messages.reverse(), // Reverse to show oldest first
+      data: messages.reverse(), // Return in chronological order
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -176,37 +102,31 @@ exports.getConversation = async (req, res) => {
         pages: Math.ceil(total / parseInt(limit))
       }
     });
-
   } catch (error) {
-    console.error('Error fetching conversation:', error);
+    console.error('Get conversation error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch conversation',
-      error: error.message
+      message: 'Failed to fetch messages'
     });
   }
 };
 
-// ==========================================
-// GET ALL CONVERSATIONS
-// ==========================================
-exports.getAllConversations = async (req, res) => {
+/**
+ * Get all conversations
+ * GET /api/messages/conversations
+ */
+exports.getConversations = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // Get all conversations where user is sender or receiver
-    const messages = await Message.aggregate([
+    // Get all unique conversations with last message
+    const conversations = await Message.aggregate([
       {
         $match: {
-          $or: [
-            { sender: userId },
-            { receiver: userId }
-          ]
+          $or: [{ sender: userId }, { receiver: userId }]
         }
       },
-      {
-        $sort: { createdAt: -1 }
-      },
+      { $sort: { createdAt: -1 } },
       {
         $group: {
           _id: '$conversationId',
@@ -214,12 +134,7 @@ exports.getAllConversations = async (req, res) => {
           unreadCount: {
             $sum: {
               $cond: [
-                {
-                  $and: [
-                    { $eq: ['$recipient', userId] },
-                    { $eq: ['$isRead', false] }
-                  ]
-                },
+                { $and: [{ $eq: ['$receiver', userId] }, { $eq: ['$isRead', false] }] },
                 1,
                 0
               ]
@@ -227,154 +142,91 @@ exports.getAllConversations = async (req, res) => {
           }
         }
       },
-      {
-        $sort: { 'lastMessage.createdAt': -1 }
-      }
+      { $sort: { 'lastMessage.createdAt': -1 } }
     ]);
 
-    // Populate user details
-    await Message.populate(messages, [
-      { path: 'lastMessage.sender', select: 'name email role' },
-      { path: 'lastMessage.recipient', select: 'name email role' }
-    ]);
+    // Populate user info for each conversation
+    const populatedConversations = await Promise.all(
+      conversations.map(async (conv) => {
+        const otherUserId = conv.lastMessage.sender.toString() === userId.toString()
+          ? conv.lastMessage.receiver
+          : conv.lastMessage.sender;
 
-    // Format conversations
-    const conversations = messages.map(conv => {
-      const lastMsg = conv.lastMessage;
-      const otherUser = lastMsg.sender._id.toString() === userId.toString()
-        ? lastMsg.recipient
-        : lastMsg.sender;
+        const otherUser = await User.findById(otherUserId).select('name avatar role');
 
-      return {
-        conversationId: conv._id,
-        otherUser,
-        lastMessage: {
-          content: lastMsg.content,
-          createdAt: lastMsg.createdAt,
-          isSentByMe: lastMsg.sender._id.toString() === userId.toString(),
-          isRead: lastMsg.isRead
-        },
-        unreadCount: conv.unreadCount
-      };
-    });
-
-    res.status(200).json({
-      success: true,
-      data: conversations
-    });
-
-  } catch (error) {
-    console.error('Error fetching conversations:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch conversations',
-      error: error.message
-    });
-  }
-};
-
-// ==========================================
-// MARK MESSAGES AS READ
-// ==========================================
-exports.markAsRead = async (req, res) => {
-  try {
-    const { otherUserId } = req.params;
-    const userId = req.user._id;
-
-    // Generate conversation ID
-    const conversationId = [userId.toString(), otherUserId].sort().join('_');
-
-    // Update all unread messages from other user
-    const result = await Message.updateMany(
-      {
-        conversationId,
-        recipient: userId,
-        isRead: false
-      },
-      {
-        isRead: true,
-        readAt: new Date()
-      }
+        return {
+          conversationId: conv._id,
+          otherUser,
+          lastMessage: {
+            content: conv.lastMessage.content,
+            createdAt: conv.lastMessage.createdAt,
+            isFromMe: conv.lastMessage.sender.toString() === userId.toString()
+          },
+          unreadCount: conv.unreadCount
+        };
+      })
     );
 
-    res.status(200).json({
+    res.json({
       success: true,
-      message: 'Messages marked as read',
-      data: {
-        markedCount: result.modifiedCount
-      }
+      data: populatedConversations
     });
-
   } catch (error) {
-    console.error('Error marking messages as read:', error);
+    console.error('Get conversations error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to mark messages as read',
-      error: error.message
+      message: 'Failed to fetch conversations'
     });
   }
 };
 
-// ==========================================
-// DELETE CONVERSATION
-// ==========================================
-exports.deleteConversation = async (req, res) => {
+/**
+ * Mark messages as read
+ * PUT /api/messages/conversation/:userId/read
+ */
+exports.markAsRead = async (req, res) => {
   try {
-    const { otherUserId } = req.params;
-    const userId = req.user._id;
+    const { userId } = req.params;
+    const conversationId = Message.createConversationId(req.user._id, userId);
 
-    // Generate conversation ID
-    const conversationId = [userId.toString(), otherUserId].sort().join('_');
+    await Message.updateMany(
+      { conversationId, receiver: req.user._id, isRead: false },
+      { isRead: true, readAt: new Date() }
+    );
 
-    // Delete all messages in conversation
-    const result = await Message.deleteMany({ conversationId });
-
-    res.status(200).json({
+    res.json({
       success: true,
-      message: 'Conversation deleted successfully',
-      data: {
-        deletedCount: result.deletedCount
-      }
+      message: 'Messages marked as read'
     });
-
   } catch (error) {
-    console.error('Error deleting conversation:', error);
+    console.error('Mark as read error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete conversation',
-      error: error.message
+      message: 'Failed to mark messages as read'
     });
   }
 };
 
-// ==========================================
-// GET UNREAD COUNT
-// ==========================================
+/**
+ * Get unread count
+ * GET /api/messages/unread-count
+ */
 exports.getUnreadCount = async (req, res) => {
   try {
-    const userId = req.user._id;
-
-    const unreadCount = await Message.countDocuments({
-      recipient: userId,
+    const count = await Message.countDocuments({
+      receiver: req.user._id,
       isRead: false
     });
 
-    res.status(200).json({
+    res.json({
       success: true,
-      data: {
-        unreadCount
-      }
+      data: { unreadCount: count }
     });
-
   } catch (error) {
-    console.error('Error fetching unread count:', error);
+    console.error('Get unread count error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch unread count',
-      error: error.message
+      message: 'Failed to fetch unread count'
     });
   }
 };
-
-// Export filter function for use in Socket.io
-exports.filterContent = filterContent;

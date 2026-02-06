@@ -1,12 +1,22 @@
-// Export all models from a single file for easy import
+// Export all models
+const User = require('./User.model');
+const InfluencerProfile = require('./InfluencerProfile.model');
+const BrandProfile = require('./BrandProfile.model');
+const Campaign = require('./Campaign.model');
+const Application = require('./Application.model');
+const Deal = require('./Deal.model');
+const Message = require('./Message.model');
+const Notification = require('./Notification.model');
+const Review = require('./Review.model');
+
 module.exports = {
-  User: require('./User.model'),
-  InfluencerProfile: require('./InfluencerProfile.model'),
-  BrandProfile: require('./BrandProfile.model'),
-  Campaign: require('./Campaign.model'),
-  Application: require('./Application.model'),
-  Deal: require('./Deal.model'),
-  Review: require('./Review.model'),
-  Message: require('./Message.model'),
-  Notification: require('./Notification.model'),
+  User,
+  InfluencerProfile,
+  BrandProfile,
+  Campaign,
+  Application,
+  Deal,
+  Message,
+  Notification,
+  Review
 };

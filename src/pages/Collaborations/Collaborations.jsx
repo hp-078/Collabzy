@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
@@ -11,30 +11,49 @@ import {
   Calendar,
   MessageSquare,
   Filter,
-  Search
+  Search,
+  Loader
 } from 'lucide-react';
 import './Collaborations.css';
 
 const Collaborations = () => {
   const { user, isInfluencer } = useAuth();
-  const { collaborations, updateCollaboration } = useData();
+  const { collaborations, loading, error, fetchMyApplications, updateApplicationStatus } = useData();
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [localLoading, setLocalLoading] = useState(true);
+
+  // Fetch applications on mount
+  useEffect(() => {
+    const loadApplications = async () => {
+      setLocalLoading(true);
+      await fetchMyApplications();
+      setLocalLoading(false);
+    };
+    loadApplications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const userCollabs = collaborations.filter(c => 
-    isInfluencer ? c.influencerId === user?.id : c.brandId === user?.id
+    isInfluencer ? (c.influencer?._id === user?._id || c.influencerId === user?._id) : (c.brand?._id === user?._id || c.brandId === user?._id)
   );
 
   const filteredCollabs = userCollabs.filter(c => {
     const matchesFilter = filter === 'all' || c.status === filter;
+    const partnerName = isInfluencer ? (c.brand?.name || c.brandName) : (c.influencer?.name || c.influencerName);
+    const serviceName = c.campaign?.title || c.service || '';
     const matchesSearch = 
-      (isInfluencer ? c.brandName : c.influencerName).toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.service.toLowerCase().includes(searchTerm.toLowerCase());
+      (partnerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      serviceName.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
-  const handleStatusChange = (collabId, newStatus) => {
-    updateCollaboration(collabId, { status: newStatus });
+  const handleStatusChange = async (collabId, newStatus) => {
+    const result = await updateApplicationStatus(collabId, newStatus);
+    if (result.success) {
+      // Refresh applications
+      fetchMyApplications(null, true);
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -55,9 +74,28 @@ const Collaborations = () => {
   const statusCounts = {
     all: userCollabs.length,
     pending: userCollabs.filter(c => c.status === 'pending').length,
-    active: userCollabs.filter(c => c.status === 'active').length,
-    completed: userCollabs.filter(c => c.status === 'completed').length,
+    active: userCollabs.filter(c => c.status === 'active' || c.status === 'shortlisted').length,
+    completed: userCollabs.filter(c => c.status === 'completed' || c.status === 'accepted').length,
   };
+
+  // Show loading state
+  if (loading || localLoading) {
+    return (
+      <div className="collab-page">
+        <div className="collab-container" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          gap: '1rem'
+        }}>
+          <Loader size={48} className="spin-animation" />
+          <p>Loading collaborations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="collab-page">
@@ -68,6 +106,23 @@ const Collaborations = () => {
             <p>Manage all your collaboration requests and projects</p>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div style={{
+            background: '#fee',
+            color: '#c33',
+            padding: '1rem',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="collab-filters-bar">
@@ -99,10 +154,10 @@ const Collaborations = () => {
         <div className="collab-list">
           {filteredCollabs.length > 0 ? (
             filteredCollabs.map((collab) => (
-              <div key={collab.id} className="collab-card">
+              <div key={collab._id || collab.id} className="collab-card">
                 <div className="collab-header">
                   <div className="collab-title">
-                    <h3>{isInfluencer ? collab.brandName : collab.influencerName}</h3>
+                    <h3>{isInfluencer ? (collab.brand?.name || collab.brandName) : (collab.influencer?.name || collab.influencerName)}</h3>
                     <span className={`collab-status-badge collab-status-${collab.status}`}>
                       {getStatusIcon(collab.status)}
                       {collab.status}
@@ -110,27 +165,27 @@ const Collaborations = () => {
                   </div>
                   <div className="collab-service">
                     <Briefcase size={16} />
-                    {collab.service}
+                    {collab.campaign?.title || collab.service || 'Application'}
                   </div>
                 </div>
 
                 <div className="collab-body">
-                  <p className="collab-message">{collab.message}</p>
+                  <p className="collab-message">{collab.proposal || collab.message || 'No message'}</p>
                   
                   <div className="collab-details">
                     <div className="collab-detail-item">
                       <DollarSign size={16} />
-                      <span>Budget: <strong>${collab.budget}</strong></span>
+                      <span>Budget: <strong>${collab.quotedPrice || collab.budget || 'N/A'}</strong></span>
                     </div>
-                    {collab.deadline && (
+                    {(collab.campaign?.deadline || collab.deadline) && (
                       <div className="collab-detail-item">
                         <Calendar size={16} />
-                        <span>Deadline: <strong>{collab.deadline}</strong></span>
+                        <span>Deadline: <strong>{new Date(collab.campaign?.deadline || collab.deadline).toLocaleDateString()}</strong></span>
                       </div>
                     )}
                     <div className="collab-detail-item">
                       <Clock size={16} />
-                      <span>Created: <strong>{collab.createdAt}</strong></span>
+                      <span>Created: <strong>{new Date(collab.createdAt || collab.appliedAt).toLocaleDateString()}</strong></span>
                     </div>
                   </div>
                 </div>

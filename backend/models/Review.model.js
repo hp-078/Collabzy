@@ -1,126 +1,82 @@
 const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema({
+  // References
   deal: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Deal',
-    required: true,
+    required: true
   },
   campaign: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Campaign',
+    required: true
   },
-  
-  // Who is reviewing whom
+
+  // Reviewer and reviewee
   reviewer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-  },
-  reviewerRole: {
-    type: String,
-    enum: ['brand', 'influencer'],
-    required: true,
+    required: true
   },
   reviewee: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: true
   },
-  revieweeRole: {
+
+  // Review type (brand reviewing influencer or vice versa)
+  reviewType: {
     type: String,
-    enum: ['brand', 'influencer'],
-    required: true,
+    enum: ['brand_to_influencer', 'influencer_to_brand'],
+    required: true
   },
-  
-  // Review Content
+
+  // Rating
   rating: {
     type: Number,
-    required: [true, 'Rating is required'],
-    min: [1, 'Rating must be at least 1'],
-    max: [5, 'Rating cannot exceed 5'],
+    required: true,
+    min: 1,
+    max: 5
   },
-  reviewText: {
+
+  // Detailed ratings
+  detailedRatings: {
+    communication: { type: Number, min: 1, max: 5 },
+    quality: { type: Number, min: 1, max: 5 },
+    timeliness: { type: Number, min: 1, max: 5 },
+    professionalism: { type: Number, min: 1, max: 5 }
+  },
+
+  // Review content
+  title: {
     type: String,
-    required: [true, 'Review text is required'],
-    minlength: [10, 'Review must be at least 10 characters'],
-    maxlength: [1000, 'Review cannot exceed 1000 characters'],
+    maxlength: [200, 'Title cannot exceed 200 characters']
   },
-  
-  // Specific Ratings (for brands reviewing influencers)
-  specificRatings: {
-    communication: {
-      type: Number,
-      min: 1,
-      max: 5,
-    },
-    quality: {
-      type: Number,
-      min: 1,
-      max: 5,
-    },
-    timeliness: {
-      type: Number,
-      min: 1,
-      max: 5,
-    },
-    professionalism: {
-      type: Number,
-      min: 1,
-      max: 5,
-    },
+  content: {
+    type: String,
+    required: true,
+    maxlength: [2000, 'Review cannot exceed 2000 characters']
   },
-  
-  // Review Status
+
+  // Response from reviewee
+  response: {
+    content: { type: String },
+    respondedAt: { type: Date }
+  },
+
+  // Status
   isPublic: {
     type: Boolean,
-    default: true,
-  },
-  isVerified: {
-    type: Boolean,
-    default: true, // Auto-verified if from completed deal
-  },
-  
-  // Response
-  response: {
-    text: String,
-    respondedAt: Date,
-  },
-  
-  // Helpful Votes
-  helpfulCount: {
-    type: Number,
-    default: 0,
-  },
-  notHelpfulCount: {
-    type: Number,
-    default: 0,
-  },
-  
-  // Flagging
-  isFlagged: {
-    type: Boolean,
-    default: false,
-  },
-  flagReason: String,
-  
-}, {
-  timestamps: true,
-});
-
-// Indexes
-reviewSchema.index({ reviewee: 1, isPublic: 1 });
-reviewSchema.index({ reviewer: 1 });
-reviewSchema.index({ deal: 1 }, { unique: true }); // One review per deal
-reviewSchema.index({ rating: -1, createdAt: -1 });
-
-// Ensure reviewer and reviewee are different
-reviewSchema.pre('save', function(next) {
-  if (this.reviewer.equals(this.reviewee)) {
-    next(new Error('Reviewer and reviewee cannot be the same'));
+    default: true
   }
-  next();
+}, {
+  timestamps: true
 });
+
+// Prevent duplicate reviews
+reviewSchema.index({ deal: 1, reviewer: 1 }, { unique: true });
+reviewSchema.index({ reviewee: 1, rating: -1 });
 
 const Review = mongoose.model('Review', reviewSchema);
 

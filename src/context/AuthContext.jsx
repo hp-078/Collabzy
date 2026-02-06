@@ -24,12 +24,25 @@ export const AuthProvider = ({ children }) => {
         try {
           // Verify token with backend
           const response = await authService.getMe();
-          setUser(response.data);
-          
-          // Connect to Socket.io
-          socketService.connect();
+          // Backend returns { success: true, user: {...} }
+          // So we need to extract the user object
+          if (response && response.data && response.data.user) {
+            const userData = response.data.user;
+            console.log('✅ User data loaded:', userData);
+            setUser(userData);
+
+            // Also update localStorage with fresh user data
+            localStorage.setItem('user', JSON.stringify(userData));
+
+            // Connect to Socket.io
+            socketService.connect();
+          } else {
+            console.error('❌ Invalid response format:', response);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
         } catch (error) {
-          console.error('Token validation failed:', error);
+          console.error('❌ Token validation failed:', error.message);
           // Token is invalid, clear storage
           localStorage.removeItem('token');
           localStorage.removeItem('user');

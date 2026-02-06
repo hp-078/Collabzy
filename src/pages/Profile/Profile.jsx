@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
+import influencerService from '../../services/influencer.service';
+import authService from '../../services/auth.service';
 import toast from 'react-hot-toast';
 import {
   User,
@@ -13,28 +14,33 @@ import {
   Save,
   Plus,
   X,
-  DollarSign
+  DollarSign,
+  Loader
 } from 'lucide-react';
 import './Profile.css';
 
 const Profile = () => {
   const { user, updateUser, isInfluencer, isBrand } = useAuth();
-  const { updateInfluencer, updateBrand } = useData();
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
+  
+  console.log('Profile component rendered, user:', user); // Debug log
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    description: user?.description || '',
-    niche: user?.niche || '',
-    platform: user?.platform || 'Instagram',
+    bio: user?.description || user?.bio || '',
+    category: user?.niche || user?.category || '',
+    platformType: user?.platform || user?.platformType || 'Instagram',
     youtubeUrl: user?.youtubeUrl || '',
     instagramUrl: user?.instagramUrl || '',
-    followers: user?.followers || '',
     location: user?.location || '',
     website: user?.website || '',
     industry: user?.industry || '',
     services: user?.services || [],
   });
+
+  console.log('Initial formData:', formData); // Debug log
 
   const [newService, setNewService] = useState({
     name: '',
@@ -45,6 +51,76 @@ const Profile = () => {
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [previewImage, setPreviewImage] = useState(user?.avatar || '');
+
+  // Update form data when user object changes
+  useEffect(() => {
+    if (user) {
+      console.log('User changed, updating formData with user:', user); // Debug log
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        bio: user.description || user.bio || prev.bio,
+        category: user.niche || user.category || prev.category,
+        platformType: user.platform || user.platformType || prev.platformType,
+        youtubeUrl: user.youtubeUrl || prev.youtubeUrl,
+        instagramUrl: user.instagramUrl || prev.instagramUrl,
+        location: user.location || prev.location,
+        website: user.website || prev.website,
+        industry: user.industry || prev.industry,
+        services: user.services || prev.services,
+      }));
+      
+      if (user.avatar) {
+        setPreviewImage(user.avatar);
+      }
+    }
+  }, [user]);
+
+  // Fetch profile data on mount (for influencers)
+  useEffect(() => {
+    const loadProfile = async () => {
+      console.log('Loading profile for influencer:', isInfluencer); // Debug log
+      if (isInfluencer) {
+        try {
+          const response = await influencerService.getOwnProfile();
+          const profileData = response.data || response; // Handle both wrapped and unwrapped responses
+          console.log('Profile loaded:', profileData); // Debug log
+          setProfile(profileData);
+
+          // Update form data with fetched profile
+          if (profileData) {
+            setFormData(prev => {
+              const newData = {
+                ...prev,
+                name: profileData.name || prev.name,
+                bio: profileData.bio || prev.bio,
+                category: profileData.niche || prev.category, // backend uses 'niche'
+                platformType: profileData.platform || prev.platformType, // backend uses 'platform'
+                youtubeUrl: profileData.youtubeUrl || prev.youtubeUrl,
+                instagramUrl: profileData.instagramUrl || prev.instagramUrl,
+                location: profileData.location || prev.location,
+                website: profileData.website || prev.website,
+                services: profileData.services || prev.services,
+              };
+              console.log('Updated formData:', newData); // Debug log
+              return newData;
+            });
+
+            if (profileData.avatar) {
+              setPreviewImage(profileData.avatar);
+            }
+          }
+        } catch (error) {
+          console.log('No profile yet or error loading:', error);
+        }
+      }
+      setLoading(false);
+    };
+
+    loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInfluencer]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -64,10 +140,12 @@ const Profile = () => {
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    console.log('Form field changed:', name, value); // Debug log
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleAddService = () => {
@@ -105,25 +183,81 @@ const Profile = () => {
     setSaving(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Map frontend fields to backend fields
+      const updatedData = {
+        name: formData.name,
+        bio: formData.bio,
+        niche: formData.category, // frontend 'category' → backend 'niche'
+        platform: formData.platformType, // frontend 'platformType' → backend 'platform'
+        location: formData.location,
+        avatar: previewImage,
+        youtubeUrl: formData.youtubeUrl,
+        instagramUrl: formData.instagramUrl,
+        website: formData.website,
+        services: formData.services,
+      };
 
-      const updatedData = { ...formData, avatar: previewImage };
-
+      // Update profile based on role
       if (isInfluencer) {
-        updateInfluencer(user.id, updatedData);
-      } else if (isBrand) {
-        updateBrand(user.id, updatedData);
-      }
+        try {
+          // Try to update existing profile first
+          await influencerService.updateProfile(updatedData);
+          toast.success('Profile updated successfully!');
+        } catch (updateError) {
+          // If profile doesn't exist (404), create a new one
+          if (updateError.response?.status === 404) {
+            await influencerService.createProfile(updatedData);
+            toast.success('Profile created successfully!');
+          } else {
+            // Re-throw other errors
+            throw updateError;
+          }
+        }
 
-      updateUser(updatedData);
-      toast.success('Profile updated successfully!');
+        // Update local user state
+        updateUser({
+          ...user,
+          ...formData,
+          avatar: previewImage
+        });
+      } else if (isBrand) {
+        // For brands, update user info via auth service
+        // Note: Brand profile update endpoint would need to be created in backend
+        updateUser({
+          ...user,
+          ...updatedData,
+          avatar: previewImage
+        });
+
+        toast.success('Profile updated successfully!');
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
-      toast.error('Failed to update profile. Please try again.');
+      const errorMsg = error.response?.data?.message || 'Failed to update profile. Please try again.';
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="prof-page">
+        <div className="prof-container" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          gap: '1rem'
+        }}>
+          <Loader size={48} className="spin-animation" />
+          <p>Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="prof-page">
@@ -190,8 +324,10 @@ const Profile = () => {
                     id="email"
                     name="email"
                     value={formData.email}
-                    onChange={handleChange}
+                    readOnly
                     className="input"
+                    style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                    title="Email cannot be changed"
                   />
                 </div>
 
@@ -231,11 +367,11 @@ const Profile = () => {
               </div>
 
               <div className="input-group prof-full-width">
-                <label htmlFor="description">About</label>
+                <label htmlFor="bio">About</label>
                 <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
+                  id="bio"
+                  name="bio"
+                  value={formData.bio}
                   onChange={handleChange}
                   placeholder="Tell us about yourself or your brand..."
                   className="input prof-textarea"
@@ -252,11 +388,11 @@ const Profile = () => {
                   
                   <div className="prof-form-grid">
                     <div className="input-group">
-                      <label htmlFor="niche">Niche / Category</label>
+                      <label htmlFor="category">Niche / Category</label>
                       <select
-                        id="niche"
-                        name="niche"
-                        value={formData.niche}
+                        id="category"
+                        name="category"
+                        value={formData.category}
                         onChange={handleChange}
                         className="input"
                       >
@@ -275,13 +411,13 @@ const Profile = () => {
                     </div>
 
                     <div className="input-group">
-                      <label htmlFor="platform">
+                      <label htmlFor="platformType">
                         Primary Platform
                       </label>
                       <select
-                        id="platform"
-                        name="platform"
-                        value={formData.platform}
+                        id="platformType"
+                        name="platformType"
+                        value={formData.platformType}
                         onChange={handleChange}
                         className="input"
                       >

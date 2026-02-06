@@ -1,4 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import influencerService from '../services/influencer.service';
+import campaignService from '../services/campaign.service';
+import applicationService from '../services/application.service';
 
 const DataContext = createContext(null);
 
@@ -10,414 +14,334 @@ export const useData = () => {
   return context;
 };
 
-// Sample influencers data
-const sampleInfluencers = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    role: 'influencer',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
-    niche: 'Fashion & Lifestyle',
-    description: 'Fashion enthusiast sharing daily style inspiration and lifestyle tips. Passionate about sustainable fashion and helping brands connect with conscious consumers.',
-    followers: '125K',
-    platform: 'Instagram',
-    instagramUrl: 'https://instagram.com/sarahjohnson',
-    instagramUsername: 'sarahjohnson',
-    youtubeUrl: '',
-    location: 'New York, USA',
-    verified: true,
-    rating: 4.9,
-    services: [
-      { id: 's1', name: 'Instagram Post', price: 500, description: 'Single feed post with product mention' },
-      { id: 's2', name: 'Story Package', price: 300, description: '3-5 stories with swipe up link' },
-      { id: 's3', name: 'Reel Creation', price: 800, description: 'Engaging 30-60 second reel' },
-    ],
-    pastCollabs: ['Nike', 'Zara', 'H&M', 'Sephora'],
-    joinedDate: '2024-01-15',
-  },
-  {
-    id: '2',
-    name: 'Mike Chen',
-    email: 'mike@example.com',
-    role: 'influencer',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
-    niche: 'Tech & Gadgets',
-    description: 'Tech reviewer and gadget enthusiast. I help brands showcase their products through honest, detailed reviews that my audience trusts.',
-    followers: '250K',
-    platform: 'YouTube',
-    instagramUrl: '',
-    youtubeUrl: 'https://youtube.com/@mikechen',
-    location: 'San Francisco, USA',
-    verified: true,
-    rating: 4.8,
-    services: [
-      { id: 's1', name: 'YouTube Review', price: 1500, description: 'Full product review video (8-12 mins)' },
-      { id: 's2', name: 'Unboxing Video', price: 800, description: 'First impressions unboxing' },
-      { id: 's3', name: 'Comparison Video', price: 2000, description: 'Side by side product comparison' },
-    ],
-    pastCollabs: ['Samsung', 'Apple', 'Sony', 'OnePlus'],
-    joinedDate: '2023-08-20',
-  },
-  {
-    id: '3',
-    name: 'Emma Wilson',
-    email: 'emma@example.com',
-    role: 'influencer',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200',
-    niche: 'Fitness & Health',
-    description: 'Certified fitness trainer sharing workout routines, nutrition tips, and healthy lifestyle content. Partner with wellness and fitness brands.',
-    followers: '180K',
-    platform: 'Instagram',
-    instagramUrl: 'https://instagram.com/emmafitness',
-    instagramUsername: 'emmafitness',
-    youtubeUrl: 'https://youtube.com/@emmawilson',
-    location: 'Los Angeles, USA',
-    verified: true,
-    rating: 4.7,
-    services: [
-      { id: 's1', name: 'Workout Feature', price: 600, description: 'Product featured in workout video' },
-      { id: 's2', name: 'Challenge Campaign', price: 1200, description: '7-day fitness challenge featuring brand' },
-      { id: 's3', name: 'Nutrition Post', price: 450, description: 'Recipe or supplement review' },
-    ],
-    pastCollabs: ['Nike', 'Gymshark', 'MyProtein', 'Fitbit'],
-    joinedDate: '2024-02-10',
-  },
-  {
-    id: '4',
-    name: 'David Park',
-    email: 'david@example.com',
-    role: 'influencer',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200',
-    niche: 'Food & Cooking',
-    description: 'Home chef and food blogger. I create delicious recipe content and help food brands reach passionate home cooks.',
-    followers: '95K',
-    platform: 'Instagram',
-    instagramUrl: 'https://instagram.com/davidcooks',
-    instagramUsername: 'davidcooks',
-    youtubeUrl: '',
-    location: 'Chicago, USA',
-    verified: false,
-    rating: 4.6,
-    services: [
-      { id: 's1', name: 'Recipe Video', price: 400, description: 'Recipe using brand product' },
-      { id: 's2', name: 'Product Review', price: 350, description: 'Honest product taste test' },
-      { id: 's3', name: 'Cook-along Live', price: 700, description: 'Live cooking session featuring brand' },
-    ],
-    pastCollabs: ['Blue Apron', 'HelloFresh', 'KitchenAid'],
-    joinedDate: '2024-03-05',
-  },
-  {
-    id: '5',
-    name: 'Lisa Martinez',
-    email: 'lisa@example.com',
-    role: 'influencer',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
-    niche: 'Beauty & Skincare',
-    description: 'Beauty expert and skincare enthusiast. I help beauty brands connect with an engaged audience through authentic reviews and tutorials.',
-    followers: '320K',
-    platform: 'Instagram',
-    location: 'Miami, USA',
-    verified: true,
-    rating: 4.9,
-    services: [
-      { id: 's1', name: 'GRWM Video', price: 700, description: 'Get ready with me featuring products' },
-      { id: 's2', name: 'Tutorial Post', price: 550, description: 'Step-by-step makeup tutorial' },
-      { id: 's3', name: 'Brand Takeover', price: 1500, description: 'Full day story takeover' },
-    ],
-    pastCollabs: ['Fenty Beauty', 'Charlotte Tilbury', 'The Ordinary', 'Glossier'],
-    joinedDate: '2023-11-12',
-  },
-  {
-    id: '6',
-    name: 'Alex Thompson',
-    email: 'alex@example.com',
-    role: 'influencer',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200',
-    niche: 'Travel & Adventure',
-    description: 'Adventure traveler and photographer. I showcase destinations and travel gear to inspire wanderlust in my community.',
-    followers: '200K',
-    platform: 'YouTube',
-    location: 'Denver, USA',
-    verified: true,
-    rating: 4.8,
-    services: [
-      { id: 's1', name: 'Destination Feature', price: 2500, description: 'Full travel vlog featuring location' },
-      { id: 's2', name: 'Gear Review', price: 1000, description: 'Travel gear review and showcase' },
-      { id: 's3', name: 'Photo Package', price: 800, description: '10 professional photos for brand use' },
-    ],
-    pastCollabs: ['GoPro', 'Airbnb', 'Lonely Planet', 'REI'],
-    joinedDate: '2023-09-28',
-  },
-];
-
-// Sample brands data
-const sampleBrands = [
-  {
-    id: 'b1',
-    name: 'TechVibe Electronics',
-    email: 'brand@techvibe.com',
-    role: 'brand',
-    avatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200',
-    industry: 'Technology',
-    description: 'Innovative consumer electronics company focused on creating smart home products that simplify everyday life.',
-    website: 'https://techvibe.com',
-    location: 'San Jose, USA',
-    verified: true,
-    activeRequests: 3,
-    completedCollabs: 12,
-    joinedDate: '2023-06-15',
-  },
-  {
-    id: 'b2',
-    name: 'GreenLife Organics',
-    email: 'brand@greenlife.com',
-    role: 'brand',
-    avatar: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=200',
-    industry: 'Food & Beverage',
-    description: 'Organic food company committed to sustainable farming and healthy eating. Looking to partner with health-conscious influencers.',
-    website: 'https://greenlife.com',
-    location: 'Portland, USA',
-    verified: true,
-    activeRequests: 5,
-    completedCollabs: 28,
-    joinedDate: '2023-04-20',
-  },
-  {
-    id: 'b3',
-    name: 'StyleHouse Fashion',
-    email: 'brand@stylehouse.com',
-    role: 'brand',
-    avatar: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200',
-    industry: 'Fashion',
-    description: 'Contemporary fashion brand offering trendy, affordable clothing for young professionals.',
-    website: 'https://stylehouse.com',
-    location: 'New York, USA',
-    verified: true,
-    activeRequests: 8,
-    completedCollabs: 45,
-    joinedDate: '2023-02-10',
-  },
-];
-
-// Sample collaboration requests
-const sampleCollaborations = [
-  {
-    id: 'c1',
-    brandId: 'b1',
-    brandName: 'TechVibe Electronics',
-    influencerId: '2',
-    influencerName: 'Mike Chen',
-    service: 'YouTube Review',
-    status: 'pending',
-    budget: 1500,
-    message: 'We would love for you to review our new smart home hub. It features voice control, app integration, and works with all major smart devices.',
-    createdAt: '2025-01-25',
-    deadline: '2025-02-15',
-  },
-  {
-    id: 'c2',
-    brandId: 'b2',
-    brandName: 'GreenLife Organics',
-    influencerId: '3',
-    influencerName: 'Emma Wilson',
-    service: 'Nutrition Post',
-    status: 'active',
-    budget: 450,
-    message: 'Looking for a post featuring our new protein powder line. Perfect for your fitness audience!',
-    createdAt: '2025-01-20',
-    deadline: '2025-02-01',
-  },
-  {
-    id: 'c3',
-    brandId: 'b3',
-    brandName: 'StyleHouse Fashion',
-    influencerId: '1',
-    influencerName: 'Sarah Johnson',
-    service: 'Instagram Post',
-    status: 'completed',
-    budget: 500,
-    message: 'Showcase our spring collection with your unique style perspective.',
-    createdAt: '2025-01-10',
-    deadline: '2025-01-20',
-    completedAt: '2025-01-18',
-  },
-];
-
-// Sample messages
-const sampleMessages = [
-  {
-    id: 'm1',
-    collaborationId: 'c1',
-    senderId: 'b1',
-    senderName: 'TechVibe Electronics',
-    receiverId: '2',
-    receiverName: 'Mike Chen',
-    content: 'Hi Mike! We loved your recent tech reviews. Would you be interested in reviewing our new smart home hub?',
-    timestamp: '2025-01-25T10:30:00',
-    read: true,
-  },
-  {
-    id: 'm2',
-    collaborationId: 'c1',
-    senderId: '2',
-    senderName: 'Mike Chen',
-    receiverId: 'b1',
-    receiverName: 'TechVibe Electronics',
-    content: 'Thanks for reaching out! I am definitely interested. Can you tell me more about the product features?',
-    timestamp: '2025-01-25T11:15:00',
-    read: true,
-  },
-  {
-    id: 'm3',
-    collaborationId: 'c2',
-    senderId: 'b2',
-    senderName: 'GreenLife Organics',
-    receiverId: '3',
-    receiverName: 'Emma Wilson',
-    content: 'Hi Emma! Your fitness content is amazing. We think our protein powder would be perfect for your audience.',
-    timestamp: '2025-01-20T14:00:00',
-    read: true,
-  },
-];
-
 export const DataProvider = ({ children }) => {
+  const { isAuthenticated, user } = useAuth();
   const [influencers, setInfluencers] = useState([]);
-  const [brands, setBrands] = useState([]);
-  const [collaborations, setCollaborations] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [campaigns, setCampaigns] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [cache, setCache] = useState({
+    influencers: { data: null, timestamp: null },
+    campaigns: { data: null, timestamp: null },
+    applications: { data: null, timestamp: null },
+  });
 
-  useEffect(() => {
-    // Load data from localStorage or use sample data
-    const storedInfluencers = localStorage.getItem('collabzy_influencers');
-    const storedBrands = localStorage.getItem('collabzy_brands');
-    const storedCollaborations = localStorage.getItem('collabzy_collaborations');
-    const storedMessages = localStorage.getItem('collabzy_messages');
+  // Cache duration: 5 minutes
+  const CACHE_DURATION = 5 * 60 * 1000;
 
-    setInfluencers(storedInfluencers ? JSON.parse(storedInfluencers) : sampleInfluencers);
-    setBrands(storedBrands ? JSON.parse(storedBrands) : sampleBrands);
-    setCollaborations(storedCollaborations ? JSON.parse(storedCollaborations) : sampleCollaborations);
-    setMessages(storedMessages ? JSON.parse(storedMessages) : sampleMessages);
-    setLoading(false);
-  }, []);
+  // Check if cache is valid
+  const isCacheValid = (cacheKey) => {
+    const cached = cache[cacheKey];
+    if (!cached.data || !cached.timestamp) return false;
+    return Date.now() - cached.timestamp < CACHE_DURATION;
+  };
 
-  // Save to localStorage whenever data changes
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('collabzy_influencers', JSON.stringify(influencers));
-      localStorage.setItem('collabzy_brands', JSON.stringify(brands));
-      localStorage.setItem('collabzy_collaborations', JSON.stringify(collaborations));
-      localStorage.setItem('collabzy_messages', JSON.stringify(messages));
+  // Update cache
+  const updateCache = (cacheKey, data) => {
+    setCache(prev => ({
+      ...prev,
+      [cacheKey]: { data, timestamp: Date.now() }
+    }));
+  };
+
+  // Fetch influencers
+  const fetchInfluencers = async (filters = {}, forceRefresh = false) => {
+    if (!forceRefresh && isCacheValid('influencers')) {
+      setInfluencers(cache.influencers.data);
+      return cache.influencers.data;
     }
-  }, [influencers, brands, collaborations, messages, loading]);
 
-  // Influencer functions
-  const addInfluencer = (influencer) => {
-    const newInfluencer = {
-      ...influencer,
-      id: Date.now().toString(),
-      joinedDate: new Date().toISOString().split('T')[0],
-      rating: 0,
-      verified: false,
-    };
-    setInfluencers([...influencers, newInfluencer]);
-    return newInfluencer;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await influencerService.getAllInfluencers(filters);
+      const data = response.data || [];
+      setInfluencers(data);
+      updateCache('influencers', data);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch influencers:', error);
+      setError('Failed to load influencers');
+      return [];
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateInfluencer = (id, updates) => {
-    setInfluencers(influencers.map(inf => 
-      inf.id === id ? { ...inf, ...updates } : inf
-    ));
+  // Fetch campaigns
+  const fetchCampaigns = async (filters = {}, forceRefresh = false) => {
+    if (!isAuthenticated) return [];
+
+    if (!forceRefresh && isCacheValid('campaigns')) {
+      setCampaigns(cache.campaigns.data);
+      return cache.campaigns.data;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await campaignService.getAllCampaigns(filters);
+      const data = response.data || [];
+      setCampaigns(data);
+      updateCache('campaigns', data);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch campaigns:', error);
+      setError('Failed to load campaigns');
+      return [];
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Brand functions
-  const addBrand = (brand) => {
-    const newBrand = {
-      ...brand,
-      id: Date.now().toString(),
-      joinedDate: new Date().toISOString().split('T')[0],
-      activeRequests: 0,
-      completedCollabs: 0,
-      verified: false,
-    };
-    setBrands([...brands, newBrand]);
-    return newBrand;
+  // Fetch user's campaigns (brand only)
+  const fetchMyCampaigns = async (filters = {}) => {
+    if (!isAuthenticated) return [];
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await campaignService.getMyCampaigns(filters);
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch my campaigns:', error);
+      setError('Failed to load your campaigns');
+      return [];
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateBrand = (id, updates) => {
-    setBrands(brands.map(brand => 
-      brand.id === id ? { ...brand, ...updates } : brand
-    ));
+  // Fetch eligible campaigns (influencer only)
+  const fetchEligibleCampaigns = async (filters = {}) => {
+    if (!isAuthenticated) return [];
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await campaignService.getEligibleCampaigns(filters);
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch eligible campaigns:', error);
+      setError('Failed to load campaigns');
+      return [];
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Collaboration functions
-  const createCollaboration = (collab) => {
-    const newCollab = {
-      ...collab,
-      id: Date.now().toString(),
-      status: 'pending',
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setCollaborations([...collaborations, newCollab]);
-    return newCollab;
+  // Fetch recommended campaigns (influencer only)
+  const fetchRecommendedCampaigns = async (filters = {}) => {
+    if (!isAuthenticated) return [];
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await campaignService.getRecommendedCampaigns(filters);
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch recommended campaigns:', error);
+      setError('Failed to load recommendations');
+      return [];
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateCollaboration = (id, updates) => {
-    setCollaborations(collaborations.map(collab => 
-      collab.id === id ? { ...collab, ...updates } : collab
-    ));
+  // Fetch applications
+  const fetchMyApplications = async (filters = {}, forceRefresh = false) => {
+    if (!isAuthenticated) {
+      console.log('⚠️ Not authenticated, skipping application fetch');
+      return [];
+    }
+
+    if (!forceRefresh && isCacheValid('applications')) {
+      console.log('📦 Using cached applications:', cache.applications.data?.length || 0);
+      setApplications(cache.applications.data);
+      return cache.applications.data;
+    }
+
+    console.log('🔄 Fetching applications from API...');
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await applicationService.getMyApplications(filters);
+      const data = response.data || [];
+      console.log('✅ Fetched applications:', data.length);
+      console.log('📋 Applications data:', data);
+      setApplications(data);
+      updateCache('applications', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to fetch applications:', error);
+      setError('Failed to load applications');
+      return [];
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Message functions
-  const sendMessage = (message) => {
-    const newMessage = {
-      ...message,
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      read: false,
-    };
-    setMessages([...messages, newMessage]);
-    return newMessage;
+  // Get single campaign
+  const getCampaignById = async (campaignId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await campaignService.getCampaignById(campaignId);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch campaign:', error);
+      setError('Failed to load campaign details');
+      return null;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const markMessageAsRead = (id) => {
-    setMessages(messages.map(msg => 
-      msg.id === id ? { ...msg, read: true } : msg
-    ));
+  // Get single influencer
+  const getInfluencerById = async (userId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await influencerService.getProfile(userId);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch influencer:', error);
+      setError('Failed to load influencer profile');
+      return null;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getMessagesByCollaboration = (collaborationId) => {
-    return messages.filter(msg => msg.collaborationId === collaborationId);
+  // Create campaign
+  const createCampaign = async (campaignData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await campaignService.createCampaign(campaignData);
+      // Invalidate campaigns cache
+      updateCache('campaigns', null);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to create campaign:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to create campaign';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getMessagesByUser = (userId) => {
-    return messages.filter(msg => 
-      msg.senderId === userId || msg.receiverId === userId
-    );
+  // Update campaign
+  const updateCampaign = async (campaignId, campaignData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await campaignService.updateCampaign(campaignId, campaignData);
+      // Invalidate campaigns cache
+      updateCache('campaigns', null);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to update campaign:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to update campaign';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Submit application
+  const submitApplication = async (applicationData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await applicationService.submitApplication(applicationData);
+      // Invalidate applications cache
+      updateCache('applications', null);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to submit application:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to submit application';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update application status (brand only)
+  const updateApplicationStatus = async (applicationId, status, message = '') => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await applicationService.updateApplicationStatus(applicationId, status, message);
+      // Invalidate applications cache
+      updateCache('applications', null);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to update application:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to update application';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Clear all cache
+  const clearCache = () => {
+    setCache({
+      influencers: { data: null, timestamp: null },
+      campaigns: { data: null, timestamp: null },
+      applications: { data: null, timestamp: null },
+    });
+  };
+
+  // Backward compatibility helpers (for components still using old API)
+  const collaborations = applications; // Applications = Collaborations conceptually
+  const brands = []; // Not used in new version
+  const messages = []; // Will be handled separately
 
   const value = {
+    // State
     influencers,
-    brands,
-    collaborations,
-    messages,
+    campaigns,
+    applications,
+    collaborations, // Alias for backward compatibility
+    brands, // Empty for backward compatibility
+    messages, // Empty for backward compatibility
     loading,
-    addInfluencer,
-    updateInfluencer,
-    addBrand,
-    updateBrand,
-    createCollaboration,
-    updateCollaboration,
-    sendMessage,
-    markMessageAsRead,
-    getMessagesByCollaboration,
-    getMessagesByUser,
+    error,
+
+    // Fetch functions
+    fetchInfluencers,
+    fetchCampaigns,
+    fetchMyCampaigns,
+    fetchEligibleCampaigns,
+    fetchRecommendedCampaigns,
+    fetchMyApplications,
+
+    // Get single item
+    getCampaignById,
+    getInfluencerById,
+
+    // Create/Update functions
+    createCampaign,
+    updateCampaign,
+    submitApplication,
+    updateApplicationStatus,
+
+
+
+    // Utility
+    clearCache,
   };
 
   return (
     <DataContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </DataContext.Provider>
   );
 };

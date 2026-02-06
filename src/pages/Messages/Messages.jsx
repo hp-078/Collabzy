@@ -23,12 +23,12 @@ const Messages = () => {
   const messagesEndRef = useRef(null);
 
   // Get unique conversations
-  const userMessages = getMessagesByUser(user?.id);
+  const userMessages = getMessagesByUser(user?._id);
   const conversations = [];
   
   userMessages.forEach(msg => {
-    const partnerId = msg.senderId === user?.id ? msg.receiverId : msg.senderId;
-    const partnerName = msg.senderId === user?.id ? msg.receiverName : msg.senderName;
+    const partnerId = msg.senderId === user?._id ? msg.receiverId : msg.senderId;
+    const partnerName = msg.senderId === user?._id ? msg.receiverName : msg.senderName;
     
     if (!conversations.find(c => c.partnerId === partnerId)) {
       conversations.push({
@@ -43,7 +43,7 @@ const Messages = () => {
 
   // Also add conversations from collaborations without messages
   collaborations.forEach(collab => {
-    const isUserInfluencer = collab.influencerId === user?.id;
+    const isUserInfluencer = collab.influencerId === user?._id;
     const partnerId = isUserInfluencer ? collab.brandId : collab.influencerId;
     const partnerName = isUserInfluencer ? collab.brandName : collab.influencerName;
     
@@ -68,8 +68,8 @@ const Messages = () => {
 
   const chatMessages = selectedChat
     ? userMessages.filter(m => 
-        (m.senderId === selectedChat && m.receiverId === user?.id) ||
-        (m.receiverId === selectedChat && m.senderId === user?.id)
+      (m.senderId === selectedChat && m.receiverId === user?._id) ||
+      (m.receiverId === selectedChat && m.senderId === user?._id)
       ).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
     : [];
 
@@ -193,7 +193,7 @@ const Messages = () => {
               <div className="msg-chat-messages">
                 {chatMessages.length > 0 ? (
                   chatMessages.map((msg, index) => {
-                    const isOwn = msg.senderId === user?.id;
+                    const isOwn = msg.senderId === user?._id;
                     const showDate = index === 0 || 
                       formatDate(msg.timestamp) !== formatDate(chatMessages[index - 1].timestamp);
                     
