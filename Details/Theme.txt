@@ -1,0 +1,495 @@
+================================================================================
+  COLLABZY — COMPLETE THEME REFERENCE
+  "Playful Pastel" Design System
+================================================================================
+
+
+================================================================================
+  1. GOOGLE FONTS IMPORT
+================================================================================
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=DM+Sans:ital,wght@0,100..1000;1,100..1000&display=swap');
+
+
+================================================================================
+  2. COLOR PALETTE
+================================================================================
+
+--- Pastel Palette (Primary) ---
+  --pastel-pink       : #FFDDE0     /* Soft pink — accents, highlights */
+  --pastel-peach       : #FFF0E8     /* Warm peach — hero gradient, backgrounds */
+  --pastel-yellow      : #FFF8D6     /* Light yellow — section backgrounds */
+  --pastel-mint        : #B8E5D0     /* Mint green — success-related elements */
+  --pastel-lavender    : #E8D5F2     /* Light purple — category badges */
+  --pastel-cream       : #FFF9F0     /* Warm cream — main body background */
+  --pastel-coral       : #FFCEC2     /* Soft coral — info boxes, softer CTA bg */
+  --pastel-sky         : #C5E8F1     /* Light blue — informational elements */
+
+--- Accent Colors ---
+  --accent-coral       : #FF6B6B     /* Primary action color — CTA, highlights */
+  --accent-purple      : #9B59B6     /* Secondary accent — badges, category tags */
+  --accent-teal        : #20B2AA     /* Tertiary accent — online indicators */
+
+--- Text Colors ---
+  --dark-text          : #1A1A1A     /* Headings, primary text */
+  --light-text         : #555555     /* Body text, descriptions */
+  --muted-text         : #888888     /* Placeholders, secondary info */
+
+--- Gray Scale ---
+  --gray-50            : #FFF9F0     /* Same as pastel-cream — lightest bg */
+  --gray-100           : #F5F0E8     /* Very light warm gray */
+  --gray-200           : #E8E0D4     /* Light borders */
+  --gray-300           : #D4C8B8     /* Disabled borders */
+  --gray-400           : #B8A898     /* Disabled text */
+  --gray-500           : #8C7B6B     /* Medium gray */
+  --gray-600           : #6B5D50     /* Strong muted text */
+  --gray-700           : #4A3F35     /* Dark warm gray */
+  --gray-800           : #332B24     /* Very dark gray */
+  --gray-900           : #1A1A1A     /* Same as dark-text */
+
+--- Semantic Colors ---
+  --success            : #98D8AA     /* Success messages */
+  --success-light      : #E6F7EC     /* Success backgrounds */
+  --warning            : #FFD686     /* Warnings */
+  --warning-light      : #FFF4DC     /* Warning backgrounds */
+  --error              : #FF9B9B     /* Error messages */
+  --error-light        : #FFE6E6     /* Error backgrounds */
+  --info               : #87CEEB     /* Info messages */
+  --info-light         : #E3F2FD     /* Info backgrounds */
+
+--- Special Colors Used in Components ---
+  #2E8B57              /* Green accent for "green" text (home page) */
+  #4CAF50              /* Checkmark green — feature lists, pricing */
+  #ff5252              /* Hover state of accent-coral (submit buttons) */
+  #4A3B5C              /* Brands section dark gradient start */
+  #2D2438              /* Brands section dark gradient end */
+
+
+================================================================================
+  3. TYPOGRAPHY
+================================================================================
+
+--- Font Families ---
+  Heading Font : 'Fraunces', Georgia, serif
+    - Variable font, optical size 9–144
+    - Weights used: 400 (italic labels), 700, 800, 900
+    - Character: Elegant, serif, editorial feel
+
+  Body Font    : 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
+    - Weights used: 300, 400, 500, 600, 700
+    - Character: Clean, modern, highly readable
+
+--- Font Size Scale ---
+  --font-size-xs       : 0.75rem     /* 12px — tiny labels */
+  --font-size-sm       : 0.875rem    /* 14px — small text */
+  --font-size-base     : 1rem        /* 16px — body default */
+  --font-size-md       : 1.125rem    /* 18px — subtitles */
+  --font-size-lg       : 1.25rem     /* 20px — large body */
+  --font-size-xl       : 1.5rem      /* 24px — small headings */
+  --font-size-2xl      : 1.875rem    /* 30px — section sub-headings */
+  --font-size-3xl      : 2.25rem     /* 36px — section headings */
+  --font-size-4xl      : 3rem        /* 48px — page headings */
+  --font-size-5xl      : 3.5rem      /* 56px — hero text */
+  --font-size-6xl      : 3.75rem     /* 60px — display text */
+
+--- Heading Styles (Global) ---
+  font-family    : var(--heading-font)
+  font-weight    : 700
+  letter-spacing : -0.04em
+  line-height    : 1.1
+  color          : var(--dark-text)
+
+--- Key Typography Sizes by Context ---
+  Hero title (desktop)       : 4rem,   font-weight: 900
+  Hero handwritten accent    : 5.5rem, font-weight: 900, letter-spacing: -0.06em
+  Section title large        : 4.5rem, font-weight: 900, line-height: 0.95
+  Section title small (italic): 1.75rem, font-weight: 400, italic
+  Portfolio card title       : 2rem,   font-weight: 800
+  Pricing card name          : 1.5rem, font-weight: 800
+  Pricing amount             : 3.5rem, font-weight: 900
+  CTA title                  : 2.75rem, font-weight: 900
+  Body text                  : 1rem,   line-height: 1.6
+  Category badge             : 0.8rem, font-weight: 600
+  Stat label (uppercase)     : 0.75rem, letter-spacing: 0.5px
+  Stat value                 : 1.5rem, font-weight: 800
+
+--- Responsive Typography ---
+  @1024px: No major changes
+  @768px : Hero title → 2.5rem, Handwritten → 3.5rem, Section title → 2.5rem
+  @480px : Hero title → 2rem, Handwritten → 2.5rem, Section title → 1.8rem, Small → 1.25rem
+
+
+================================================================================
+  4. SPACING & LAYOUT
+================================================================================
+
+--- Content Width ---
+  Default section max-width  : 1200px
+  Wide sections (portfolio)  : 1400px
+  Narrow content (contact/CTA): 600px
+  Pricing grid max-width     : 900px
+
+--- Section Padding ---
+  Standard sections          : 120px top/bottom (80px → 100px)
+  Hero                       : 160px top, 120px bottom
+  Brands section             : 200px top/bottom
+  Final CTA                  : 80px top/bottom
+  Mobile sections            : 60px top/bottom
+
+--- Grid Layouts ---
+  Hero                       : 2-column (1fr 1fr), gap: 4rem
+  Portfolio cards             : 2-column (1fr 1fr), gap: 3rem
+  Pricing grid               : 2-column (1fr 1fr), gap: 2rem
+  Footer                     : 5-column (2fr 1fr 1fr 1fr 1.5fr)
+  Mobile                     : All collapse to 1-column
+
+--- Common Gaps ---
+  0.25rem – 0.5rem           : Tight spacing (stat items, dots)
+  0.75rem – 1rem             : Medium spacing (list items, form gaps)
+  1.5rem – 2rem              : Standard spacing (card content)
+  2.5rem – 3rem              : Section inner spacing
+  4rem                       : Hero grid gap
+
+
+================================================================================
+  5. BORDER RADIUS SCALE
+================================================================================
+
+  8px                        : Very small (dot indicators)
+  12px                       : Inputs, form fields, testimonial boxes, pricing CTA buttons
+  16px                       : Image wrappers, notification dropdowns
+  20px                       : General cards (auth, dashboard)
+  24px                       : Large cards (portfolio, pricing, contact form)
+  32px                       : Footer container
+  50px (border-radius: 50px) : Pill buttons (CTA, badges, categories, popular badge)
+  100px                      : Navbar (pill shape)
+  50%                        : Perfect circles (avatars, decorative dots)
+
+
+================================================================================
+  6. SHADOWS & EFFECTS
+================================================================================
+
+--- Card Shadows ---
+  Default card               : 0 4px 20px rgba(0, 0, 0, 0.08)
+  Medium card                : 0 4px 30px rgba(0, 0, 0, 0.08)
+  Stacked card level 2       : 0 8px 30px rgba(0, 0, 0, 0.10)
+  Stacked card level 3       : 0 12px 40px rgba(0, 0, 0, 0.12)
+  Hover state                : 0 25px 70px rgba(0, 0, 0, 0.18)
+  Card hover (standard)      : 0 15px 50px rgba(0, 0, 0, 0.12)
+  CTA button                 : 0 4px 20px rgba(0, 0, 0, 0.15)
+  CTA button hover           : 0 8px 30px rgba(0, 0, 0, 0.20)
+  Subtle (contact form)      : 0 4px 30px rgba(0, 0, 0, 0.05)
+
+--- Glassmorphism Recipe (Navbar & Footer) ---
+  Background:
+    linear-gradient(135deg,
+      rgba(255, 249, 240, 0.85),
+      rgba(255, 228, 214, 0.75),
+      rgba(255, 249, 240, 0.85)
+    )
+  Backdrop Filter:
+    blur(24px) saturate(180%)
+  Border:
+    1px solid rgba(255, 181, 186, 0.3)
+  Box Shadow (Navbar — multi-layer):
+    0 4px 30px rgba(255, 182, 193, 0.15),    /* Pink glow */
+    0 2px 10px rgba(0, 0, 0, 0.05),           /* Subtle dark */
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),   /* Inner top highlight */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03)        /* Inner bottom subtle */
+
+--- Borders (common) ---
+  Light separator            : 1px solid rgba(0, 0, 0, 0.05)
+  Pricing popular border     : 2px solid var(--accent-coral)
+  Input border               : 2px solid rgba(0, 0, 0, 0.08)
+  Input focus border         : 2px solid var(--accent-coral) or var(--pastel-pink)
+
+
+================================================================================
+  7. GRADIENTS
+================================================================================
+
+--- Hero Gradient ---
+  linear-gradient(180deg,
+    var(--pastel-peach)  0%,     /* #FFF0E8 */
+    var(--pastel-pink)  50%,     /* #FFDDE0 */
+    var(--pastel-cream) 100%     /* #FFF9F0 */
+  )
+
+--- Brands Section (Dark) ---
+  linear-gradient(180deg,
+    #4A3B5C  0%,
+    #2D2438 100%
+  )
+
+--- Final CTA Section ---
+  linear-gradient(180deg,
+    var(--pastel-cream)  0%,     /* #FFF9F0 */
+    var(--pastel-peach) 100%     /* #FFF0E8 */
+  )
+
+--- Loading Screen ---
+  linear-gradient(135deg,
+    var(--pastel-peach),          /* #FFF0E8 */
+    var(--pastel-cream)           /* #FFF9F0 */
+  )
+
+--- Navbar Glassmorphism ---
+  linear-gradient(135deg,
+    rgba(255, 249, 240, 0.85),
+    rgba(255, 228, 214, 0.75),
+    rgba(255, 249, 240, 0.85)
+  )
+
+
+================================================================================
+  8. ANIMATIONS & TRANSITIONS
+================================================================================
+
+--- Easing Curves ---
+  Standard               : ease  (0.25, 0.1, 0.25, 1)
+  Smooth out             : cubic-bezier(0.25, 0.46, 0.45, 0.94)   — card transitions
+  Smooth in-out          : cubic-bezier(0.4, 0, 0.2, 1)           — page transitions, scroll anim
+  Bouncy                 : cubic-bezier(0.68, -0.55, 0.265, 1.55) — notification badge scale
+
+--- Transition Durations ---
+  Quick (hover states)   : 0.3s
+  Medium (cards, UI)     : 0.5s
+  Slow (page transitions): 0.5s – 0.8s
+
+--- Keyframe Animations ---
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%      { transform: translateY(-10px); }
+    /* Duration: 3s, ease-in-out, infinite */
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+    /* Duration: 0.4s */
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+    /* Duration: 0.3s */
+  }
+
+  @keyframes scrollBounce {
+    0%, 100% { transform: translateY(0); opacity: 0.5; }
+    50%      { transform: translateY(10px); opacity: 1; }
+    /* Duration: 2s, ease-in-out, infinite — scroll indicator dot */
+  }
+
+  @keyframes home-dot-bounce {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+    40%           { transform: scale(1); opacity: 1; }
+    /* Duration: 1.4s, ease-in-out, infinite — contact section dots */
+  }
+
+  @keyframes shimmer (Navbar) {
+    0%   { left: -100%; }
+    100% { left: 200%; }
+    /* Duration: 3s, ease-in-out, infinite — hover shimmer effect */
+  }
+
+--- Scroll-Triggered Animation Pattern ---
+  [data-animate] elements:
+    Initial  : opacity: 0, transform: translateY(30px)
+    Visible  : opacity: 1, transform: translateY(0)
+    Duration : 0.8s
+    Easing   : cubic-bezier(0.4, 0, 0.2, 1)
+
+--- Hover Patterns ---
+  Cards      : translateY(-5px) to translateY(-8px) + increased shadow
+  Buttons    : translateY(-2px) to translateY(-3px)
+  Links      : gap increase (0.5rem → 0.75rem) + color change to accent-coral
+  Images     : scale(1.05)
+
+
+================================================================================
+  9. COMPONENT PATTERNS
+================================================================================
+
+--- Buttons ---
+  .btn (Base):
+    padding: 0.875rem 1.75rem
+    border-radius: 50px
+    font-weight: 600
+    font-size: 0.95rem
+    cursor: pointer
+    transition: all 0.3s ease
+
+  .btn-primary:
+    background: var(--dark-text)    /* #1A1A1A */
+    color: white
+    hover: translateY(-2px), shadow 0 8px 25px rgba(0,0,0,0.2)
+
+  .btn-secondary:
+    background: white
+    color: var(--dark-text)
+    border: 2px solid var(--dark-text)
+    hover: background → var(--dark-text), color → white
+
+  .btn-outline:
+    background: transparent
+    color: var(--dark-text)
+    border: 2px solid rgba(0,0,0,0.1)
+    hover: background → rgba(0,0,0,0.05)
+
+  Button Sizes:
+    .btn-sm : padding 0.625rem 1.25rem, font-size 0.85rem
+    .btn-lg : padding 1rem 2.5rem, font-size 1.05rem
+
+--- Inputs ---
+  .input:
+    padding: 0.875rem 1rem
+    border: 2px solid var(--gray-200)
+    border-radius: 12px
+    font-size: 0.95rem
+    background: white
+    transition: all 0.3s ease
+    focus: border-color → var(--pastel-pink), box-shadow → 0 0 0 3px rgba(255,221,224,0.3)
+
+--- Cards ---
+  Standard card:
+    background: white
+    border-radius: 24px
+    padding: 2.5rem
+    border: 1px solid rgba(0, 0, 0, 0.05)
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08)
+
+  Sticky stacked cards:
+    position: sticky
+    Staggered top: 100px → 150px → 200px
+    Staggered z-index: 1 → 2 → 3
+    margin-bottom: 50px
+
+--- Badges / Pills ---
+  Category badge:
+    padding: 0.5rem 1rem
+    background: var(--pastel-lavender)
+    border-radius: 50px
+    font-size: 0.8rem
+    font-weight: 600
+    color: var(--accent-purple)
+
+  Popular badge:
+    padding: 0.5rem 1.5rem
+    background: var(--accent-coral)
+    color: white
+    border-radius: 50px
+    font-size: 0.8rem
+
+  Floating badges (hero):
+    background: white
+    border-radius: 50px
+    padding: 0.75rem 1.25rem
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)
+    animation: float 3s ease-in-out infinite
+
+--- Navbar ---
+  Pill-shaped glassmorphism navigation bar
+    border-radius: 100px
+    max-width: 900px
+    margin: 1.5rem auto
+    glassmorphism background + backdrop-filter
+    shimmer animation on hover
+    Fixed at top, z-index: 1000
+
+  Nav link active state:
+    background: var(--dark-text)
+    color: white
+    border-radius: 50px
+
+--- Footer ---
+  Glassmorphism container
+    border-radius: 32px
+    max-width: 1400px
+    margin: 0 auto 2rem
+    5-column grid layout
+    Same glassmorphism as navbar
+
+--- Notification Dropdown ---
+  background: var(--pastel-cream)
+  border-radius: 16px
+  max-height: 480px
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15)
+  slideIn animation 0.25s
+
+
+================================================================================
+  10. SECTION BACKGROUNDS
+================================================================================
+
+  Body / Default             : var(--pastel-cream) — #FFF9F0
+  Hero                       : Gradient peach → pink → cream
+  Portfolio (Features)       : var(--pastel-cream) — #FFF9F0
+  Brands (Top Brands)        : Dark gradient #4A3B5C → #2D2438
+  Influencers                : var(--pastel-yellow) — #FFF8D6
+  Pricing                    : var(--pastel-yellow) — #FFF8D6
+  Contact                    : var(--pastel-cream) — #FFF9F0
+  Final CTA                  : Gradient cream → peach
+  Loading screen             : Gradient peach → cream (135deg)
+
+--- Wave / Clip-Path Transitions ---
+  Between sections, elliptical wave shapes are used:
+    clip-path: ellipse(70% 100% at 50% 0%)   — top wave
+    clip-path: ellipse(70% 100% at 50% 100%)  — bottom wave
+    clip-path: polygon(0 0, 100% 0, 100% 30%, 50% 100%, 0 30%) — pointed wave
+
+
+================================================================================
+  11. RESPONSIVE BREAKPOINTS
+================================================================================
+
+  Desktop                    : > 1024px (full layout)
+  Tablet                     : ≤ 1024px
+    - Hero: single column, centered
+    - Floating badges hidden
+    - Grids collapse to 2-column
+  Mobile                     : ≤ 768px
+    - Sticky cards disabled (position: relative)
+    - Typography scaled down ~60%
+    - Pricing: single column
+    - Dome gallery: 65vh, min 500px
+  Small mobile               : ≤ 480px
+    - Hero padding reduced
+    - Section padding 60px
+    - Gallery 50vh, min 380px
+    - Scroll indicator hidden
+    - Typography further reduced
+
+
+================================================================================
+  12. SCROLLBAR CUSTOMIZATION
+================================================================================
+
+  Width       : 8px
+  Track       : var(--gray-100) — #F5F0E8
+  Thumb       : var(--gray-300) — #D4C8B8
+  Thumb hover : var(--gray-400) — #B8A898
+  Thumb radius: 4px
+
+
+================================================================================
+  13. DESIGN PRINCIPLES SUMMARY
+================================================================================
+
+  • Warm, Inviting Palette    : Pastel tones create a friendly, approachable feel
+  • Glassmorphism Navigation  : Translucent navbar/footer with blur for modern depth
+  • Sticky Stacked Cards      : Portfolio cards stack on scroll for engaging interaction
+  • Playful Animations        : Floating badges, scroll-triggered reveals, subtle hovers
+  • Strong Typographic Hierarchy: Fraunces serif for personality, DM Sans for readability
+  • Consistent Radius Scale   : From 12px (inputs) to 100px (navbar) with purpose
+  • Layer-Based Shadows       : Multi-layer box-shadows for realistic depth
+  • Section Wave Transitions  : Clip-path ellipses create organic section borders
+  • Dark Contrast Section     : Brands section uses dark bg for visual variety
+  • Mobile-First Degradation  : Sticky effects gracefully disabled on small screens
+
+
+================================================================================
+  END OF THEME REFERENCE
+================================================================================
