@@ -222,17 +222,17 @@
 }
 
 .collab-detail-item svg {
-  color: var(--primary-500);
+  color: var(--accent-coral);
 }
 
 .collab-detail-item strong {
-  color: var(--gray-900);
+  color: var(--dark-text);
 }
 
 .collab-footer {
   padding: 1rem 1.5rem;
-  background: var(--gray-50);
-  border-top: 1px solid var(--gray-100);
+  background: var(--pastel-cream);
+  border-top: 1px solid rgba(255, 181, 186, 0.2);
 }
 
 .collab-action-buttons {
@@ -253,24 +253,28 @@
 .collab-empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  background: var(--white);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(255, 181, 186, 0.1);
 }
 
 .collab-empty-state svg {
-  color: var(--gray-300);
+  color: var(--muted-text);
   margin-bottom: 1rem;
 }
 
 .collab-empty-state h3 {
   font-size: 1.25rem;
-  color: var(--gray-700);
+  font-family: var(--heading-font);
+  font-weight: 800;
+  color: var(--dark-text);
   margin-bottom: 0.5rem;
+  letter-spacing: -0.03em;
 }
 
 .collab-empty-state p {
-  color: var(--gray-500);
+  color: var(--light-text);
+  font-family: var(--body-font);
   margin-bottom: 1.5rem;
   max-width: 400px;
   margin-left: auto;

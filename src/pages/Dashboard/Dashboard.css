@@ -421,17 +421,20 @@
 
 /* Deadlines Card */
 .dash-deadlines-card {
-  background: var(--white);
-  border-radius: var(--radius-xl);
+  background: white;
+  border-radius: 24px;
   padding: 1.5rem;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .dash-deadlines-card h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--gray-900);
+  font-size: 1.125rem;
+  font-weight: 800;
+  font-family: var(--heading-font);
+  color: var(--dark-text);
   margin-bottom: 1rem;
+  letter-spacing: -0.02em;
 }
 
 .dash-deadline-list {
@@ -445,29 +448,32 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: var(--gray-50);
-  border-radius: var(--radius-md);
+  background: var(--pastel-cream);
+  border-radius: 16px;
 }
 
 .dash-deadline-item svg {
-  color: var(--primary-500);
+  color: var(--accent-coral);
   margin-top: 2px;
 }
 
 .dash-deadline-title {
   font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--gray-900);
+  font-weight: 600;
+  font-family: var(--body-font);
+  color: var(--dark-text);
 }
 
 .dash-deadline-date {
   font-size: 0.75rem;
-  color: var(--gray-500);
+  font-family: var(--body-font);
+  color: var(--muted-text);
 }
 
 .dash-no-deadlines {
   font-size: 0.875rem;
-  color: var(--gray-500);
+  font-family: var(--body-font);
+  color: var(--muted-text);
   text-align: center;
   padding: 1rem;
 }

@@ -1,7 +1,13 @@
+﻿/* ========================================
+   Loading Skeleton - Playful Pastel Theme
+======================================== */
+
 .skeleton-card {
-  background: var(--card-bg);
-  border-radius: 16px;
+  background: white;
+  border-radius: 24px;
   padding: 24px;
+  box-shadow: 0 4px 20px rgba(255, 181, 186, 0.1);
+  border: 1px solid rgba(255, 181, 186, 0.2);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -9,7 +15,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(90deg, #2a2f3f 25%, #363d52 50%, #2a2f3f 75%);
+  background: linear-gradient(90deg, var(--gray-100) 25%, var(--pastel-peach) 50%, var(--gray-100) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   margin: 0 auto 16px;
@@ -34,20 +40,20 @@
 .skeleton-title {
   height: 24px;
   width: 70%;
-  background: linear-gradient(90deg, #2a2f3f 25%, #363d52 50%, #2a2f3f 75%);
+  background: linear-gradient(90deg, var(--gray-100) 25%, var(--pastel-peach) 50%, var(--gray-100) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 4px;
+  border-radius: 8px;
   margin: 0 auto;
 }
 
 .skeleton-text {
   height: 16px;
   width: 100%;
-  background: linear-gradient(90deg, #2a2f3f 25%, #363d52 50%, #2a2f3f 75%);
+  background: linear-gradient(90deg, var(--gray-100) 25%, var(--pastel-peach) 50%, var(--gray-100) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .skeleton-text-short {
@@ -64,19 +70,19 @@
 .skeleton-stat {
   height: 40px;
   width: 80px;
-  background: linear-gradient(90deg, #2a2f3f 25%, #363d52 50%, #2a2f3f 75%);
+  background: linear-gradient(90deg, var(--gray-100) 25%, var(--pastel-peach) 50%, var(--gray-100) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .skeleton-button {
   height: 40px;
   width: 100%;
-  background: linear-gradient(90deg, #2a2f3f 25%, #363d52 50%, #2a2f3f 75%);
+  background: linear-gradient(90deg, var(--gray-100) 25%, var(--pastel-peach) 50%, var(--gray-100) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 8px;
+  border-radius: 50px;
   margin-top: 8px;
 }
 
@@ -84,9 +90,10 @@
   display: flex;
   gap: 12px;
   padding: 16px;
-  background: var(--card-bg);
-  border-radius: 12px;
+  background: white;
+  border-radius: 16px;
   margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(255, 181, 186, 0.1);
 }
 
 .skeleton-message-content {
@@ -102,8 +109,9 @@
   align-items: center;
   gap: 16px;
   padding: 24px;
-  background: var(--card-bg);
-  border-radius: 16px;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(255, 181, 186, 0.1);
 }
 
 .skeleton-profile-content {
@@ -115,19 +123,11 @@
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
 }

@@ -9,21 +9,24 @@
 }
 
 .empty-icon {
-  color: var(--text-tertiary);
+  color: var(--muted-text);
   margin-bottom: 24px;
   opacity: 0.5;
 }
 
 .empty-state h3 {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: var(--heading-font);
+  color: var(--dark-text);
   margin-bottom: 12px;
+  letter-spacing: -0.03em;
 }
 
 .empty-state p {
-  font-size: 16px;
-  color: var(--text-secondary);
+  font-size: 1rem;
+  font-family: var(--body-font);
+  color: var(--light-text);
   max-width: 400px;
   line-height: 1.6;
 }
