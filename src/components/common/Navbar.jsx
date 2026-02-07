@@ -35,7 +35,7 @@ const Navbar = () => {
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
   const notifRef = useRef(null);
-    const { user, logout, isAuthenticated, isInfluencer } = useAuth();
+    const { user, logout, isAuthenticated, isInfluencer, isBrand } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -256,7 +256,7 @@ const Navbar = () => {
                               <Home size={16} />
                               <span>Home</span>
                           </Link>
-                          {!isInfluencer && (
+                          {!isAuthenticated && (
                               <>
                                   <button
                                       className={`nav-pill ${activeSection === 'how-it-works' ? 'nav-active' : ''}`}
@@ -307,6 +307,16 @@ const Navbar = () => {
                                       <Briefcase size={16} />
                                       <span>Collaborations</span>
                                   </Link>
+                                  {isBrand && (
+                                      <Link 
+                                          to="/influencers"
+                                          className={`nav-pill ${isActive('/influencers') ? 'nav-active' : ''}`}
+                                          onClick={closeMenu}
+                                      >
+                                          <Users size={16} />
+                                          <span>Influencers</span>
+                                      </Link>
+                                  )}
                               </>
                           )}
                       </div>
