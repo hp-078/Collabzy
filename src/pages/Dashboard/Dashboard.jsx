@@ -61,7 +61,7 @@ const Dashboard = () => {
   const pendingApps = applications.filter(a => a.status === 'pending');
   const activeApps = applications.filter(a => a.status === 'shortlisted' || a.status === 'accepted');
   const completedApps = applications.filter(a => a.status === 'accepted');
-  const activeDeals = deals.filter(d => d.status === 'in_progress' || d.status === 'confirmed');
+  const activeDeals = deals.filter(d => d.status === 'in_progress' || d.status === 'active');
   const completedDeals = deals.filter(d => d.status === 'completed');
 
   const stats = isInfluencer ? [

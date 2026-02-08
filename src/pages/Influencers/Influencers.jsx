@@ -193,8 +193,8 @@ const Influencers = () => {
         <div className="inf-grid">
           {filteredInfluencers.map((influencer) => (
             <Link 
-              key={influencer._id || influencer.id} 
-              to={`/influencer/${influencer.userId || influencer._id || influencer.id}`}
+              key={influencer._id} 
+              to={`/influencer/${influencer._id}`}
               className="inf-card"
             >
               <div className="inf-card-header">

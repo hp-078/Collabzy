@@ -26,7 +26,7 @@ const InfluencerDetail = () => {
   const [message, setMessage] = useState('');
   const [deadline, setDeadline] = useState('');
 
-  const influencer = influencers.find(i => i.id === id);
+  const influencer = influencers.find(i => i._id === id);
 
   if (!influencer) {
     return (
@@ -54,9 +54,9 @@ const InfluencerDetail = () => {
     if (!selectedService || !message) return;
 
     const collaboration = {
-      brandId: user.id,
+      brandId: user._id,
       brandName: user.name,
-      influencerId: influencer.id,
+      influencerId: influencer._id,
       influencerName: influencer.name,
       service: selectedService.name,
       budget: selectedService.price,
