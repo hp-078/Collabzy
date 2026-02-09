@@ -48,27 +48,33 @@ const InfluencerDetail = () => {
     setShowModal(true);
   };
 
-  const handleSubmitRequest = (e) => {
+  const handleSubmitRequest = async (e) => {
     e.preventDefault();
     
-    if (!selectedService || !message) return;
+    if (!selectedService || !message) {
+      alert('Please fill in all required fields');
+      return;
+    }
 
     const collaboration = {
-      brandId: user._id,
-      brandName: user.name,
       influencerId: influencer._id,
-      influencerName: influencer.name,
       service: selectedService.name,
       budget: selectedService.price,
       message: message,
       deadline: deadline,
     };
 
-    createCollaboration(collaboration);
-    setShowModal(false);
-    setMessage('');
-    setDeadline('');
-    navigate('/collaborations');
+    const result = await createCollaboration(collaboration);
+    
+    if (result.success) {
+      alert('✅ Collaboration request sent successfully! Check Messages to continue the conversation.');
+      setShowModal(false);
+      setMessage('');
+      setDeadline('');
+      navigate('/messages');
+    } else {
+      alert(`❌ Failed to send collaboration request!\n\n${result.error}\n\n✅ Solution:\n1. Open a new terminal\n2. cd backend\n3. npm run dev\n\nSee START_HERE.md for details`);
+    }
   };
 
   return (
@@ -84,11 +90,25 @@ const InfluencerDetail = () => {
         <div className="idet-profile-header">
           <div className="idet-avatar-section">
             <div className="idet-avatar-wrapper">
-              <img 
-                src={influencer.avatar} 
-                alt={influencer.name}
-                className="idet-profile-avatar"
-              />
+              {influencer.avatar ? (
+                <img 
+                  src={influencer.avatar} 
+                  alt={influencer.name}
+                  className="idet-profile-avatar"
+                />
+              ) : (
+                <div className="idet-profile-avatar" style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: '3rem',
+                  fontWeight: 'bold',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white'
+                }}>
+                  {influencer.name?.charAt(0) || '?'}
+                </div>
+              )}
               {influencer.verified && (
                 <span className="idet-verified-badge">
                   <CheckCircle size={24} />

@@ -95,6 +95,11 @@ const Messages = () => {
         const convId = [user._id, selectedChat].sort().join('_');
         socketService.sendMessage(convId, result.data);
       }
+    } else {
+      // Show error message
+      alert(`❌ Failed to send message!\n\n${result.error || 'Backend server may not be running'}\n\n✅ Solution:\n1. Open a new terminal\n2. Run: cd backend\n3. Run: npm run dev\n\nThen try sending the message again.`);
+      // Restore the message
+      setNewMessage(content);
     }
     // Refresh conversation list
     fetchConversations(true);

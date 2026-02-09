@@ -183,14 +183,18 @@ const Campaigns = () => {
     setSubmitting(true);
     try {
       const payload = {
-        campaign: showApplyModal._id,
+        campaignId: showApplyModal._id,
         message: applyForm.message,
         proposedRate: applyForm.proposedRate ? Number(applyForm.proposedRate) : undefined,
         proposedDeliverables: applyForm.proposedDeliverables
-          ? applyForm.proposedDeliverables.split(',').map(d => d.trim()).filter(Boolean)
+          ? applyForm.proposedDeliverables.split(',').map(d => d.trim()).filter(Boolean).map(desc => ({
+              description: desc
+            }))
           : [],
         portfolioLinks: applyForm.portfolioLinks
-          ? applyForm.portfolioLinks.split(',').map(l => l.trim()).filter(Boolean)
+          ? applyForm.portfolioLinks.split(',').map(l => l.trim()).filter(Boolean).map(link => ({
+              url: link
+            }))
           : [],
       };
 
@@ -202,6 +206,7 @@ const Campaigns = () => {
         loadCampaigns();
       } else {
         toast.error(result.error || 'Failed to apply');
+        alert(`❌ Failed to submit application!\n\n${result.error}\n\n✅ Solution:\n1. Open a new terminal\n2. cd backend\n3. npm run dev\n\nSee START_HERE.md for details`);
       }
     } catch (err) {
       toast.error('Failed to submit application');

@@ -38,7 +38,7 @@ function buildItems(pool, seg) {
   }
 
   const normalizedImages = pool.map(image => ({
-    src: image.avatar || image.src || '',
+    src: image.avatar || image.src || null,
     alt: image.name || image.alt || '',
     data: image
   }));
@@ -83,7 +83,21 @@ function InfluencerModal({ influencer, onClose }) {
           <button className="modal-close-btn" onClick={onClose}>
             <X size={20} />
           </button>
-          <img src={influencer.avatar} alt={influencer.name} className="modal-avatar" />
+          {influencer.avatar ? (
+            <img src={influencer.avatar} alt={influencer.name} className="modal-avatar" />
+          ) : (
+            <div className="modal-avatar" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontSize: '2rem',
+              fontWeight: 'bold',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white'
+            }}>
+              {influencer.name?.charAt(0) || '?'}
+            </div>
+          )}
           <h3>{influencer.name}</h3>
           <p>{influencer.niche}</p>
         </div>
@@ -358,7 +372,23 @@ export default function DomeGallery({
                     aria-label={it.alt || 'View influencer'}
                     onClick={onTileClick}
                   >
-                    <img src={it.src} draggable={false} alt={it.alt} />
+                    {it.src ? (
+                      <img src={it.src} draggable={false} alt={it.alt} />
+                    ) : (
+                      <div style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        fontSize: '2rem',
+                        fontWeight: 'bold'
+                      }}>
+                        {it.alt?.charAt(0) || '?'}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

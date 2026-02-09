@@ -419,6 +419,32 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  // Create collaboration request (sends message to influencer)
+  const createCollaboration = async (collaborationData) => {
+    try {
+      const { influencerId, service, budget, message, deadline } = collaborationData;
+      
+      // Format collaboration request message
+      const formattedMessage = `🤝 Collaboration Request\n\n` +
+        `Service: ${service || 'Not specified'}\n` +
+        `Budget: $${budget || 'To be discussed'}\n` +
+        `Deadline: ${deadline || 'To be discussed'}\n\n` +
+        `Message:\n${message}`;
+      
+      // Send as message
+      const response = await messageService.sendMessage(influencerId, formattedMessage);
+      
+      // Invalidate conversations cache
+      updateCache('conversations', null);
+      
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to send collaboration request:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to send collaboration request. Make sure backend is running.';
+      return { success: false, error: errorMsg };
+    }
+  };
+
   // ============ BRAND FUNCTIONS ============
 
   // Get own brand profile
@@ -492,6 +518,7 @@ export const DataProvider = ({ children }) => {
     updateDealStatus,
     sendMessage,
     markMessagesAsRead,
+    createCollaboration,
     updateBrandProfile,
 
     // Utility

@@ -100,6 +100,8 @@ const Collaborations = () => {
           setBrandApplications(allApps);
         }
       }
+    } else {
+      alert(`❌ Failed to update application status!\n\n${result.error}\n\n✅ Solution:\n1. Open a new terminal\n2. cd backend\n3. npm run dev\n\nSee START_HERE.md for details`);
     }
   };
 
