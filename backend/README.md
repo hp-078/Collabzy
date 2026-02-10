@@ -133,7 +133,8 @@ backend/
 
 ### Module Not Found
 - Run `npm install` to install dependencies
-
+    backend eun on the :
+    sudo apt update && sudo apt upgrade; sudo apt install gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager
 ## 📄 License
 
 ISC
