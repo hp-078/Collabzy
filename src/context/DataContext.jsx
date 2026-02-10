@@ -431,9 +431,63 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // ============ MESSAGE FUNCTIONS ============
+  // ============ MESSAGE FUNCTIONS (CAMPAIGN-CENTRIC) ============
 
-  // Fetch all conversations
+  // Fetch all collaborations (applications) with their message threads
+  const fetchCollaborations = async (forceRefresh = false) => {
+    if (!isAuthenticated) return [];
+
+    if (!forceRefresh && isCacheValid('conversations')) {
+      setConversations(cache.conversations.data);
+      return cache.conversations.data;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await messageService.getMyCollaborations();
+      const data = response.data || [];
+      setConversations(data);
+      updateCache('conversations', data);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch collaborations:', error);
+      setError('Failed to load collaborations');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get messages for a specific application/collaboration
+  const getApplicationMessages = async (applicationId, page = 1) => {
+    if (!isAuthenticated) return [];
+    try {
+      const response = await messageService.getApplicationMessages(applicationId, page);
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch application messages:', error);
+      return [];
+    }
+  };
+
+  // Send a message in application/collaboration context
+  const sendApplicationMessage = async (applicationId, content) => {
+    try {
+      const response = await messageService.sendApplicationMessage(applicationId, content);
+      // Invalidate conversations cache
+      updateCache('conversations', null);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to send application message:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to send message';
+      return { success: false, error: errorMsg };
+    }
+  };
+
+  // ============ LEGACY MESSAGE FUNCTIONS (USER-TO-USER) ============
+
+  // Fetch all conversations (legacy)
   const fetchConversations = async (forceRefresh = false) => {
     if (!isAuthenticated) return [];
 
@@ -459,7 +513,7 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Get messages with a specific user
+  // Get messages with a specific user (legacy)
   const getMessagesByUser = async (userId, page = 1) => {
     if (!isAuthenticated) return [];
     try {
@@ -471,7 +525,7 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Send a message
+  // Send a message (legacy)
   const sendMessage = async (receiverId, content) => {
     try {
       const response = await messageService.sendMessage(receiverId, content);
@@ -485,7 +539,7 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Mark messages as read
+  // Mark messages as read (legacy)
   const markMessagesAsRead = async (userId) => {
     try {
       await messageService.markAsRead(userId);
@@ -578,14 +632,16 @@ export const DataProvider = ({ children }) => {
     fetchRecommendedCampaigns,
     fetchMyApplications,
     fetchMyDeals,
-    fetchConversations,
+    fetchCollaborations, // Primary: Application-based
+    fetchConversations, // Legacy: User-to-user
     fetchCampaignApplications,
     fetchBrandProfile,
 
     // Get single item
     getCampaignById,
     getInfluencerById,
-    getMessagesByUser,
+    getApplicationMessages, // Primary: Messages for application
+    getMessagesByUser, // Legacy: Messages with user
     getReviewsForUser,
     getMyReviews,
 
@@ -598,7 +654,8 @@ export const DataProvider = ({ children }) => {
     updateDealStatus,
     createReview,
     respondToReview,
-    sendMessage,
+    sendApplicationMessage, // Primary: Send in application context
+    sendMessage, // Legacy: Send to user directly
     markMessagesAsRead,
     createCollaboration,
     updateBrandProfile,

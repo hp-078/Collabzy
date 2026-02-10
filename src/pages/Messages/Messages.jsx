@@ -13,30 +13,31 @@ import {
   Smile,
   ChevronLeft,
   Loader,
-  Circle
+  Briefcase,
+  Tag
 } from 'lucide-react';
 import './Messages.css';
 
 const Messages = () => {
   const { user } = useAuth();
-  const { conversations, fetchConversations, getMessagesByUser, sendMessage, markMessagesAsRead } = useData();
-  const [selectedChat, setSelectedChat] = useState(null); // otherUser._id
+  const { conversations, fetchCollaborations, getApplicationMessages, sendApplicationMessage } = useData();
+  const [selectedCollaboration, setSelectedCollaboration] = useState(null); // collaboration object {application, campaign, otherUser, etc.}
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [loadingConvs, setLoadingConvs] = useState(true);
+  const [loadingCollaborations, setLoadingCollaborations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [typingUsers, setTypingUsers] = useState(new Set());
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
-  // Load conversations on mount
+  // Load collaborations on mount
   useEffect(() => {
     const load = async () => {
-      setLoadingConvs(true);
-      await fetchConversations();
-      setLoadingConvs(false);
+      setLoadingCollaborations(true);
+      await fetchCollaborations();
+      setLoadingCollaborations(false);
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,8 +68,8 @@ const Messages = () => {
 
   // Listen for typing indicators
   useEffect(() => {
-    const handleTypingStart = ({ userId }) => {
-      if (userId !== user?._id) {
+    const handleTypingStart = ({ userId, applicationId }) => {
+      if (userId !== user?._id && selectedCollaboration?.application._id === applicationId) {
         setTypingUsers(prev => new Set([...prev, userId]));
       }
     };
@@ -88,18 +89,17 @@ const Messages = () => {
       socketService.off('typing:start', handleTypingStart);
       socketService.off('typing:stop', handleTypingStop);
     };
-  }, [user?._id]);
+  }, [user?._id, selectedCollaboration]);
 
   // Listen for new messages via socket
   useEffect(() => {
     const handleNewMessage = (msg) => {
-      // If the message is in the currently open conversation, add it
-      const senderId = msg.sender?._id || msg.sender;
-      if (selectedChat && (senderId === selectedChat || msg.receiver === selectedChat)) {
+      // If the message is in the currently open collaboration, add it
+      if (selectedCollaboration && msg.application === selectedCollaboration.application?._id) {
         setChatMessages(prev => [...prev, msg]);
       }
-      // Refresh conversations to update last message
-      fetchConversations(true);
+      // Refresh collaborations to update last message
+      fetchCollaborations(true);
     };
 
     socketService.onNewMessage(handleNewMessage);
@@ -108,24 +108,21 @@ const Messages = () => {
       socketService.off('message:receive', handleNewMessage);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChat]);
+  }, [selectedCollaboration]);
 
-  // Load messages when selecting a chat
-  const handleSelectChat = useCallback(async (otherUserId) => {
-    setSelectedChat(otherUserId);
+  // Load messages when selecting a collaboration
+  const handleSelectCollaboration = useCallback(async (collaboration) => {
+    if (!collaboration?.application?._id) return;
+    setSelectedCollaboration(collaboration);
     setLoadingMessages(true);
-    const msgs = await getMessagesByUser(otherUserId);
+    const msgs = await getApplicationMessages(collaboration.application._id);
     setChatMessages(msgs);
     setLoadingMessages(false);
-    // Mark as read
-    markMessagesAsRead(otherUserId);
-    // Join socket conversation room
-    if (user?._id) {
-      const convId = [user._id, otherUserId].sort().join('_');
-      socketService.joinConversation(convId);
-    }
+    // Join socket conversation room for this application
+    const roomId = `app_${collaboration.application._id}`;
+    socketService.joinConversation(roomId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, []);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -136,8 +133,8 @@ const Messages = () => {
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
     
-    if (selectedChat && user?._id) {
-      const convId = [user._id, selectedChat].sort().join('_');
+    if (selectedCollaboration?.application?._id && user?._id) {
+      const roomId = `app_${selectedCollaboration.application._id}`;
       
       // Clear previous timeout
       if (typingTimeoutRef.current) {
@@ -145,44 +142,42 @@ const Messages = () => {
       }
       
       // Start typing
-      socketService.startTyping(convId);
+      socketService.startTyping(roomId);
       
       // Stop typing after 2 seconds of no input
       typingTimeoutRef.current = setTimeout(() => {
-        socketService.stopTyping(convId);
+        socketService.stopTyping(roomId);
       }, 2000);
     }
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedChat) return;
+    if (!newMessage.trim() || !selectedCollaboration) return;
 
     // Stop typing indicator
-    if (user?._id && selectedChat) {
-      const convId = [user._id, selectedChat].sort().join('_');
-      socketService.stopTyping(convId);
+    if (selectedCollaboration?.application?._id) {
+      const roomId = `app_${selectedCollaboration.application._id}`;
+      socketService.stopTyping(roomId);
     }
 
     const content = newMessage.trim();
     setNewMessage('');
 
-    const result = await sendMessage(selectedChat, content);
+    const result = await sendApplicationMessage(selectedCollaboration.application._id, content);
     if (result.success && result.data) {
       setChatMessages(prev => [...prev, result.data]);
       // Also emit via socket for real-time
-      if (user?._id) {
-        const convId = [user._id, selectedChat].sort().join('_');
-        socketService.sendMessage(convId, result.data);
-      }
+      const roomId = `app_${selectedCollaboration.application._id}`;
+      socketService.sendMessage(roomId, result.data);
     } else {
       // Show error message
       alert(`❌ Failed to send message!\n\n${result.error || 'Backend server may not be running'}\n\n✅ Solution:\n1. Open a new terminal\n2. Run: cd backend\n3. Run: npm run dev\n\nThen try sending the message again.`);
       // Restore the message
       setNewMessage(content);
     }
-    // Refresh conversation list
-    fetchConversations(true);
+    // Refresh collaboration list
+    fetchCollaborations(true);
   };
 
   const formatTime = (timestamp) => {
@@ -200,108 +195,132 @@ const Messages = () => {
     return date.toLocaleDateString();
   };
 
-  // Filter conversations by search
-  const filteredConversations = conversations.filter(c =>
-    (c.otherUser?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Find selected conversation info
-  const selectedConversation = selectedChat
-    ? conversations.find(c => c.otherUser?._id === selectedChat)
-    : null;
+  // Filter collaborations by search (search by campaign title or other user name)
+  const filteredCollaborations = conversations.filter(collab => {
+    const campaignTitle = collab.campaign?.title || '';
+    const otherUserName = collab.otherUser?.name || '';
+    return campaignTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      otherUserName.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   return (
     <div className="msg-page">
       <div className="msg-container">
-        {/* Sidebar */}
-        <div className={`msg-sidebar ${selectedChat ? 'msg-hidden-mobile' : ''}`}>
+        {/* Sidebar - Show Collaborations */}
+        <div className={`msg-sidebar ${selectedCollaboration ? 'msg-hidden-mobile' : ''}`}>
           <div className="msg-sidebar-header">
-            <h2>Messages</h2>
+            <h2>Collaborations</h2>
+            <p style={{ fontSize: '0.85rem', color: '#888', marginTop: '4px' }}>
+              Campaign-based chats
+            </p>
           </div>
 
           <div className="msg-sidebar-search">
             <Search size={18} />
             <input
               type="text"
-              placeholder="Search conversations..."
+              placeholder="Search by campaign or user..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
           <div className="msg-conversations-list">
-            {loadingConvs ? (
+            {loadingCollaborations ? (
               <div className="msg-loading-container">
                 <Loader size={24} className="spin-animation" />
               </div>
-            ) : filteredConversations.length > 0 ? (
-              filteredConversations.map((conv) => {
-                const isOnline = onlineUsers.has(conv.otherUser?._id);
+            ) : filteredCollaborations.length > 0 ? (
+              filteredCollaborations.map((collab) => {
+                if (!collab?.application?._id) return null;
+                const isOnline = onlineUsers.has(collab.otherUser?._id);
+                const isSelected = selectedCollaboration?.application?._id === collab.application._id;
                 return (
                   <div
-                    key={conv.otherUser?._id || conv.conversationId}
-                    className={`msg-conversation-item ${selectedChat === conv.otherUser?._id ? 'msg-active' : ''}`}
-                    onClick={() => handleSelectChat(conv.otherUser?._id)}
+                    key={collab.application._id}
+                    className={`msg-conversation-item ${isSelected ? 'msg-active' : ''}`}
+                    onClick={() => handleSelectCollaboration(collab)}
                   >
                     <div className="msg-conversation-avatar">
-                      {conv.otherUser?.avatar ? (
-                        <img src={conv.otherUser.avatar} alt={conv.otherUser.name} />
+                      {collab.otherUser?.avatar ? (
+                        <img src={collab.otherUser.avatar} alt={collab.otherUser.name} />
                       ) : (
-                        conv.otherUser?.name?.charAt(0) || '?'
+                        collab.otherUser?.name?.charAt(0) || '?'
                       )}
                       {isOnline && <span className="msg-online-dot" />}
                     </div>
-                  <div className="msg-conversation-info">
-                    <div className="msg-conversation-header">
-                      <h4>{conv.otherUser?.name || 'Unknown'}</h4>
-                      <span className="msg-conversation-time">
-                        {conv.lastMessage?.createdAt ? formatTime(conv.lastMessage.createdAt) : ''}
-                      </span>
+                    <div className="msg-conversation-info">
+                      <div className="msg-conversation-header">
+                        <h4>{collab.campaign?.title || 'Unknown Campaign'}</h4>
+                        <span className="msg-conversation-time">
+                          {collab.lastMessage?.createdAt ? formatTime(collab.lastMessage.createdAt) : ''}
+                        </span>
+                      </div>
+                      <p className="msg-conversation-subtitle" style={{ 
+                        fontSize: '0.75rem', 
+                        color: '#666', 
+                        marginBottom: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        <Tag size={12} />
+                        {collab.otherUser?.name || 'Unknown'}
+                      </p>
+                      <p className="msg-conversation-preview">
+                        {collab.lastMessage?.isFromMe ? 'You: ' : ''}
+                        {collab.lastMessage?.content || 'No messages yet'}
+                      </p>
                     </div>
-                    <p className="msg-conversation-preview">
-                      {conv.lastMessage?.isFromMe ? 'You: ' : ''}
-                      {conv.lastMessage?.content || 'No messages yet'}
-                    </p>
+                    {collab.unreadCount > 0 && (
+                      <span className="msg-unread-badge">{collab.unreadCount}</span>
+                    )}
                   </div>
-                  {conv.unreadCount > 0 && (
-                    <span className="msg-unread-badge">{conv.unreadCount}</span>
-                  )}
-                </div>
                 );
               })
             ) : (
               <div className="msg-no-conversations">
-                <p>No conversations yet</p>
+                <Briefcase size={48} style={{ color: '#ccc', marginBottom: '12px' }} />
+                <p style={{ fontWeight: '500', marginBottom: '4px' }}>No collaborations yet</p>
+                <p style={{ fontSize: '0.85rem', color: '#888' }}>
+                  Apply to campaigns to start collaborating
+                </p>
               </div>
             )}
           </div>
         </div>
 
         {/* Chat Area */}
-        <div className={`msg-chat ${!selectedChat ? 'msg-hidden-mobile' : ''}`}>
-          {selectedChat ? (
+        <div className={`msg-chat ${!selectedCollaboration ? 'msg-hidden-mobile' : ''}`}>
+          {selectedCollaboration ? (
             <>
               <div className="msg-chat-header">
                 <button 
                   className="msg-back-btn msg-mobile-only"
-                  onClick={() => setSelectedChat(null)}
+                  onClick={() => setSelectedCollaboration(null)}
                 >
                   <ChevronLeft size={24} />
                 </button>
                 <div className="msg-chat-user">
                   <div className="msg-chat-avatar">
-                    {selectedConversation?.otherUser?.name?.charAt(0) || '?'}
-                    {onlineUsers.has(selectedChat) && <span className="msg-online-dot" />}
+                    {selectedCollaboration.otherUser?.name?.charAt(0) || '?'}
+                    {onlineUsers.has(selectedCollaboration.otherUser?._id) && <span className="msg-online-dot" />}
                   </div>
                   <div className="msg-chat-user-info">
-                    <h3>{selectedConversation?.otherUser?.name || 'Unknown'}</h3>
-                    <span className="msg-online-status">
-                      {typingUsers.has(selectedChat) ? (
-                        <span className="msg-typing-indicator">typing...</span>
-                      ) : onlineUsers.has(selectedChat) ? (
-                        <span className="msg-status-online">Online</span>
+                    <h3>{selectedCollaboration.campaign?.title || 'Unknown Campaign'}</h3>
+                    <span className="msg-online-status" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {typingUsers.has(selectedCollaboration.otherUser?._id) ? (
+                        <span className="msg-typing-indicator">
+                          {selectedCollaboration.otherUser?.name} is typing...
+                        </span>
                       ) : (
-                        selectedConversation?.otherUser?.role || 'Offline'
+                        <>
+                          <Tag size={12} />
+                          {selectedCollaboration.otherUser?.name || 'Unknown'}
+                          {onlineUsers.has(selectedCollaboration.otherUser?._id) && (
+                            <span style={{ color: '#10b981' }}>• Online</span>
+                          )}
+                        </>
                       )}
                     </span>
                   </div>
@@ -352,7 +371,7 @@ const Messages = () => {
                   })
                 ) : (
                   <div className="msg-no-messages">
-                    <p>No messages yet. Start the conversation!</p>
+                    <p>No messages yet. Start the collaboration discussion!</p>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
@@ -369,7 +388,7 @@ const Messages = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="Type a message..."
+                  placeholder={`Message about ${selectedCollaboration.campaign?.title || 'this campaign'}...`}
                   value={newMessage}
                   onChange={handleTyping}
                 />
@@ -385,8 +404,8 @@ const Messages = () => {
             <div className="msg-no-chat-selected">
               <div className="msg-no-chat-content">
                 <div className="msg-no-chat-icon">💬</div>
-                <h3>Select a conversation</h3>
-                <p>Choose a conversation from the sidebar to start messaging</p>
+                <h3>Select a collaboration</h3>
+                <p>Choose a collaboration to discuss campaign details</p>
               </div>
             </div>
           )}

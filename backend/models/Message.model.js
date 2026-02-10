@@ -1,7 +1,25 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
-  // Conversation reference
+  // Collaboration Context - messages are tied to campaigns/applications
+  campaign: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Campaign',
+    required: true,
+    index: true
+  },
+  application: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Application',
+    required: true,
+    index: true
+  },
+  deal: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Deal'
+  },
+
+  // Conversation ID (for backward compatibility and grouping)
   conversationId: {
     type: String,
     required: true,
@@ -47,13 +65,7 @@ const messageSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  readAt: { type: Date },
-
-  // Optional deal reference
-  deal: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Deal'
-  }
+  readAt: { type: Date }
 }, {
   timestamps: true
 });

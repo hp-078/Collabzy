@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import {
@@ -26,6 +26,7 @@ import './Collaborations.css';
 
 const Collaborations = () => {
   const { user, isInfluencer, isBrand } = useAuth();
+  const navigate = useNavigate();
   const {
     applications,
     deals,
@@ -274,6 +275,11 @@ const Collaborations = () => {
     }
   };
 
+  // Navigate to Messages page (to open collaboration chat)
+  const handleGoToMessages = () => {
+    navigate('/messages');
+  };
+
   // Star rating component
   const StarRating = ({ rating, onRate }) => {
     return (
@@ -494,6 +500,14 @@ const Collaborations = () => {
                           >
                             Reject
                           </button>
+                          <button 
+                            className="btn btn-outline btn-sm"
+                            onClick={handleGoToMessages}
+                            style={{ marginLeft: 'auto' }}
+                          >
+                            <MessageSquare size={16} />
+                            Message
+                          </button>
                         </div>
                       )}
                       {/* Brand: create deal from accepted application */}
@@ -505,6 +519,13 @@ const Collaborations = () => {
                           >
                             <Handshake size={16} />
                             Create Deal
+                          </button>
+                          <button 
+                            className="btn btn-outline btn-sm"
+                            onClick={handleGoToMessages}
+                          >
+                            <MessageSquare size={16} />
+                            Message
                           </button>
                         </div>
                       )}
@@ -519,10 +540,30 @@ const Collaborations = () => {
                           </button>
                         </div>
                       )}
+                      {isInfluencer && app.status === 'shortlisted' && (
+                        <div className="collab-action-buttons">
+                          <button 
+                            className="btn btn-outline btn-sm"
+                            onClick={handleGoToMessages}
+                          >
+                            <MessageSquare size={16} />
+                            Message
+                          </button>
+                        </div>
+                      )}
                       {isInfluencer && app.status === 'accepted' && (
-                        <div className="collab-completed-info collab-success">
-                          <CheckCircle size={18} />
-                          <span>Accepted! Waiting for deal confirmation.</span>
+                        <div className="collab-action-buttons">
+                          <button 
+                            className="btn btn-outline btn-sm"
+                            onClick={handleGoToMessages}
+                          >
+                            <MessageSquare size={16} />
+                            Message
+                          </button>
+                          <div className="collab-completed-info collab-success" style={{ marginLeft: 'auto' }}>
+                            <CheckCircle size={18} />
+                            <span>Accepted! Waiting for deal confirmation.</span>
+                          </div>
                         </div>
                       )}
                       {(app.status === 'rejected' || app.status === 'withdrawn') && (
