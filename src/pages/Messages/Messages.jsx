@@ -12,7 +12,8 @@ import {
   Paperclip,
   Smile,
   ChevronLeft,
-  Loader
+  Loader,
+  Circle
 } from 'lucide-react';
 import './Messages.css';
 
@@ -25,7 +26,10 @@ const Messages = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [typingUsers, setTypingUsers] = useState(new Set());
   const messagesEndRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   // Load conversations on mount
   useEffect(() => {
@@ -37,6 +41,54 @@ const Messages = () => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Listen for online/offline users
+  useEffect(() => {
+    const handleUserOnline = (userId) => {
+      setOnlineUsers(prev => new Set([...prev, userId]));
+    };
+
+    const handleUserOffline = (userId) => {
+      setOnlineUsers(prev => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+    };
+
+    socketService.onUserOnline(handleUserOnline);
+    socketService.onUserOffline(handleUserOffline);
+
+    return () => {
+      socketService.off('user:online', handleUserOnline);
+      socketService.off('user:offline', handleUserOffline);
+    };
+  }, []);
+
+  // Listen for typing indicators
+  useEffect(() => {
+    const handleTypingStart = ({ userId }) => {
+      if (userId !== user?._id) {
+        setTypingUsers(prev => new Set([...prev, userId]));
+      }
+    };
+
+    const handleTypingStop = ({ userId }) => {
+      setTypingUsers(prev => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+    };
+
+    socketService.onTypingStart(handleTypingStart);
+    socketService.onTypingStop(handleTypingStop);
+
+    return () => {
+      socketService.off('typing:start', handleTypingStart);
+      socketService.off('typing:stop', handleTypingStop);
+    };
+  }, [user?._id]);
 
   // Listen for new messages via socket
   useEffect(() => {
@@ -80,9 +132,37 @@ const Messages = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
+  // Handle typing indicator
+  const handleTyping = (e) => {
+    setNewMessage(e.target.value);
+    
+    if (selectedChat && user?._id) {
+      const convId = [user._id, selectedChat].sort().join('_');
+      
+      // Clear previous timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      // Start typing
+      socketService.startTyping(convId);
+      
+      // Stop typing after 2 seconds of no input
+      typingTimeoutRef.current = setTimeout(() => {
+        socketService.stopTyping(convId);
+      }, 2000);
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedChat) return;
+
+    // Stop typing indicator
+    if (user?._id && selectedChat) {
+      const convId = [user._id, selectedChat].sort().join('_');
+      socketService.stopTyping(convId);
+    }
 
     const content = newMessage.trim();
     setNewMessage('');
@@ -151,23 +231,26 @@ const Messages = () => {
 
           <div className="msg-conversations-list">
             {loadingConvs ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+              <div className="msg-loading-container">
                 <Loader size={24} className="spin-animation" />
               </div>
             ) : filteredConversations.length > 0 ? (
-              filteredConversations.map((conv) => (
-                <div
-                  key={conv.otherUser?._id || conv.conversationId}
-                  className={`msg-conversation-item ${selectedChat === conv.otherUser?._id ? 'msg-active' : ''}`}
-                  onClick={() => handleSelectChat(conv.otherUser?._id)}
-                >
-                  <div className="msg-conversation-avatar">
-                    {conv.otherUser?.avatar ? (
-                      <img src={conv.otherUser.avatar} alt={conv.otherUser.name} />
-                    ) : (
-                      conv.otherUser?.name?.charAt(0) || '?'
-                    )}
-                  </div>
+              filteredConversations.map((conv) => {
+                const isOnline = onlineUsers.has(conv.otherUser?._id);
+                return (
+                  <div
+                    key={conv.otherUser?._id || conv.conversationId}
+                    className={`msg-conversation-item ${selectedChat === conv.otherUser?._id ? 'msg-active' : ''}`}
+                    onClick={() => handleSelectChat(conv.otherUser?._id)}
+                  >
+                    <div className="msg-conversation-avatar">
+                      {conv.otherUser?.avatar ? (
+                        <img src={conv.otherUser.avatar} alt={conv.otherUser.name} />
+                      ) : (
+                        conv.otherUser?.name?.charAt(0) || '?'
+                      )}
+                      {isOnline && <span className="msg-online-dot" />}
+                    </div>
                   <div className="msg-conversation-info">
                     <div className="msg-conversation-header">
                       <h4>{conv.otherUser?.name || 'Unknown'}</h4>
@@ -184,7 +267,8 @@ const Messages = () => {
                     <span className="msg-unread-badge">{conv.unreadCount}</span>
                   )}
                 </div>
-              ))
+                );
+              })
             ) : (
               <div className="msg-no-conversations">
                 <p>No conversations yet</p>
@@ -207,11 +291,18 @@ const Messages = () => {
                 <div className="msg-chat-user">
                   <div className="msg-chat-avatar">
                     {selectedConversation?.otherUser?.name?.charAt(0) || '?'}
+                    {onlineUsers.has(selectedChat) && <span className="msg-online-dot" />}
                   </div>
                   <div className="msg-chat-user-info">
                     <h3>{selectedConversation?.otherUser?.name || 'Unknown'}</h3>
                     <span className="msg-online-status">
-                      {selectedConversation?.otherUser?.role || ''}
+                      {typingUsers.has(selectedChat) ? (
+                        <span className="msg-typing-indicator">typing...</span>
+                      ) : onlineUsers.has(selectedChat) ? (
+                        <span className="msg-status-online">Online</span>
+                      ) : (
+                        selectedConversation?.otherUser?.role || 'Offline'
+                      )}
                     </span>
                   </div>
                 </div>
@@ -230,7 +321,7 @@ const Messages = () => {
 
               <div className="msg-chat-messages">
                 {loadingMessages ? (
-                  <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+                  <div className="msg-loading-container">
                     <Loader size={24} className="spin-animation" />
                   </div>
                 ) : chatMessages.length > 0 ? (
@@ -280,7 +371,7 @@ const Messages = () => {
                   type="text"
                   placeholder="Type a message..."
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={handleTyping}
                 />
                 <button type="button" className="msg-input-action">
                   <Smile size={20} />

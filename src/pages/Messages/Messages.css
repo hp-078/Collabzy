@@ -430,3 +430,74 @@
     max-width: 85%;
   }
 }
+
+/* Loading Container */
+.msg-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+/* Spin Animation */
+.spin-animation {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Online Status Dot */
+.msg-online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: #2ecc71;
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.msg-conversation-avatar {
+  position: relative;
+}
+
+.msg-chat-avatar {
+  position: relative;
+}
+
+/* Online/Typing Status */
+.msg-status-online {
+  color: #2ecc71;
+  font-weight: 600;
+}
+
+.msg-typing-indicator {
+  color: var(--accent-coral);
+  font-style: italic;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Unread Badge */
+.msg-unread-badge {
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-coral);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--body-font);
+  border-radius: 50%;
+  padding: 0 6px;
+}

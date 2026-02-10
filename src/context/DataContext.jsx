@@ -6,6 +6,7 @@ import applicationService from '../services/application.service';
 import messageService from '../services/message.service';
 import dealService from '../services/deal.service';
 import brandService from '../services/brand.service';
+import reviewService from '../services/review.service';
 
 const DataContext = createContext(null);
 
@@ -336,6 +337,24 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  // Create deal from accepted application (brand only)
+  const createDeal = async (dealData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await dealService.createDeal(dealData);
+      updateCache('deals', null);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to create deal:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to create deal';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Update deal status
   const updateDealStatus = async (dealId, statusData) => {
     setLoading(true);
@@ -347,6 +366,64 @@ export const DataProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to update deal:', error);
       const errorMsg = error.response?.data?.message || 'Failed to update deal';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ============ REVIEW FUNCTIONS ============
+
+  // Create a review for a completed deal
+  const createReview = async (reviewData) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await reviewService.createReview(reviewData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to create review:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to submit review';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get reviews for a user
+  const getReviewsForUser = async (userId) => {
+    try {
+      const response = await reviewService.getReviewsForUser(userId);
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch reviews:', error);
+      return [];
+    }
+  };
+
+  // Get my reviews (reviews I've written)
+  const getMyReviews = async () => {
+    try {
+      const response = await reviewService.getMyReviews();
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to fetch my reviews:', error);
+      return [];
+    }
+  };
+
+  // Respond to a review
+  const respondToReview = async (reviewId, responseText) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await reviewService.respondToReview(reviewId, responseText);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Failed to respond to review:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to respond to review';
       setError(errorMsg);
       return { success: false, error: errorMsg };
     } finally {
@@ -509,13 +586,18 @@ export const DataProvider = ({ children }) => {
     getCampaignById,
     getInfluencerById,
     getMessagesByUser,
+    getReviewsForUser,
+    getMyReviews,
 
     // Create/Update functions
     createCampaign,
     updateCampaign,
     submitApplication,
     updateApplicationStatus,
+    createDeal,
     updateDealStatus,
+    createReview,
+    respondToReview,
     sendMessage,
     markMessagesAsRead,
     createCollaboration,

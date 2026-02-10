@@ -10,16 +10,24 @@ import {
   MapPin,
   Instagram,
   Youtube,
-  Twitter,
-  Loader
+  TrendingUp,
+  Loader,
+  X
 } from 'lucide-react';
 import './Influencers.css';
 
 const platformIcons = {
   Instagram: <Instagram size={16} />,
   YouTube: <Youtube size={16} />,
-  Twitter: <Twitter size={16} />,
-  TikTok: <span>📱</span>,
+  TikTok: <span className="tiktok-icon">📱</span>,
+  Multiple: <><Youtube size={14} /><Instagram size={14} /></>,
+};
+
+const formatFollowers = (count) => {
+  if (!count || count === 0) return 'N/A';
+  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+  return count.toString();
 };
 
 const Influencers = () => {
@@ -44,21 +52,21 @@ const Influencers = () => {
   const niches = [...new Set(influencers.flatMap(i => {
     if (Array.isArray(i.niche)) return i.niche;
     if (i.niche) return [i.niche];
-    if (i.category) return [i.category];
     return [];
   }))].filter(Boolean);
-  const platforms = [...new Set(influencers.map(i => i.platform || i.platformType))].filter(Boolean);
+  const platforms = [...new Set(influencers.map(i => i.platformType))].filter(Boolean);
 
   const filteredInfluencers = influencers.filter(influencer => {
-    const nicheStr = Array.isArray(influencer.niche) ? influencer.niche.join(' ') : (influencer.niche || influencer.category || '');
+    const nicheStr = Array.isArray(influencer.niche) ? influencer.niche.join(' ') : (influencer.niche || '');
     const matchesSearch = influencer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         nicheStr.toLowerCase().includes(searchTerm.toLowerCase());
+                         nicheStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         influencer.bio?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesNiche = !selectedNiche || (
       Array.isArray(influencer.niche)
         ? influencer.niche.includes(selectedNiche)
-        : (influencer.niche === selectedNiche || influencer.category === selectedNiche)
+        : influencer.niche === selectedNiche
     );
-    const matchesPlatform = !selectedPlatform || (influencer.platform === selectedPlatform || influencer.platformType === selectedPlatform);
+    const matchesPlatform = !selectedPlatform || influencer.platformType === selectedPlatform;
     
     return matchesSearch && matchesNiche && matchesPlatform;
   });
@@ -88,16 +96,7 @@ const Influencers = () => {
 
         {/* Error State */}
         {error && (
-          <div className="inf-error-message" style={{
-            background: '#fee',
-            color: '#c33',
-            padding: '1rem',
-            borderRadius: '8px',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
+          <div className="inf-error-message">
             <span>⚠️</span>
             <span>{error}</span>
           </div>
@@ -105,14 +104,7 @@ const Influencers = () => {
 
         {/* Loading State */}
         {(loading || localLoading) && (
-          <div className="inf-loading" style={{
-            textAlign: 'center',
-            padding: '4rem 2rem',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1rem'
-          }}>
+          <div className="inf-loading">
             <Loader size={48} className="spin-animation" />
             <p>Loading influencers...</p>
           </div>
@@ -199,37 +191,47 @@ const Influencers = () => {
             >
               <div className="inf-card-header">
                 <div className="inf-avatar-wrapper">
-                  <img 
-                    src={influencer.avatar || influencer.profilePicture || 'https://via.placeholder.com/200'} 
-                    alt={influencer.name}
-                    className="inf-avatar"
-                  />
-                  {influencer.verified && (
+                  {influencer.avatar ? (
+                    <img 
+                      src={influencer.avatar} 
+                      alt={influencer.name}
+                      className="inf-avatar"
+                    />
+                  ) : (
+                    <div className="inf-avatar-placeholder">
+                      {influencer.name?.charAt(0) || 'I'}
+                    </div>
+                  )}
+                  {influencer.isVerified && (
                     <span className="inf-verified-badge">
                       <CheckCircle size={16} />
                     </span>
                   )}
                 </div>
                 <div className="inf-platform-badge">
-                  {platformIcons[influencer.platform || influencer.platformType] || (influencer.platform || influencer.platformType)}
+                  {platformIcons[influencer.platformType] || influencer.platformType}
                 </div>
               </div>
               
               <div className="inf-card-body">
                 <h3 className="inf-name">{influencer.name}</h3>
-                <p className="inf-niche">{Array.isArray(influencer.niche) ? influencer.niche.join(', ') : (influencer.niche || influencer.category || '')}</p>
+                <p className="inf-niche">
+                  {Array.isArray(influencer.niche) ? influencer.niche.join(', ') : influencer.niche || 'No niche specified'}
+                </p>
                 
-                <div className="inf-location">
-                  <MapPin size={14} />
-                  <span>{influencer.location || 'Location not specified'}</span>
-                </div>
+                {influencer.location && (
+                  <div className="inf-location">
+                    <MapPin size={14} />
+                    <span>{influencer.location}</span>
+                  </div>
+                )}
 
                 {/* Social Media Handles */}
                 <div className="inf-social-handles">
-                  {(influencer.instagramUsername || influencer.instagramUrl) && (
+                  {influencer.instagramUsername && (
                     <span className="inf-handle">
                       <Instagram size={12} />
-                      @{influencer.instagramUsername || 'Instagram'}
+                      @{influencer.instagramUsername}
                     </span>
                   )}
                   {influencer.youtubeUrl && (
@@ -240,25 +242,31 @@ const Influencers = () => {
                   )}
                 </div>
 
-                <p className="inf-description">
-                  {(influencer.description || influencer.bio || '').slice(0, 100)}
-                  {(influencer.description || influencer.bio || '').length > 100 ? '...' : ''}
-                </p>
+                {influencer.bio && (
+                  <p className="inf-description">
+                    {influencer.bio.slice(0, 100)}
+                    {influencer.bio.length > 100 ? '...' : ''}
+                  </p>
+                )}
 
                 <div className="inf-stats">
                   <div className="inf-stat">
                     <Users size={16} />
-                    <span>{influencer.followers || influencer.totalFollowers || 'N/A'}</span>
+                    <span>{formatFollowers(influencer.totalFollowers)}</span>
                   </div>
                   <div className="inf-stat">
+                    <TrendingUp size={16} />
+                    <span>{influencer.averageEngagementRate?.toFixed(1) || '0'}%</span>
+                  </div>
+                  <div className="inf-stat inf-trust-score">
                     <Star size={16} fill="currentColor" />
-                    <span>{influencer.rating || influencer.averageRating || influencer.trustScore || 'N/A'}</span>
+                    <span>{influencer.trustScore || 50}</span>
                   </div>
                 </div>
 
                 {influencer.services && influencer.services.length > 0 && (
                   <div className="inf-price-range">
-                    Starting from <strong>${Math.min(...influencer.services.map(s => s.price))}</strong>
+                    Starting from <strong>₹{Math.min(...influencer.services.map(s => s.price)).toLocaleString()}</strong>
                   </div>
                 )}
               </div>
