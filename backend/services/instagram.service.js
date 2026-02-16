@@ -3,23 +3,16 @@ const axios = require('axios');
 /**
  * Instagram Service - Handle Instagram profile and post analytics
  * 
- * Note: Instagram doesn't have a free public API like YouTube.
- * Options:
- * 1. Instagram Basic Display API (personal accounts, limited)
- * 2. Instagram Graph API (business accounts, requires Facebook)
- * 3. Third-party APIs (RapidAPI, etc.)
- * 4. Web scraping (public data only)
- * 
- * This implementation uses a hybrid approach:
- * - Instagram Graph API for business accounts (if configured)
- * - Fallback to public profile scraping for basic stats
+ * Uses Instagram Graph API (Business Discovery) with:
+ * - INSTAGRAM_ACCESS_TOKEN (Facebook Page access token)
+ * - INSTAGRAM_PAGE_ID (Instagram Business Account ID linked to the Facebook Page)
  */
 
 class InstagramService {
   constructor() {
     this.accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
-    this.graphApiUrl = 'https://graph.instagram.com';
-    this.rapidApiKey = process.env.RAPIDAPI_KEY; // Optional third-party API
+    this.pageId = process.env.INSTAGRAM_PAGE_ID; // Instagram Business Account / Page ID
+    this.graphApiUrl = 'https://graph.facebook.com/v21.0';
   }
 
   /**
@@ -55,24 +48,28 @@ class InstagramService {
 
   /**
    * Fetch Instagram profile using Graph API (for business accounts)
-   * Requires: Instagram Business Account + Facebook Page + Access Token
+   * Requires: Instagram Page ID + Access Token
+   * Uses business_discovery to look up any business/creator account by username
    */
   async fetchProfileGraphAPI(username) {
     try {
       if (!this.accessToken) {
         throw new Error('Instagram Graph API access token not configured');
       }
+      if (!this.pageId) {
+        throw new Error('Instagram Page ID not configured');
+      }
 
-      // Step 1: Get Instagram Business Account ID
-      const businessDiscoveryUrl = `${this.graphApiUrl}/me`;
-      const response = await axios.get(businessDiscoveryUrl, {
+      // Use business_discovery with the configured Page ID
+      const response = await axios.get(`${this.graphApiUrl}/${this.pageId}`, {
         params: {
-          fields: `business_discovery.username(${username}){followers_count,follows_count,media_count,profile_picture_url,biography,username,name}`,
+          fields: `business_discovery.username(${username}){followers_count,follows_count,media_count,profile_picture_url,biography,username,name,ig_id,media.limit(12){timestamp,like_count,comments_count,media_type,caption,permalink,thumbnail_url,media_url}}`,
           access_token: this.accessToken,
         },
       });
 
       const profile = response.data.business_discovery;
+      const recentMedia = profile.media?.data || [];
 
       return {
         username: profile.username,
@@ -82,61 +79,23 @@ class InstagramService {
         followers: profile.followers_count,
         following: profile.follows_count,
         posts: profile.media_count,
-        isVerified: false, // Not available in basic response
+        isVerified: false,
         isBusinessAccount: true,
+        recentMedia, // Include media for engagement calculation
       };
     } catch (error) {
+      if (error.response?.data?.error) {
+        const igError = error.response.data.error;
+        console.error('Instagram Graph API error details:', igError);
+        throw new Error(`Graph API error: ${igError.message}`);
+      }
       throw new Error(`Graph API error: ${error.message}`);
     }
   }
 
   /**
-   * Fetch Instagram profile using RapidAPI (Third-party service)
-   * More reliable than scraping, provides comprehensive data
-   */
-  async fetchProfileRapidAPI(username) {
-    try {
-      if (!this.rapidApiKey) {
-        throw new Error('RapidAPI key not configured');
-      }
-
-      const response = await axios.get(
-        `https://instagram-scraper-api2.p.rapidapi.com/v1/info`,
-        {
-          params: { username_or_id_or_url: username },
-          headers: {
-            'X-RapidAPI-Key': this.rapidApiKey,
-            'X-RapidAPI-Host': 'instagram-scraper-api2.p.rapidapi.com',
-          },
-        }
-      );
-
-      const data = response.data.data;
-
-      return {
-        username: data.username,
-        name: data.full_name || data.username,
-        biography: data.biography || '',
-        profilePicture: data.profile_pic_url_hd || data.profile_pic_url,
-        followers: data.follower_count,
-        following: data.following_count,
-        posts: data.media_count,
-        isVerified: data.is_verified || false,
-        isBusinessAccount: data.is_business_account || false,
-        externalUrl: data.external_url || null,
-        category: data.category_name || null,
-      };
-    } catch (error) {
-      if (error.response?.status === 404) {
-        throw new Error('Instagram profile not found');
-      }
-      throw new Error(`RapidAPI error: ${error.message}`);
-    }
-  }
-
-  /**
-   * Fetch Instagram profile - tries multiple methods
-   * Priority: Graph API > RapidAPI > Manual input
+   * Fetch Instagram profile using Graph API
+   * Falls back to manual input if Graph API fails
    */
   async fetchProfile(instagramUrl) {
     try {
@@ -144,27 +103,17 @@ class InstagramService {
       let profile = null;
       let method = 'unknown';
 
-      // Try Graph API first (if configured and business account)
-      if (this.accessToken) {
+      // Try Graph API (requires access token + page ID)
+      if (this.accessToken && this.pageId) {
         try {
           profile = await this.fetchProfileGraphAPI(username);
           method = 'graph_api';
         } catch (error) {
-          console.log('Graph API failed, trying alternative:', error.message);
+          console.log('Graph API failed:', error.message);
         }
       }
 
-      // Try RapidAPI as fallback
-      if (!profile && this.rapidApiKey) {
-        try {
-          profile = await this.fetchProfileRapidAPI(username);
-          method = 'rapid_api';
-        } catch (error) {
-          console.log('RapidAPI failed:', error.message);
-        }
-      }
-
-      // If all methods fail, return basic structure for manual input
+      // If Graph API fails, return structure for manual input
       if (!profile) {
         return {
           success: false,
@@ -189,48 +138,6 @@ class InstagramService {
         success: false,
         error: error.message,
       };
-    }
-  }
-
-  /**
-   * Fetch recent Instagram posts and calculate engagement
-   * Using RapidAPI for post data
-   */
-  async fetchRecentPosts(username, count = 12) {
-    try {
-      if (!this.rapidApiKey) {
-        throw new Error('RapidAPI key required for post fetching');
-      }
-
-      const response = await axios.get(
-        `https://instagram-scraper-api2.p.rapidapi.com/v1/posts`,
-        {
-          params: {
-            username_or_id_or_url: username,
-            amount: count,
-          },
-          headers: {
-            'X-RapidAPI-Key': this.rapidApiKey,
-            'X-RapidAPI-Host': 'instagram-scraper-api2.p.rapidapi.com',
-          },
-        }
-      );
-
-      const posts = response.data.data.items || [];
-
-      return posts.map(post => ({
-        id: post.id,
-        shortcode: post.code,
-        caption: post.caption?.text || '',
-        mediaType: post.media_type, // 1=photo, 2=video, 8=carousel
-        likes: post.like_count,
-        comments: post.comment_count,
-        timestamp: post.taken_at,
-        thumbnailUrl: post.thumbnail_url || post.image_versions?.items?.[0]?.url,
-        videoViews: post.play_count || 0,
-      }));
-    } catch (error) {
-      throw new Error(`Failed to fetch posts: ${error.message}`);
     }
   }
 
@@ -285,7 +192,7 @@ class InstagramService {
 
       const profile = profileResult.data;
 
-      // Step 2: Try to get recent posts (optional, may fail)
+      // Step 2: Calculate engagement from media data
       let posts = [];
       let metrics = {
         engagementRate: 0,
@@ -293,28 +200,34 @@ class InstagramService {
         averageComments: 0,
       };
 
-      try {
-        posts = await this.fetchRecentPosts(profile.username, 12);
+      // Use media data returned inline from Graph API
+      if (profile.recentMedia && profile.recentMedia.length > 0) {
+        posts = profile.recentMedia.map(media => ({
+          id: media.id,
+          caption: media.caption || '',
+          mediaType: media.media_type,
+          likes: media.like_count || 0,
+          comments: media.comments_count || 0,
+          timestamp: media.timestamp,
+          thumbnailUrl: media.thumbnail_url || media.media_url,
+          permalink: media.permalink,
+        }));
+
         const engagementRate = this.calculateEngagementRate(posts, profile.followers);
         const { averageLikes, averageComments } = this.calculateAverageEngagement(posts);
-
-        metrics = {
-          engagementRate,
-          averageLikes,
-          averageComments,
-        };
-      } catch (error) {
-        console.log('Could not fetch posts:', error.message);
-        // Continue without post data
+        metrics = { engagementRate, averageLikes, averageComments };
       }
+
+      // Remove recentMedia from profile before returning (already processed)
+      const { recentMedia, ...profileClean } = profile;
 
       return {
         success: true,
         method: profileResult.method,
         data: {
-          profile,
+          profile: profileClean,
           metrics,
-          recentPosts: posts.slice(0, 6), // Return only 6 for display
+          recentPosts: posts.slice(0, 6),
         },
       };
     } catch (error) {
@@ -326,42 +239,37 @@ class InstagramService {
   }
 
   /**
-   * Analyze a specific Instagram post
+   * Analyze a specific Instagram post using Graph API
+   * Uses the oembed endpoint for public post data
    */
   async analyzePost(postUrl) {
     try {
-      if (!this.rapidApiKey) {
-        throw new Error('RapidAPI key required for post analysis');
+      if (!this.accessToken) {
+        throw new Error('Instagram access token required for post analysis');
       }
 
       // Extract shortcode from URL
       const shortcode = this.extractPostShortcode(postUrl);
 
-      const response = await axios.get(
-        `https://instagram-scraper-api2.p.rapidapi.com/v1/post_info`,
-        {
-          params: { code_or_id_or_url: shortcode },
-          headers: {
-            'X-RapidAPI-Key': this.rapidApiKey,
-            'X-RapidAPI-Host': 'instagram-scraper-api2.p.rapidapi.com',
-          },
-        }
-      );
+      // Use Instagram oEmbed endpoint via Graph API
+      const response = await axios.get(`${this.graphApiUrl}/instagram_oembed`, {
+        params: {
+          url: postUrl,
+          access_token: this.accessToken,
+        },
+      });
 
-      const post = response.data.data;
+      const data = response.data;
 
       return {
         success: true,
         data: {
-          id: post.id,
-          shortcode: post.code,
-          caption: post.caption?.text || '',
-          username: post.user.username,
-          likes: post.like_count,
-          comments: post.comment_count,
-          timestamp: post.taken_at,
-          mediaType: post.media_type === 2 ? 'video' : post.media_type === 8 ? 'carousel' : 'photo',
-          videoViews: post.play_count || 0,
+          shortcode,
+          authorName: data.author_name || '',
+          title: data.title || '',
+          html: data.html || '',
+          thumbnailUrl: data.thumbnail_url || '',
+          providerUrl: data.provider_url || '',
         },
       };
     } catch (error) {

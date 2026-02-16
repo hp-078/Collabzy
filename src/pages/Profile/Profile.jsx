@@ -4,6 +4,7 @@ import influencerService from '../../services/influencer.service';
 import brandService from '../../services/brand.service';
 import authService from '../../services/auth.service';
 import youtubeService from '../../services/youtube.service';
+import instagramService from '../../services/instagram.service';
 import toast from 'react-hot-toast';
 import {
   User,
@@ -66,6 +67,8 @@ const Profile = () => {
   const [previewImage, setPreviewImage] = useState(user?.avatar || '');
   const [fetchingYouTube, setFetchingYouTube] = useState(false);
   const [youtubeStats, setYoutubeStats] = useState(null);
+  const [fetchingInstagram, setFetchingInstagram] = useState(false);
+  const [instagramStats, setInstagramStats] = useState(null);
   const [addingPlatform, setAddingPlatform] = useState(false);
 
   // Update form data when user object changes
@@ -229,7 +232,7 @@ const Profile = () => {
     }
 
     // Only YouTube is supported for auto-fetch initially
-    if (newPlatform.type !== 'YouTube') {
+    if (newPlatform.type !== 'YouTube' && newPlatform.type !== 'Instagram') {
       const platform = {
         type: newPlatform.type,
         url: newPlatform.url,
@@ -244,6 +247,62 @@ const Profile = () => {
       setNewPlatform({ type: 'YouTube', url: '' });
       setShowPlatformModal(false);
       toast.success(`${newPlatform.type} platform added successfully! Auto-fetch coming soon.`);
+      return;
+    }
+
+    // Instagram platform - fetch stats immediately
+    if (newPlatform.type === 'Instagram') {
+      setAddingPlatform(true);
+      try {
+        const response = await instagramService.fetchProfile(newPlatform.url);
+        
+        if (response.requiresManualInput) {
+          // Auto-fetch not available, add without stats
+          const platform = {
+            type: 'Instagram',
+            url: newPlatform.url,
+            addedAt: new Date().toISOString(),
+          };
+          setFormData({
+            ...formData,
+            platforms: [...(formData.platforms || []), platform],
+          });
+          setNewPlatform({ type: 'YouTube', url: '' });
+          setShowPlatformModal(false);
+          toast.success('Instagram added! Auto-fetch unavailable — enter stats manually.');
+          return;
+        }
+
+        if (response.success && response.data) {
+          const igData = response.data;
+          const platform = {
+            type: 'Instagram',
+            url: newPlatform.url,
+            stats: {
+              followers: igData.profile?.followers || 0,
+              following: igData.profile?.following || 0,
+              posts: igData.profile?.posts || 0,
+              engagementRate: igData.metrics?.engagementRate || 0,
+            },
+            lastFetched: new Date().toISOString(),
+            username: igData.profile?.username,
+          };
+
+          setFormData({
+            ...formData,
+            platforms: [...(formData.platforms || []), platform],
+          });
+
+          setNewPlatform({ type: 'YouTube', url: '' });
+          setShowPlatformModal(false);
+          toast.success('Instagram platform added with stats!');
+        }
+      } catch (error) {
+        console.error('Error adding Instagram platform:', error);
+        toast.error(error.response?.data?.message || 'Failed to fetch Instagram data');
+      } finally {
+        setAddingPlatform(false);
+      }
       return;
     }
 
@@ -362,6 +421,81 @@ const Profile = () => {
       toast.error(errorMsg);
     } finally {
       setFetchingYouTube(false);
+    }
+  };
+
+  const handleFetchInstagramData = async () => {
+    if (!formData.instagramUrl) {
+      toast.error('Please enter your Instagram profile URL first');
+      return;
+    }
+
+    setFetchingInstagram(true);
+    try {
+      const response = await instagramService.fetchProfile(formData.instagramUrl);
+      
+      console.log('Instagram API Response:', response);
+      
+      if (response.requiresManualInput) {
+        toast.error('Auto-fetch unavailable. Please enter your Instagram stats manually.');
+        return;
+      }
+
+      if (response.success && response.data) {
+        const igData = response.data;
+        console.log('Instagram Data:', igData);
+        
+        setInstagramStats(igData);
+        
+        // Show success message with stats
+        toast.success(
+          `✅ Instagram data fetched!\n` +
+          `👥 ${igData.profile.followers?.toLocaleString()} followers\n` +
+          `📸 ${igData.profile.posts} posts\n` +
+          `💫 ${igData.metrics.engagementRate?.toFixed(2)}% engagement`,
+          { duration: 5000 }
+        );
+
+        // Auto-update the profile with fetched data
+        try {
+          const updatedData = {
+            name: formData.name,
+            bio: formData.bio,
+            niche: formData.category,
+            platformType: formData.platformType,
+            location: formData.location,
+            avatar: previewImage,
+            youtubeUrl: formData.youtubeUrl,
+            instagramUrl: formData.instagramUrl,
+            website: formData.website,
+            services: formData.services,
+            instagramStats: {
+              followers: igData.profile.followers,
+              following: igData.profile.following,
+              postCount: igData.profile.posts,
+              engagementRate: igData.metrics.engagementRate,
+              averageLikes: igData.metrics.averageLikes,
+              averageComments: igData.metrics.averageComments,
+              lastFetched: new Date()
+            },
+            instagramUsername: igData.profile.username
+          };
+
+          console.log('Updating profile with Instagram data:', updatedData);
+
+          await influencerService.updateProfile(updatedData);
+          toast.success('Profile updated with Instagram stats!');
+        } catch (updateError) {
+          console.error('Error updating profile with Instagram stats:', updateError);
+          toast.error('Stats fetched but failed to save to profile');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching Instagram data:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to fetch Instagram data';
+      toast.error(errorMsg);
+    } finally {
+      setFetchingInstagram(false);
     }
   };
 
@@ -654,11 +788,20 @@ const Profile = () => {
                             <p className="prof-platform-url">{platform.url}</p>
                             {platform.stats && (
                               <div className="prof-platform-stats">
-                                {platform.stats.subscribers && (
-                                  <span><UsersIcon size={14} /> {platform.stats.subscribers.toLocaleString()}</span>
+                                {platform.stats.subscribers != null && (
+                                  <span><UsersIcon size={14} /> {platform.stats.subscribers.toLocaleString()} subscribers</span>
                                 )}
-                                {platform.stats.views && (
-                                  <span><Eye size={14} /> {platform.stats.views.toLocaleString()}</span>
+                                {platform.stats.followers != null && (
+                                  <span><UsersIcon size={14} /> {platform.stats.followers.toLocaleString()} followers</span>
+                                )}
+                                {platform.stats.views != null && (
+                                  <span><Eye size={14} /> {platform.stats.views.toLocaleString()} views</span>
+                                )}
+                                {platform.stats.posts != null && (
+                                  <span><Camera size={14} /> {platform.stats.posts.toLocaleString()} posts</span>
+                                )}
+                                {platform.stats.engagementRate != null && (
+                                  <span><TrendingUp size={14} /> {platform.stats.engagementRate.toFixed(2)}% engagement</span>
                                 )}
                               </div>
                             )}
@@ -914,7 +1057,19 @@ const Profile = () => {
                   </div>
                 )}
 
-                {newPlatform.type !== 'YouTube' && (
+                {newPlatform.type === 'Instagram' && (
+                  <div className="prof-platform-note">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <TrendingUp size={16} style={{ color: 'var(--accent-coral)' }} />
+                      <strong>Auto-fetch enabled</strong>
+                    </div>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                      Instagram stats (followers, posts, engagement) will be fetched automatically via Graph API.
+                    </p>
+                  </div>
+                )}
+
+                {newPlatform.type !== 'YouTube' && newPlatform.type !== 'Instagram' && (
                   <div className="prof-platform-note">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                       <Globe size={16} style={{ color: 'var(--pastel-sky)' }} />

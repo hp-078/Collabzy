@@ -83,6 +83,7 @@ const messageRoutes = require('./routes/message.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const reviewRoutes = require('./routes/review.routes');
 const youtubeRoutes = require('./routes/youtube.routes');
+const instagramRoutes = require('./routes/instagram.routes');
 
 // Mount routes
 app.use('/api/auth', authRoutes);
@@ -95,6 +96,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/youtube', youtubeRoutes);
+app.use('/api/instagram', instagramRoutes);
 
 // ===========================================
 // ERROR HANDLING
