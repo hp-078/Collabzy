@@ -14,9 +14,12 @@ import {
   Send,
   X,
   Youtube,
+  Instagram,
   TrendingUp,
   Eye,
-  Users as UsersIcon
+  Users as UsersIcon,
+  Heart,
+  MessageCircle
 } from 'lucide-react';
 import './InfluencerDetail.css';
 
@@ -294,6 +297,108 @@ const InfluencerDetail = () => {
                   >
                     <Youtube size={18} />
                     Visit Channel
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Instagram Stats */}
+            {influencer.instagramStats && influencer.instagramStats.followers > 0 && (
+              <div className="idet-sidebar-card idet-instagram-card">
+                <div className="idet-instagram-header">
+                  <div className="idet-instagram-icon">
+                    <Instagram size={22} />
+                  </div>
+                  <h3 className="idet-instagram-title">Instagram Analytics</h3>
+                </div>
+                
+                <div className="idet-instagram-stats">
+                  <div className="idet-instagram-stat">
+                    <div className="idet-instagram-stat-left">
+                      <div className="idet-instagram-stat-icon">
+                        <UsersIcon size={18} />
+                      </div>
+                      <span className="idet-instagram-stat-label">Followers</span>
+                    </div>
+                    <span className="idet-instagram-stat-value">
+                      {influencer.instagramStats.followers?.toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="idet-instagram-stat">
+                    <div className="idet-instagram-stat-left">
+                      <div className="idet-instagram-stat-icon">
+                        <UsersIcon size={18} />
+                      </div>
+                      <span className="idet-instagram-stat-label">Following</span>
+                    </div>
+                    <span className="idet-instagram-stat-value">
+                      {influencer.instagramStats.following?.toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="idet-instagram-stat">
+                    <div className="idet-instagram-stat-left">
+                      <div className="idet-instagram-stat-icon">
+                        <Eye size={18} />
+                      </div>
+                      <span className="idet-instagram-stat-label">Posts</span>
+                    </div>
+                    <span className="idet-instagram-stat-value">
+                      {influencer.instagramStats.posts}
+                    </span>
+                  </div>
+                  
+                  <div className="idet-instagram-stat">
+                    <div className="idet-instagram-stat-left">
+                      <div className="idet-instagram-stat-icon">
+                        <TrendingUp size={18} />
+                      </div>
+                      <span className="idet-instagram-stat-label">Engagement</span>
+                    </div>
+                    <span className="idet-instagram-stat-value">
+                      {influencer.instagramStats.engagementRate?.toFixed(2)}%
+                    </span>
+                  </div>
+
+                  {influencer.instagramStats.averageLikes > 0 && (
+                    <div className="idet-instagram-stat">
+                      <div className="idet-instagram-stat-left">
+                        <div className="idet-instagram-stat-icon">
+                          <Heart size={18} />
+                        </div>
+                        <span className="idet-instagram-stat-label">Avg. Likes</span>
+                      </div>
+                      <span className="idet-instagram-stat-value">
+                        {influencer.instagramStats.averageLikes?.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {influencer.instagramStats.averageComments > 0 && (
+                    <div className="idet-instagram-stat">
+                      <div className="idet-instagram-stat-left">
+                        <div className="idet-instagram-stat-icon">
+                          <MessageCircle size={18} />
+                        </div>
+                        <span className="idet-instagram-stat-label">Avg. Comments</span>
+                      </div>
+                      <span className="idet-instagram-stat-value">
+                        {influencer.instagramStats.averageComments?.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {influencer.instagramUrl && (
+                  <a 
+                    href={influencer.instagramUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="idet-instagram-button"
+                  >
+                    <Instagram size={18} />
+                    Visit Profile
                   </a>
                 )}
               </div>

@@ -43,6 +43,18 @@ const influencerService = {
     return response.data;
   },
 
+  // Refresh YouTube profile data (force refetch)
+  refreshYouTubeProfile: async () => {
+    const response = await api.post('/influencer/refresh-youtube');
+    return response.data;
+  },
+
+  // Refresh Instagram profile data (force refetch)
+  refreshInstagramProfile: async () => {
+    const response = await api.post('/influencer/refresh-instagram');
+    return response.data;
+  },
+
   // Get trending influencers
   getTrendingInfluencers: async (limit = 10) => {
     const response = await api.get("/influencer/list", {

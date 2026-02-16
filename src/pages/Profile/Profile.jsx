@@ -132,6 +132,98 @@ const Profile = () => {
             if (profileData.avatar) {
               setPreviewImage(profileData.avatar);
             }
+
+            // Load cached YouTube stats if available (from DB fields)
+            if (profileData.youtubeData || profileData.youtubeStats) {
+              const ytData = {
+                channel: {
+                  title: profileData.youtubeData?.title || '',
+                  subscriberCount: profileData.youtubeStats?.subscribers || 0,
+                  viewCount: profileData.youtubeStats?.totalViews || 0,
+                  videoCount: profileData.youtubeStats?.videoCount || 0,
+                  thumbnail: profileData.youtubeData?.thumbnail || '',
+                  channelId: profileData.youtubeChannelId || '',
+                },
+                metrics: {
+                  engagementRate: profileData.youtubeStats?.engagementRate || 0,
+                  averageViews: profileData.youtubeStats?.averageViews || 0,
+                },
+                recentVideos: profileData.youtubeData?.recentVideos || [],
+                fetchedAt: profileData.youtubeData?.fetchedAt || profileData.youtubeStats?.lastFetched,
+              };
+              setYoutubeStats(ytData);
+            } else {
+              // Fallback: try to reconstruct from platforms array
+              const ytPlatform = (profileData.platforms || []).find(p => p.type === 'YouTube');
+              if (ytPlatform?.stats) {
+                const ytData = {
+                  channel: {
+                    title: ytPlatform.channelTitle || '',
+                    subscriberCount: ytPlatform.stats.subscribers || 0,
+                    viewCount: ytPlatform.stats.views || 0,
+                    videoCount: ytPlatform.stats.videos || 0,
+                    thumbnail: '',
+                    channelId: ytPlatform.channelId || '',
+                  },
+                  metrics: {
+                    engagementRate: ytPlatform.stats.engagementRate || 0,
+                    averageViews: 0,
+                  },
+                  recentVideos: [],
+                  fetchedAt: ytPlatform.lastFetched,
+                };
+                setYoutubeStats(ytData);
+              }
+            }
+
+            // Load cached Instagram stats if available (from DB fields)
+            if (profileData.instagramData || profileData.instagramStats) {
+              const igData = {
+                profile: {
+                  username: profileData.instagramData?.username || profileData.instagramUsername || '',
+                  name: profileData.instagramData?.name || '',
+                  biography: profileData.instagramData?.biography || '',
+                  profilePicture: profileData.instagramData?.profilePicture || '',
+                  followers: profileData.instagramStats?.followers || 0,
+                  following: profileData.instagramStats?.following || 0,
+                  posts: profileData.instagramStats?.posts || 0,
+                  isVerified: profileData.instagramData?.isVerified || false,
+                },
+                metrics: {
+                  engagementRate: profileData.instagramStats?.engagementRate || 0,
+                  averageLikes: profileData.instagramStats?.averageLikes || 0,
+                  averageComments: profileData.instagramStats?.averageComments || 0,
+                },
+                recentPosts: profileData.instagramData?.recentMedia || [],
+                fetchedAt: profileData.instagramData?.fetchedAt || profileData.instagramStats?.lastFetched,
+              };
+              setInstagramStats(igData);
+            } else {
+              // Fallback: try to reconstruct from platforms array
+              const igPlatform = (profileData.platforms || []).find(p => p.type === 'Instagram');
+              if (igPlatform?.stats) {
+                const igData = {
+                  profile: {
+                    username: igPlatform.username || '',
+                    name: '',
+                    biography: '',
+                    profilePicture: '',
+                    followers: igPlatform.stats.followers || 0,
+                    following: igPlatform.stats.following || 0,
+                    posts: igPlatform.stats.posts || 0,
+                    isVerified: false,
+                  },
+                  metrics: {
+                    engagementRate: igPlatform.stats.engagementRate || 0,
+                    averageLikes: 0,
+                    averageComments: 0,
+                  },
+                  recentPosts: [],
+                  fetchedAt: igPlatform.lastFetched,
+                };
+                setInstagramStats(igData);
+              }
+            }
           }
         } catch (error) {
           console.log('No influencer profile yet or error loading:', error);
@@ -288,10 +380,42 @@ const Profile = () => {
             username: igData.profile?.username,
           };
 
-          setFormData({
-            ...formData,
-            platforms: [...(formData.platforms || []), platform],
-          });
+          // Also set instagramUrl so backend stores it and Social Media Analytics section shows
+          setFormData(prev => ({
+            ...prev,
+            instagramUrl: newPlatform.url,
+            platforms: [...(prev.platforms || []), platform],
+          }));
+
+          // Populate instagramStats state so it shows immediately in Social Media Analytics
+          const formattedIgStats = {
+            profile: {
+              username: igData.profile?.username || '',
+              name: igData.profile?.name || '',
+              biography: igData.profile?.biography || '',
+              profilePicture: igData.profile?.profilePicture || '',
+              followers: igData.profile?.followers || 0,
+              following: igData.profile?.following || 0,
+              posts: igData.profile?.posts || 0,
+              isVerified: igData.profile?.isVerified || false,
+            },
+            metrics: {
+              engagementRate: igData.metrics?.engagementRate || 0,
+              averageLikes: igData.metrics?.averageLikes || 0,
+              averageComments: igData.metrics?.averageComments || 0,
+            },
+            recentPosts: igData.recentPosts || [],
+            fetchedAt: new Date(),
+            cached: false,
+          };
+          setInstagramStats(formattedIgStats);
+
+          // Also persist to DB via influencer service so data survives reload
+          try {
+            await influencerService.fetchInstagramProfile(newPlatform.url);
+          } catch (persistErr) {
+            console.warn('Instagram data shown but failed to persist to DB:', persistErr);
+          }
 
           setNewPlatform({ type: 'YouTube', url: '' });
           setShowPlatformModal(false);
@@ -328,10 +452,39 @@ const Profile = () => {
           channelTitle: ytData.channel?.title,
         };
 
-        setFormData({
-          ...formData,
-          platforms: [...(formData.platforms || []), platform],
-        });
+        // Also set youtubeUrl so the backend stores it and Social Media Analytics section shows
+        setFormData(prev => ({
+          ...prev,
+          youtubeUrl: newPlatform.url,
+          platforms: [...(prev.platforms || []), platform],
+        }));
+
+        // Populate youtubeStats state so it shows immediately in Social Media Analytics
+        const formattedYtStats = {
+          channel: {
+            title: ytData.channel?.title || '',
+            subscriberCount: ytData.channel?.subscriberCount || 0,
+            viewCount: ytData.channel?.viewCount || 0,
+            videoCount: ytData.channel?.videoCount || 0,
+            thumbnail: ytData.channel?.thumbnail || '',
+            channelId: ytData.channel?.channelId || '',
+          },
+          metrics: {
+            engagementRate: ytData.metrics?.engagementRate || 0,
+            averageViews: ytData.metrics?.averageViews || 0,
+          },
+          recentVideos: ytData.recentVideos || [],
+          fetchedAt: new Date(),
+          cached: false,
+        };
+        setYoutubeStats(formattedYtStats);
+
+        // Also persist to DB via influencer service so data survives reload
+        try {
+          await influencerService.fetchYouTubeProfile(newPlatform.url);
+        } catch (persistErr) {
+          console.warn('YouTube data shown but failed to persist to DB:', persistErr);
+        }
 
         setNewPlatform({ type: 'YouTube', url: '' });
         setShowPlatformModal(false);
@@ -356,14 +509,18 @@ const Profile = () => {
 
 
   const handleFetchYouTubeData = async () => {
-    if (!formData.youtubeUrl) {
+    // Get YouTube URL from either direct field or platforms array
+    const youtubeUrl = formData.youtubeUrl || 
+      (formData.platforms || []).find(p => p.type === 'YouTube')?.url;
+    
+    if (!youtubeUrl) {
       toast.error('Please enter your YouTube channel URL first');
       return;
     }
 
     setFetchingYouTube(true);
     try {
-      const response = await youtubeService.fetchProfile(formData.youtubeUrl);
+      const response = await influencerService.fetchYouTubeProfile(youtubeUrl);
       
       console.log('YouTube API Response:', response); // Debug log
       
@@ -371,49 +528,33 @@ const Profile = () => {
         const ytData = response.data;
         console.log('YouTube Data:', ytData); // Debug log
         
-        setYoutubeStats(ytData);
+        // Update the stats state with fetched data
+        const formattedData = {
+          channel: {
+            title: ytData.channel?.title || '',
+            subscriberCount: ytData.channel?.subscriberCount || 0,
+            viewCount: ytData.channel?.viewCount || 0,
+            videoCount: ytData.channel?.videoCount || 0,
+            thumbnail: ytData.channel?.thumbnail || '',
+            channelId: ytData.channel?.channelId || '',
+          },
+          metrics: {
+            engagementRate: ytData.metrics?.engagementRate || 0,
+            averageViews: ytData.metrics?.averageViews || 0,
+          },
+          recentVideos: ytData.recentVideos || [],
+          fetchedAt: new Date(),
+          cached: response.cached || false,
+        };
+        
+        setYoutubeStats(formattedData);
         
         // Show success message with stats
-        toast.success(
-          `✅ YouTube data fetched!\n` +
-          `📊 ${ytData.channel.subscriberCount?.toLocaleString()} subscribers\n` +
-          `📹 ${ytData.channel.videoCount} videos\n` +
-          `💫 ${ytData.metrics.engagementRate?.toFixed(2)}% engagement`,
-          { duration: 5000 }
-        );
-
-        // Auto-update the profile with fetched data
-        try {
-          const updatedData = {
-            name: formData.name,
-            bio: formData.bio,
-            niche: formData.category,
-            platformType: formData.platformType,
-            location: formData.location,
-            avatar: previewImage,
-            youtubeUrl: formData.youtubeUrl,
-            instagramUrl: formData.instagramUrl,
-            website: formData.website,
-            services: formData.services,
-            youtubeStats: {
-              subscribers: ytData.channel.subscriberCount,
-              totalViews: ytData.channel.viewCount,
-              videoCount: ytData.channel.videoCount,
-              averageViews: ytData.metrics.averageViews,
-              engagementRate: ytData.metrics.engagementRate,
-              lastFetched: new Date()
-            },
-            youtubeChannelId: ytData.channel.channelId
-          };
-
-          console.log('Updating profile with:', updatedData); // Debug log
-
-          await influencerService.updateProfile(updatedData);
-          toast.success('Profile updated with YouTube stats!');
-        } catch (updateError) {
-          console.error('Error updating profile with YouTube stats:', updateError);
-          toast.error('Stats fetched but failed to save to profile');
-        }
+        const message = response.cached
+          ? `📦 YouTube data loaded from cache\n📊 ${formattedData.channel.subscriberCount?.toLocaleString()} subscribers`
+          : `✅ YouTube data fetched!\n📊 ${formattedData.channel.subscriberCount?.toLocaleString()} subscribers\n📹 ${formattedData.channel.videoCount} videos\n💫 ${formattedData.metrics.engagementRate?.toFixed(2)}% engagement`;
+        
+        toast.success(message, { duration: 5000 });
       }
     } catch (error) {
       console.error('Error fetching YouTube data:', error);
@@ -424,15 +565,64 @@ const Profile = () => {
     }
   };
 
+  const handleRefreshYouTubeData = async () => {
+    setFetchingYouTube(true);
+    try {
+      const response = await influencerService.refreshYouTubeProfile();
+      
+      console.log('YouTube Refresh Response:', response);
+      
+      if (response.success && response.data) {
+        const ytData = response.data;
+        
+        // Update the stats state with refreshed data
+        const formattedData = {
+          channel: {
+            title: ytData.channel?.title || '',
+            subscriberCount: ytData.channel?.subscriberCount || 0,
+            viewCount: ytData.channel?.viewCount || 0,
+            videoCount: ytData.channel?.videoCount || 0,
+            thumbnail: ytData.channel?.thumbnail || '',
+            channelId: ytData.channel?.channelId || '',
+          },
+          metrics: {
+            engagementRate: ytData.metrics?.engagementRate || 0,
+            averageViews: ytData.metrics?.averageViews || 0,
+          },
+          recentVideos: ytData.recentVideos || [],
+          fetchedAt: new Date(),
+          cached: false,
+        };
+        
+        setYoutubeStats(formattedData);
+        
+        toast.success(
+          `🔄 YouTube data refreshed!\n📊 ${formattedData.channel.subscriberCount?.toLocaleString()} subscribers\n📹 ${formattedData.channel.videoCount} videos\n💫 ${formattedData.metrics.engagementRate?.toFixed(2)}% engagement`,
+          { duration: 5000 }
+        );
+      }
+    } catch (error) {
+      console.error('Error refreshing YouTube data:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to refresh YouTube data';
+      toast.error(errorMsg);
+    } finally {
+      setFetchingYouTube(false);
+    }
+  };
+
   const handleFetchInstagramData = async () => {
-    if (!formData.instagramUrl) {
+    // Get Instagram URL from either direct field or platforms array
+    const instagramUrl = formData.instagramUrl || 
+      (formData.platforms || []).find(p => p.type === 'Instagram')?.url;
+    
+    if (!instagramUrl) {
       toast.error('Please enter your Instagram profile URL first');
       return;
     }
 
     setFetchingInstagram(true);
     try {
-      const response = await instagramService.fetchProfile(formData.instagramUrl);
+      const response = await influencerService.fetchInstagramProfile(instagramUrl);
       
       console.log('Instagram API Response:', response);
       
@@ -445,54 +635,93 @@ const Profile = () => {
         const igData = response.data;
         console.log('Instagram Data:', igData);
         
-        setInstagramStats(igData);
+        // Update the stats state with fetched data
+        const formattedData = {
+          profile: {
+            username: igData.profile?.username || '',
+            name: igData.profile?.name || '',
+            biography: igData.profile?.biography || '',
+            profilePicture: igData.profile?.profilePicture || '',
+            followers: igData.profile?.followers || 0,
+            following: igData.profile?.following || 0,
+            posts: igData.profile?.posts || 0,
+            isVerified: igData.profile?.isVerified || false,
+          },
+          metrics: {
+            engagementRate: igData.metrics?.engagementRate || 0,
+            averageLikes: igData.metrics?.averageLikes || 0,
+            averageComments: igData.metrics?.averageComments || 0,
+          },
+          recentPosts: igData.recentPosts || [],
+          fetchedAt: new Date(),
+          cached: response.cached || false,
+        };
+        
+        setInstagramStats(formattedData);
         
         // Show success message with stats
-        toast.success(
-          `✅ Instagram data fetched!\n` +
-          `👥 ${igData.profile.followers?.toLocaleString()} followers\n` +
-          `📸 ${igData.profile.posts} posts\n` +
-          `💫 ${igData.metrics.engagementRate?.toFixed(2)}% engagement`,
-          { duration: 5000 }
-        );
-
-        // Auto-update the profile with fetched data
-        try {
-          const updatedData = {
-            name: formData.name,
-            bio: formData.bio,
-            niche: formData.category,
-            platformType: formData.platformType,
-            location: formData.location,
-            avatar: previewImage,
-            youtubeUrl: formData.youtubeUrl,
-            instagramUrl: formData.instagramUrl,
-            website: formData.website,
-            services: formData.services,
-            instagramStats: {
-              followers: igData.profile.followers,
-              following: igData.profile.following,
-              postCount: igData.profile.posts,
-              engagementRate: igData.metrics.engagementRate,
-              averageLikes: igData.metrics.averageLikes,
-              averageComments: igData.metrics.averageComments,
-              lastFetched: new Date()
-            },
-            instagramUsername: igData.profile.username
-          };
-
-          console.log('Updating profile with Instagram data:', updatedData);
-
-          await influencerService.updateProfile(updatedData);
-          toast.success('Profile updated with Instagram stats!');
-        } catch (updateError) {
-          console.error('Error updating profile with Instagram stats:', updateError);
-          toast.error('Stats fetched but failed to save to profile');
-        }
+        const message = response.cached
+          ? `📦 Instagram data loaded from cache\n👥 ${formattedData.profile.followers?.toLocaleString()} followers`
+          : `✅ Instagram data fetched!\n👥 ${formattedData.profile.followers?.toLocaleString()} followers\n📸 ${formattedData.profile.posts} posts\n💫 ${formattedData.metrics.engagementRate?.toFixed(2)}% engagement`;
+        
+        toast.success(message, { duration: 5000 });
       }
     } catch (error) {
       console.error('Error fetching Instagram data:', error);
       const errorMsg = error.response?.data?.message || 'Failed to fetch Instagram data';
+      toast.error(errorMsg);
+    } finally {
+      setFetchingInstagram(false);
+    }
+  };
+
+  const handleRefreshInstagramData = async () => {
+    setFetchingInstagram(true);
+    try {
+      const response = await influencerService.refreshInstagramProfile();
+      
+      console.log('Instagram Refresh Response:', response);
+      
+      if (response.requiresManualInput) {
+        toast.error('Auto-fetch unavailable. Please enter your Instagram stats manually.');
+        return;
+      }
+
+      if (response.success && response.data) {
+        const igData = response.data;
+        
+        // Update the stats state with refreshed data
+        const formattedData = {
+          profile: {
+            username: igData.profile?.username || '',
+            name: igData.profile?.name || '',
+            biography: igData.profile?.biography || '',
+            profilePicture: igData.profile?.profilePicture || '',
+            followers: igData.profile?.followers || 0,
+            following: igData.profile?.following || 0,
+            posts: igData.profile?.posts || 0,
+            isVerified: igData.profile?.isVerified || false,
+          },
+          metrics: {
+            engagementRate: igData.metrics?.engagementRate || 0,
+            averageLikes: igData.metrics?.averageLikes || 0,
+            averageComments: igData.metrics?.averageComments || 0,
+          },
+          recentPosts: igData.recentPosts || [],
+          fetchedAt: new Date(),
+          cached: false,
+        };
+        
+        setInstagramStats(formattedData);
+        
+        toast.success(
+          `🔄 Instagram data refreshed!\n👥 ${formattedData.profile.followers?.toLocaleString()} followers\n📸 ${formattedData.profile.posts} posts\n💫 ${formattedData.metrics.engagementRate?.toFixed(2)}% engagement`,
+          { duration: 5000 }
+        );
+      }
+    } catch (error) {
+      console.error('Error refreshing Instagram data:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to refresh Instagram data';
       toast.error(errorMsg);
     } finally {
       setFetchingInstagram(false);
@@ -828,6 +1057,177 @@ const Profile = () => {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Social Media Stats Section */}
+                <div className="prof-section" style={{ marginTop: '2rem' }}>
+                  <h2>Social Media Analytics</h2>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                    View and refresh your social media statistics
+                  </p>
+
+                  {/* YouTube Stats */}
+                  {(formData.youtubeUrl || (formData.platforms || []).some(p => p.type === 'YouTube')) && (
+                    <div className="prof-social-stats-card" style={{ marginBottom: '1.5rem' }}>
+                      <div className="prof-stats-header">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Youtube size={24} style={{ color: '#FF0000' }} />
+                          <h3>YouTube</h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={youtubeStats ? handleRefreshYouTubeData : handleFetchYouTubeData}
+                          disabled={fetchingYouTube}
+                          className="btn btn-outline btn-sm"
+                        >
+                          {fetchingYouTube ? (
+                            <>
+                              <Loader size={16} className="animate-spin" />
+                              {youtubeStats ? 'Refreshing...' : 'Fetching...'}
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw size={16} />
+                              {youtubeStats ? 'Refresh Stats' : 'Fetch Stats'}
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {youtubeStats ? (
+                        <>
+                          <div className="prof-stats-grid">
+                            <div className="prof-stat-item">
+                              <UsersIcon size={18} />
+                              <div>
+                                <p className="prof-stat-value">{youtubeStats.channel?.subscriberCount?.toLocaleString() || '0'}</p>
+                                <p className="prof-stat-label">Subscribers</p>
+                              </div>
+                            </div>
+                            <div className="prof-stat-item">
+                              <Eye size={18} />
+                              <div>
+                                <p className="prof-stat-value">{youtubeStats.channel?.viewCount?.toLocaleString() || '0'}</p>
+                                <p className="prof-stat-label">Total Views</p>
+                              </div>
+                            </div>
+                            <div className="prof-stat-item">
+                              <Camera size={18} />
+                              <div>
+                                <p className="prof-stat-value">{youtubeStats.channel?.videoCount?.toLocaleString() || '0'}</p>
+                                <p className="prof-stat-label">Videos</p>
+                              </div>
+                            </div>
+                            <div className="prof-stat-item">
+                              <TrendingUp size={18} />
+                              <div>
+                                <p className="prof-stat-value">{youtubeStats.metrics?.engagementRate?.toFixed(2) || '0'}%</p>
+                                <p className="prof-stat-label">Engagement</p>
+                              </div>
+                            </div>
+                          </div>
+                          {youtubeStats.fetchedAt && (
+                            <p className="prof-stats-last-updated">
+                              Last updated: {new Date(youtubeStats.fetchedAt).toLocaleString()}
+                              {youtubeStats.cached && ' (from cache)'}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <div className="prof-empty-state" style={{ padding: '2rem' }}>
+                          <Youtube size={48} style={{ opacity: 0.3 }} />
+                          <p>No YouTube stats available</p>
+                          <p className="prof-empty-hint">Click "Fetch Stats" to load your YouTube analytics</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Instagram Stats */}
+                  {(formData.instagramUrl || (formData.platforms || []).some(p => p.type === 'Instagram')) && (
+                    <div className="prof-social-stats-card">
+                      <div className="prof-stats-header">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Instagram size={24} style={{ color: '#E4405F' }} />
+                          <h3>Instagram</h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={instagramStats ? handleRefreshInstagramData : handleFetchInstagramData}
+                          disabled={fetchingInstagram}
+                          className="btn btn-outline btn-sm"
+                        >
+                          {fetchingInstagram ? (
+                            <>
+                              <Loader size={16} className="animate-spin" />
+                              {instagramStats ? 'Refreshing...' : 'Fetching...'}
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw size={16} />
+                              {instagramStats ? 'Refresh Stats' : 'Fetch Stats'}
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {instagramStats ? (
+                        <>
+                          <div className="prof-stats-grid">
+                            <div className="prof-stat-item">
+                              <UsersIcon size={18} />
+                              <div>
+                                <p className="prof-stat-value">{instagramStats.profile?.followers?.toLocaleString() || '0'}</p>
+                                <p className="prof-stat-label">Followers</p>
+                              </div>
+                            </div>
+                            <div className="prof-stat-item">
+                              <UsersIcon size={18} />
+                              <div>
+                                <p className="prof-stat-value">{instagramStats.profile?.following?.toLocaleString() || '0'}</p>
+                                <p className="prof-stat-label">Following</p>
+                              </div>
+                            </div>
+                            <div className="prof-stat-item">
+                              <Camera size={18} />
+                              <div>
+                                <p className="prof-stat-value">{instagramStats.profile?.posts?.toLocaleString() || '0'}</p>
+                                <p className="prof-stat-label">Posts</p>
+                              </div>
+                            </div>
+                            <div className="prof-stat-item">
+                              <TrendingUp size={18} />
+                              <div>
+                                <p className="prof-stat-value">{instagramStats.metrics?.engagementRate?.toFixed(2) || '0'}%</p>
+                                <p className="prof-stat-label">Engagement</p>
+                              </div>
+                            </div>
+                          </div>
+                          {instagramStats.fetchedAt && (
+                            <p className="prof-stats-last-updated">
+                              Last updated: {new Date(instagramStats.fetchedAt).toLocaleString()}
+                              {instagramStats.cached && ' (from cache)'}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <div className="prof-empty-state" style={{ padding: '2rem' }}>
+                          <Instagram size={48} style={{ opacity: 0.3 }} />
+                          <p>No Instagram stats available</p>
+                          <p className="prof-empty-hint">Click "Fetch Stats" to load your Instagram analytics</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {!formData.youtubeUrl && !formData.instagramUrl && 
+                   !(formData.platforms || []).some(p => p.type === 'YouTube' || p.type === 'Instagram') && (
+                    <div className="prof-empty-state">
+                      <Globe size={48} />
+                      <p>No social media accounts linked</p>
+                      <p className="prof-empty-hint">Add your YouTube or Instagram URL in the platforms section above to track your stats</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Services Section */}
