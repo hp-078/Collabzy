@@ -12,7 +12,11 @@ import {
   Calendar,
   DollarSign,
   Send,
-  X
+  X,
+  Youtube,
+  TrendingUp,
+  Eye,
+  Users as UsersIcon
 } from 'lucide-react';
 import './InfluencerDetail.css';
 
@@ -221,6 +225,80 @@ const InfluencerDetail = () => {
           </div>
 
           <div className="idet-sidebar">
+            {/* YouTube Stats */}
+            {influencer.youtubeStats && influencer.youtubeStats.subscribers > 0 && (
+              <div className="idet-sidebar-card idet-youtube-card">
+                <div className="idet-youtube-header">
+                  <div className="idet-youtube-icon">
+                    <Youtube size={22} />
+                  </div>
+                  <h3 className="idet-youtube-title">YouTube Analytics</h3>
+                </div>
+                
+                <div className="idet-youtube-stats">
+                  <div className="idet-youtube-stat">
+                    <div className="idet-youtube-stat-left">
+                      <div className="idet-youtube-stat-icon">
+                        <UsersIcon size={18} />
+                      </div>
+                      <span className="idet-youtube-stat-label">Subscribers</span>
+                    </div>
+                    <span className="idet-youtube-stat-value">
+                      {influencer.youtubeStats.subscribers?.toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="idet-youtube-stat">
+                    <div className="idet-youtube-stat-left">
+                      <div className="idet-youtube-stat-icon">
+                        <Eye size={18} />
+                      </div>
+                      <span className="idet-youtube-stat-label">Total Views</span>
+                    </div>
+                    <span className="idet-youtube-stat-value">
+                      {influencer.youtubeStats.totalViews?.toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="idet-youtube-stat">
+                    <div className="idet-youtube-stat-left">
+                      <div className="idet-youtube-stat-icon">
+                        <Youtube size={18} />
+                      </div>
+                      <span className="idet-youtube-stat-label">Videos</span>
+                    </div>
+                    <span className="idet-youtube-stat-value">
+                      {influencer.youtubeStats.videoCount}
+                    </span>
+                  </div>
+                  
+                  <div className="idet-youtube-stat">
+                    <div className="idet-youtube-stat-left">
+                      <div className="idet-youtube-stat-icon">
+                        <TrendingUp size={18} />
+                      </div>
+                      <span className="idet-youtube-stat-label">Engagement</span>
+                    </div>
+                    <span className="idet-youtube-stat-value">
+                      {influencer.youtubeStats.engagementRate?.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+                
+                {influencer.youtubeUrl && (
+                  <a 
+                    href={influencer.youtubeUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="idet-youtube-button"
+                  >
+                    <Youtube size={18} />
+                    Visit Channel
+                  </a>
+                )}
+              </div>
+            )}
+
             {/* Quick Stats */}
             <div className="idet-sidebar-card">
               <h3>Quick Stats</h3>

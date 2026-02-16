@@ -166,10 +166,8 @@ const Messages = () => {
 
     const result = await sendApplicationMessage(selectedCollaboration.application._id, content);
     if (result.success && result.data) {
-      setChatMessages(prev => [...prev, result.data]);
-      // Also emit via socket for real-time
-      const roomId = `app_${selectedCollaboration.application._id}`;
-      socketService.sendMessage(roomId, result.data);
+      // Message will be added via socket listener when backend emits it
+      // No need to add manually or emit again - backend handles socket emission
     } else {
       // Show error message
       alert(`❌ Failed to send message!\n\n${result.error || 'Backend server may not be running'}\n\n✅ Solution:\n1. Open a new terminal\n2. Run: cd backend\n3. Run: npm run dev\n\nThen try sending the message again.`);

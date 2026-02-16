@@ -208,4 +208,13 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   to { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 button:focus, button:focus-visible { outline: 4px auto -webkit-focus-ring-color; }

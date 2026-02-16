@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import influencerService from '../../services/influencer.service';
 import brandService from '../../services/brand.service';
 import authService from '../../services/auth.service';
+import youtubeService from '../../services/youtube.service';
 import toast from 'react-hot-toast';
 import {
   User,
@@ -16,7 +17,11 @@ import {
   Plus,
   X,
   DollarSign,
-  Loader
+  Loader,
+  RefreshCw,
+  TrendingUp,
+  Eye,
+  Users as UsersIcon
 } from 'lucide-react';
 import './Profile.css';
 
@@ -39,6 +44,7 @@ const Profile = () => {
     website: user?.website || '',
     industry: user?.industry || '',
     services: user?.services || [],
+    platforms: user?.platforms || [],
   });
 
   console.log('Initial formData:', formData); // Debug log
@@ -49,9 +55,18 @@ const Profile = () => {
     description: '',
   });
 
+  const [newPlatform, setNewPlatform] = useState({
+    type: 'YouTube',
+    url: '',
+  });
+
   const [showServiceModal, setShowServiceModal] = useState(false);
+  const [showPlatformModal, setShowPlatformModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [previewImage, setPreviewImage] = useState(user?.avatar || '');
+  const [fetchingYouTube, setFetchingYouTube] = useState(false);
+  const [youtubeStats, setYoutubeStats] = useState(null);
+  const [addingPlatform, setAddingPlatform] = useState(false);
 
   // Update form data when user object changes
   useEffect(() => {
@@ -70,6 +85,7 @@ const Profile = () => {
         website: user.website || prev.website,
         industry: user.industry || prev.industry,
         services: user.services || prev.services,
+        platforms: user.platforms || prev.platforms,
       }));
       
       if (user.avatar) {
@@ -206,6 +222,149 @@ const Profile = () => {
     });
   };
 
+  const handleAddPlatform = async () => {
+    if (!newPlatform.url) {
+      toast.error('Please enter the platform URL');
+      return;
+    }
+
+    // Only YouTube is supported for auto-fetch initially
+    if (newPlatform.type !== 'YouTube') {
+      const platform = {
+        type: newPlatform.type,
+        url: newPlatform.url,
+        addedAt: new Date().toISOString(),
+      };
+
+      setFormData({
+        ...formData,
+        platforms: [...(formData.platforms || []), platform],
+      });
+
+      setNewPlatform({ type: 'YouTube', url: '' });
+      setShowPlatformModal(false);
+      toast.success(`${newPlatform.type} platform added successfully! Auto-fetch coming soon.`);
+      return;
+    }
+
+    // YouTube platform - fetch stats immediately
+    setAddingPlatform(true);
+    try {
+      const response = await youtubeService.fetchProfile(newPlatform.url);
+      
+      if (response.success && response.data) {
+        const ytData = response.data;
+        
+        const platform = {
+          type: 'YouTube',
+          url: newPlatform.url,
+          stats: {
+            subscribers: ytData.channel?.subscriberCount || 0,
+            views: ytData.channel?.viewCount || 0,
+            videos: ytData.channel?.videoCount || 0,
+            engagementRate: ytData.metrics?.engagementRate || 0,
+          },
+          lastFetched: new Date().toISOString(),
+          channelId: ytData.channel?.channelId,
+          channelTitle: ytData.channel?.title,
+        };
+
+        setFormData({
+          ...formData,
+          platforms: [...(formData.platforms || []), platform],
+        });
+
+        setNewPlatform({ type: 'YouTube', url: '' });
+        setShowPlatformModal(false);
+        toast.success('YouTube platform added successfully!');
+      }
+    } catch (error) {
+      console.error('Error adding platform:', error);
+      toast.error(error.response?.data?.message || 'Failed to fetch YouTube data');
+    } finally {
+      setAddingPlatform(false);
+    }
+  };
+
+  const handleRemovePlatform = (index) => {
+    const updatedPlatforms = formData.platforms.filter((_, i) => i !== index);
+    setFormData({
+      ...formData,
+      platforms: updatedPlatforms,
+    });
+    toast.success('Platform removed successfully');
+  };
+
+
+  const handleFetchYouTubeData = async () => {
+    if (!formData.youtubeUrl) {
+      toast.error('Please enter your YouTube channel URL first');
+      return;
+    }
+
+    setFetchingYouTube(true);
+    try {
+      const response = await youtubeService.fetchProfile(formData.youtubeUrl);
+      
+      console.log('YouTube API Response:', response); // Debug log
+      
+      if (response.success && response.data) {
+        const ytData = response.data;
+        console.log('YouTube Data:', ytData); // Debug log
+        
+        setYoutubeStats(ytData);
+        
+        // Show success message with stats
+        toast.success(
+          `✅ YouTube data fetched!\n` +
+          `📊 ${ytData.channel.subscriberCount?.toLocaleString()} subscribers\n` +
+          `📹 ${ytData.channel.videoCount} videos\n` +
+          `💫 ${ytData.metrics.engagementRate?.toFixed(2)}% engagement`,
+          { duration: 5000 }
+        );
+
+        // Auto-update the profile with fetched data
+        try {
+          const updatedData = {
+            name: formData.name,
+            bio: formData.bio,
+            niche: formData.category,
+            platformType: formData.platformType,
+            location: formData.location,
+            avatar: previewImage,
+            youtubeUrl: formData.youtubeUrl,
+            instagramUrl: formData.instagramUrl,
+            website: formData.website,
+            services: formData.services,
+            youtubeStats: {
+              subscribers: ytData.channel.subscriberCount,
+              totalViews: ytData.channel.viewCount,
+              videoCount: ytData.channel.videoCount,
+              averageViews: ytData.metrics.averageViews,
+              engagementRate: ytData.metrics.engagementRate,
+              lastFetched: new Date()
+            },
+            youtubeChannelId: ytData.channel.channelId
+          };
+
+          console.log('Updating profile with:', updatedData); // Debug log
+
+          await influencerService.updateProfile(updatedData);
+          toast.success('Profile updated with YouTube stats!');
+        } catch (updateError) {
+          console.error('Error updating profile with YouTube stats:', updateError);
+          toast.error('Stats fetched but failed to save to profile');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching YouTube data:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to fetch YouTube data';
+      toast.error(errorMsg);
+    } finally {
+      setFetchingYouTube(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -224,6 +383,7 @@ const Profile = () => {
           instagramUrl: formData.instagramUrl,
           website: formData.website,
           services: formData.services,
+          platforms: formData.platforms || [],
         };
 
         try {
@@ -465,54 +625,65 @@ const Profile = () => {
                         <option value="Multiple">Multiple Platforms</option>
                       </select>
                     </div>
-
-                    <div className="input-group">
-                      <label htmlFor="followers">Followers</label>
-                      <input
-                        type="text"
-                        id="followers"
-                        name="followers"
-                        value={formData.followers}
-                        onChange={handleChange}
-                        placeholder="e.g., 50K, 1M"
-                        className="input"
-                      />
-                    </div>
                   </div>
 
-                  {/* Social Media Links */}
-                  <div className="prof-form-grid">
-                    <div className="input-group prof-full-width">
-                      <label htmlFor="youtubeUrl">
-                        <Youtube size={16} />
-                        YouTube Channel URL
-                      </label>
-                      <input
-                        type="url"
-                        id="youtubeUrl"
-                        name="youtubeUrl"
-                        value={formData.youtubeUrl}
-                        onChange={handleChange}
-                        placeholder="https://youtube.com/@yourchannel"
-                        className="input"
-                      />
-                    </div>
+                  {/* Connected Platforms Section */}
+                  <div className="prof-section-header" style={{ marginTop: '1.5rem' }}>
+                    <h3>Connected Platforms</h3>
+                    <button 
+                      type="button" 
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setShowPlatformModal(true)}
+                    >
+                      <Plus size={16} />
+                      Add Platform
+                    </button>
+                  </div>
 
-                    <div className="input-group prof-full-width">
-                      <label htmlFor="instagramUrl">
-                        <Instagram size={16} />
-                        Instagram Profile URL
-                      </label>
-                      <input
-                        type="url"
-                        id="instagramUrl"
-                        name="instagramUrl"
-                        value={formData.instagramUrl}
-                        onChange={handleChange}
-                        placeholder="https://instagram.com/yourusername"
-                        className="input"
-                      />
-                    </div>
+                  <div className="prof-platforms-list">
+                    {(formData.platforms || []).length > 0 ? (
+                      (formData.platforms || []).map((platform, index) => (
+                        <div key={index} className="prof-platform-item">
+                          <div className="prof-platform-icon">
+                            {platform.type === 'YouTube' && <Youtube size={24} />}
+                            {platform.type === 'Instagram' && <Instagram size={24} />}
+                            {platform.type === 'TikTok' && <Globe size={24} />}
+                          </div>
+                          <div className="prof-platform-info">
+                            <h4>{platform.type}</h4>
+                            <p className="prof-platform-url">{platform.url}</p>
+                            {platform.stats && (
+                              <div className="prof-platform-stats">
+                                {platform.stats.subscribers && (
+                                  <span><UsersIcon size={14} /> {platform.stats.subscribers.toLocaleString()}</span>
+                                )}
+                                {platform.stats.views && (
+                                  <span><Eye size={14} /> {platform.stats.views.toLocaleString()}</span>
+                                )}
+                              </div>
+                            )}
+                            {platform.lastFetched && (
+                              <p className="prof-platform-last-fetched">
+                                Last updated: {new Date(platform.lastFetched).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                          <button 
+                            type="button"
+                            onClick={() => handleRemovePlatform(index)}
+                            className="prof-platform-remove"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="prof-empty-state">
+                        <Globe size={48} />
+                        <p>No platforms connected yet</p>
+                        <p className="prof-empty-hint">Add your social media platforms to automatically track your stats</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -672,6 +843,115 @@ const Profile = () => {
                   onClick={handleAddService}
                 >
                   Add Service
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add Platform Modal */}
+        {showPlatformModal && (
+          <div className="prof-modal-overlay" onClick={() => setShowPlatformModal(false)}>
+            <div className="prof-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="prof-modal-header">
+                <h2>Add Platform</h2>
+                <button 
+                  type="button" 
+                  className="prof-modal-close"
+                  onClick={() => setShowPlatformModal(false)}
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="prof-modal-body">
+                <div className="input-group">
+                  <label htmlFor="platformType">Platform Type</label>
+                  <select
+                    id="platformType"
+                    value={newPlatform.type}
+                    onChange={(e) => setNewPlatform({ ...newPlatform, type: e.target.value })}
+                    className="input"
+                  >
+                    <option value="YouTube">YouTube</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="TikTok">TikTok</option>
+                  </select>
+                </div>
+
+                <div className="input-group">
+                  <label htmlFor="platformUrl">
+                    {newPlatform.type === 'YouTube' && <Youtube size={16} />}
+                    {newPlatform.type === 'Instagram' && <Instagram size={16} />}
+                    {newPlatform.type === 'TikTok' && <Globe size={16} />}
+                    {' '} Platform URL
+                  </label>
+                  <input
+                    type="url"
+                    id="platformUrl"
+                    value={newPlatform.url}
+                    onChange={(e) => setNewPlatform({ ...newPlatform, url: e.target.value })}
+                    placeholder={
+                      newPlatform.type === 'YouTube' 
+                        ? 'https://youtube.com/@yourchannel'
+                        : newPlatform.type === 'Instagram'
+                        ? 'https://instagram.com/yourusername'
+                        : 'https://tiktok.com/@yourusername'
+                    }
+                    className="input"
+                  />
+                </div>
+
+                {newPlatform.type === 'YouTube' && (
+                  <div className="prof-platform-note">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <TrendingUp size={16} style={{ color: 'var(--accent-coral)' }} />
+                      <strong>Auto-fetch enabled</strong>
+                    </div>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                      YouTube stats will be fetched immediately and automatically updated every 24 hours.
+                    </p>
+                  </div>
+                )}
+
+                {newPlatform.type !== 'YouTube' && (
+                  <div className="prof-platform-note">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <Globe size={16} style={{ color: 'var(--pastel-sky)' }} />
+                      <strong>Coming Soon</strong>
+                    </div>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                      Auto-fetch for {newPlatform.type} will be available soon. You can add the platform now to keep it linked.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="prof-modal-actions">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary"
+                  onClick={() => setShowPlatformModal(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary"
+                  onClick={handleAddPlatform}
+                  disabled={addingPlatform}
+                >
+                  {addingPlatform ? (
+                    <>
+                      <Loader size={18} className="animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={18} />
+                      Add Platform
+                    </>
+                  )}
                 </button>
               </div>
             </div>

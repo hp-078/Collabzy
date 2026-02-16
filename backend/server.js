@@ -82,6 +82,7 @@ const dealRoutes = require('./routes/deal.routes');
 const messageRoutes = require('./routes/message.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const reviewRoutes = require('./routes/review.routes');
+const youtubeRoutes = require('./routes/youtube.routes');
 
 // Mount routes
 app.use('/api/auth', authRoutes);
@@ -93,6 +94,7 @@ app.use('/api/deals', dealRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/youtube', youtubeRoutes);
 
 // ===========================================
 // ERROR HANDLING
