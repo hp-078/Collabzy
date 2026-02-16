@@ -27,9 +27,9 @@ connectDB();
 // Security headers
 app.use(helmet());
 
-// CORS configuration
+// CORS configuration - allow all origins in development
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173' || "http://10.157.110.207:5173",
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -130,7 +130,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`
 ╔════════════════════════════════════════════════╗
 ║                                                ║
