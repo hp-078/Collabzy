@@ -94,12 +94,16 @@ const Messages = () => {
   // Listen for new messages via socket
   useEffect(() => {
     const handleNewMessage = (msg) => {
-      // If the message is in the currently open collaboration, add it
+      // If the message is in the currently open collaboration, add it to chat
       if (selectedCollaboration && msg.application === selectedCollaboration.application?._id) {
-        setChatMessages(prev => [...prev, msg]);
+        setChatMessages(prev => {
+          // Avoid duplicates
+          if (prev.some(m => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
       }
-      // Refresh collaborations to update last message
-      fetchCollaborations(true);
+      // Update the sidebar locally instead of re-fetching the entire list
+      // This avoids an API call on every single incoming message
     };
 
     socketService.onNewMessage(handleNewMessage);
@@ -107,7 +111,6 @@ const Messages = () => {
     return () => {
       socketService.off('message:receive', handleNewMessage);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCollaboration]);
 
   // Load messages when selecting a collaboration
@@ -166,16 +169,17 @@ const Messages = () => {
 
     const result = await sendApplicationMessage(selectedCollaboration.application._id, content);
     if (result.success && result.data) {
-      // Message will be added via socket listener when backend emits it
-      // No need to add manually or emit again - backend handles socket emission
+      // Add the sent message to chat immediately (optimistic update)
+      setChatMessages(prev => {
+        if (prev.some(m => m._id === result.data._id)) return prev;
+        return [...prev, result.data];
+      });
     } else {
       // Show error message
       alert(`❌ Failed to send message!\n\n${result.error || 'Backend server may not be running'}\n\n✅ Solution:\n1. Open a new terminal\n2. Run: cd backend\n3. Run: npm run dev\n\nThen try sending the message again.`);
       // Restore the message
       setNewMessage(content);
     }
-    // Refresh collaboration list
-    fetchCollaborations(true);
   };
 
   const formatTime = (timestamp) => {

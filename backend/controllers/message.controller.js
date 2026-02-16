@@ -76,6 +76,9 @@ exports.sendApplicationMessage = async (req, res) => {
     // Emit via Socket.io
     emitToConversation(conversationId, 'message:receive', message);
     
+    // Also emit to receiver's personal room so Navbar badge updates in real-time
+    emitToUser(receiverId, 'message:receive', message);
+    
     // Notify receiver
     const senderName = req.user.name;
     const campaignTitle = application.campaign.title;

@@ -101,20 +101,30 @@ const Navbar = () => {
 
   useEffect(() => {
     fetchCounts();
-    const interval = setInterval(fetchCounts, 30000); // refresh every 30s
+    // Poll as a fallback only — real-time updates come via sockets
+    const interval = setInterval(fetchCounts, 120000); // refresh every 2 min (fallback)
     return () => clearInterval(interval);
   }, [fetchCounts]);
 
   // Listen for real-time notifications via socket
   useEffect(() => {
     if (!isAuthenticated || !socketService.socket) return;
-    const handler = (notification) => {
+    const notifHandler = (notification) => {
       setNotifications(prev => [notification, ...prev]);
       setUnreadNotifCount(prev => prev + 1);
     };
-    socketService.socket.on('notification:new', handler);
+    // Real-time message count: increment badge when a new message arrives
+    const msgHandler = () => {
+      // Only increment if user is NOT on the messages page
+      if (!window.location.pathname.startsWith('/messages')) {
+        setUnreadMsgCount(prev => prev + 1);
+      }
+    };
+    socketService.socket.on('notification:new', notifHandler);
+    socketService.socket.on('message:receive', msgHandler);
     return () => {
-      socketService.socket?.off('notification:new', handler);
+      socketService.socket?.off('notification:new', notifHandler);
+      socketService.socket?.off('message:receive', msgHandler);
     };
   }, [isAuthenticated]);
 
