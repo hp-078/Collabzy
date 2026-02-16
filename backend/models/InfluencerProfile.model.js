@@ -58,6 +58,26 @@ const influencerProfileSchema = new mongoose.Schema({
   instagramUsername: { type: String, default: '' },
   tiktokUrl: { type: String, default: '' },
 
+  // Connected Platforms (from Add Platform modal)
+  platforms: [{
+    type: { type: String, enum: ['YouTube', 'Instagram', 'TikTok', 'Other'] },
+    url: { type: String },
+    stats: {
+      subscribers: Number,
+      views: Number,
+      videos: Number,
+      followers: Number,
+      following: Number,
+      posts: Number,
+      engagementRate: Number
+    },
+    lastFetched: { type: String },
+    channelId: { type: String },
+    channelTitle: { type: String },
+    username: { type: String },
+    addedAt: { type: String }
+  }],
+
   // YouTube Stats
   youtubeStats: {
     subscribers: { type: Number, default: 0 },
@@ -66,6 +86,27 @@ const influencerProfileSchema = new mongoose.Schema({
     averageViews: { type: Number, default: 0 },
     engagementRate: { type: Number, default: 0 },
     lastFetched: { type: Date }
+  },
+
+  // YouTube Detailed Data (stored from API fetch)
+  youtubeData: {
+    title: { type: String },
+    description: { type: String },
+    thumbnail: { type: String },
+    customUrl: { type: String },
+    country: { type: String },
+    publishedAt: { type: Date },
+    recentVideos: [{
+      videoId: String,
+      title: String,
+      thumbnail: String,
+      publishedAt: Date,
+      views: Number,
+      likes: Number,
+      comments: Number,
+      duration: String
+    }],
+    fetchedAt: { type: Date }
   },
 
   // Instagram Stats
@@ -77,6 +118,28 @@ const influencerProfileSchema = new mongoose.Schema({
     averageComments: { type: Number, default: 0 },
     engagementRate: { type: Number, default: 0 },
     lastFetched: { type: Date }
+  },
+
+  // Instagram Detailed Data (stored from API fetch)
+  instagramData: {
+    username: { type: String },
+    name: { type: String },
+    biography: { type: String },
+    profilePicture: { type: String },
+    isVerified: { type: Boolean },
+    isBusinessAccount: { type: Boolean },
+    recentMedia: [{
+      mediaId: String,
+      caption: String,
+      mediaType: String,
+      mediaUrl: String,
+      thumbnail: String,
+      permalink: String,
+      timestamp: Date,
+      likes: Number,
+      comments: Number
+    }],
+    fetchedAt: { type: Date }
   },
 
   // Combined Statistics

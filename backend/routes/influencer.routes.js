@@ -15,6 +15,10 @@ router.get('/profile/me', requireAuth, requireInfluencer, influencerController.g
 router.post('/fetch-youtube', requireAuth, requireInfluencer, influencerController.fetchYouTubeProfile);
 router.post('/fetch-instagram', requireAuth, requireInfluencer, influencerController.fetchInstagramProfile);
 
+// Social media refresh (force refetch)
+router.post('/refresh-youtube', requireAuth, requireInfluencer, influencerController.refreshYouTubeProfile);
+router.post('/refresh-instagram', requireAuth, requireInfluencer, influencerController.refreshInstagramProfile);
+
 // Public by-ID route (/:id pattern comes LAST)
 router.get('/:id', influencerController.getProfileById);
 

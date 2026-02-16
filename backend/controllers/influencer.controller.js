@@ -84,7 +84,7 @@ exports.updateProfile = async (req, res) => {
 
     // Update basic fields
     const basicFields = ['name', 'bio', 'avatar', 'location', 'website',
-      'youtubeUrl', 'instagramUrl', 'tiktokUrl', 'services'];
+      'youtubeUrl', 'instagramUrl', 'tiktokUrl', 'services', 'platforms'];
 
     basicFields.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -287,12 +287,12 @@ exports.listInfluencers = async (req, res) => {
 };
 
 /**
- * Fetch YouTube data (placeholder - would need YouTube API integration)
+ * Fetch YouTube data from YouTube API and store in database
  * POST /api/influencer/fetch-youtube
  */
 exports.fetchYouTubeProfile = async (req, res) => {
   try {
-    const { youtubeUrl } = req.body;
+    const { youtubeUrl, forceRefresh } = req.body;
 
     if (!youtubeUrl) {
       return res.status(400).json({
@@ -309,34 +309,119 @@ exports.fetchYouTubeProfile = async (req, res) => {
       });
     }
 
-    // In a real implementation, this would call YouTube API
-    // For now, just save the URL
+    // Check if we have cached data and forceRefresh is not requested
+    if (!forceRefresh && profile.youtubeData?.fetchedAt) {
+      // Always return cached data unless explicitly requesting refresh
+      return res.json({
+        success: true,
+        message: 'YouTube data retrieved from cache',
+        cached: true,
+        data: {
+          channel: {
+            title: profile.youtubeData.title,
+            description: profile.youtubeData.description,
+            thumbnail: profile.youtubeData.thumbnail,
+            customUrl: profile.youtubeData.customUrl,
+            country: profile.youtubeData.country,
+            publishedAt: profile.youtubeData.publishedAt,
+            channelId: profile.youtubeChannelId,
+            subscriberCount: profile.youtubeStats?.subscribers || 0,
+            viewCount: profile.youtubeStats?.totalViews || 0,
+            videoCount: profile.youtubeStats?.videoCount || 0
+          },
+          metrics: {
+            engagementRate: profile.youtubeStats?.engagementRate || 0,
+            averageViews: profile.youtubeStats?.averageViews || 0
+          },
+          recentVideos: profile.youtubeData.recentVideos || []
+        }
+      });
+    }
+
+    // Fetch fresh data from YouTube API
+    const youtubeService = require('../services/youtube.service');
+    const result = await youtubeService.fetchCompleteProfile(youtubeUrl);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.error,
+        quotaUsed: result.quotaUsed
+      });
+    }
+
+    // Update profile with fetched data
     profile.youtubeUrl = youtubeUrl;
-    profile.youtubeStats.lastFetched = new Date();
+    profile.youtubeChannelId = result.data.channel.channelId;
+
+    // Store stats
+    profile.youtubeStats = {
+      subscribers: result.data.channel.subscriberCount,
+      totalViews: result.data.channel.viewCount,
+      videoCount: result.data.channel.videoCount,
+      averageViews: result.data.metrics.averageViews,
+      engagementRate: result.data.metrics.engagementRate,
+      lastFetched: new Date()
+    };
+
+    // Store detailed data
+    profile.youtubeData = {
+      title: result.data.channel.title,
+      description: result.data.channel.description,
+      thumbnail: result.data.channel.thumbnail,
+      customUrl: result.data.channel.customUrl,
+      country: result.data.channel.country,
+      publishedAt: result.data.channel.publishedAt,
+      recentVideos: result.data.recentVideos,
+      fetchedAt: new Date()
+    };
+
+    // Update combined stats
+    profile.updateCombinedStats();
 
     await profile.save();
 
     res.json({
       success: true,
-      message: 'YouTube profile linked successfully',
-      data: profile
+      message: 'YouTube profile fetched and saved successfully',
+      cached: false,
+      data: {
+        channel: {
+          title: profile.youtubeData.title,
+          description: profile.youtubeData.description,
+          thumbnail: profile.youtubeData.thumbnail,
+          customUrl: profile.youtubeData.customUrl,
+          country: profile.youtubeData.country,
+          publishedAt: profile.youtubeData.publishedAt,
+          channelId: profile.youtubeChannelId,
+          subscriberCount: profile.youtubeStats.subscribers,
+          viewCount: profile.youtubeStats.totalViews,
+          videoCount: profile.youtubeStats.videoCount
+        },
+        metrics: {
+          engagementRate: profile.youtubeStats.engagementRate,
+          averageViews: profile.youtubeStats.averageViews
+        },
+        recentVideos: result.data.recentVideos
+      }
     });
   } catch (error) {
     console.error('Fetch YouTube error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch YouTube data'
+      message: 'Failed to fetch YouTube data',
+      error: error.message
     });
   }
 };
 
 /**
- * Fetch Instagram data (placeholder - would need Instagram API integration)
+ * Fetch Instagram data from Instagram API and store in database
  * POST /api/influencer/fetch-instagram
  */
 exports.fetchInstagramProfile = async (req, res) => {
   try {
-    const { instagramUrl } = req.body;
+    const { instagramUrl, forceRefresh } = req.body;
 
     if (!instagramUrl) {
       return res.status(400).json({
@@ -353,23 +438,185 @@ exports.fetchInstagramProfile = async (req, res) => {
       });
     }
 
-    // In a real implementation, this would call Instagram API
-    // For now, just save the URL
+    // Check if we have cached data and forceRefresh is not requested
+    if (!forceRefresh && profile.instagramData?.fetchedAt) {
+      // Always return cached data unless explicitly requesting refresh
+      return res.json({
+        success: true,
+        message: 'Instagram data retrieved from cache',
+        cached: true,
+        data: {
+          profile: profile.instagramData,
+          metrics: {
+            engagementRate: profile.instagramStats.engagementRate,
+            averageLikes: profile.instagramStats.averageLikes,
+            averageComments: profile.instagramStats.averageComments
+          },
+          recentPosts: profile.instagramData.recentMedia || []
+        }
+      });
+    }
+
+    // Fetch fresh data from Instagram API
+    const instagramService = require('../services/instagram.service');
+    const result = await instagramService.fetchCompleteProfile(instagramUrl);
+
+    if (!result.success) {
+      if (result.requiresManualInput) {
+        return res.status(200).json({
+          success: true,
+          requiresManualInput: true,
+          username: result.username,
+          profileUrl: result.profileUrl,
+          message: result.message
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: result.error
+      });
+    }
+
+    // Update profile with fetched data
     profile.instagramUrl = instagramUrl;
-    profile.instagramStats.lastFetched = new Date();
+    profile.instagramUsername = result.data.profile.username;
+
+    // Store stats
+    profile.instagramStats = {
+      followers: result.data.profile.followers,
+      following: result.data.profile.following,
+      posts: result.data.profile.posts,
+      averageLikes: result.data.metrics.averageLikes,
+      averageComments: result.data.metrics.averageComments,
+      engagementRate: result.data.metrics.engagementRate,
+      lastFetched: new Date()
+    };
+
+    // Store detailed data
+    profile.instagramData = {
+      username: result.data.profile.username,
+      name: result.data.profile.name,
+      biography: result.data.profile.biography,
+      profilePicture: result.data.profile.profilePicture,
+      isVerified: result.data.profile.isVerified,
+      isBusinessAccount: result.data.profile.isBusinessAccount,
+      recentMedia: result.data.recentPosts.map(post => ({
+        mediaId: post.id,
+        caption: post.caption,
+        mediaType: post.mediaType,
+        mediaUrl: post.thumbnailUrl,
+        thumbnail: post.thumbnailUrl,
+        permalink: post.permalink,
+        timestamp: post.timestamp,
+        likes: post.likes,
+        comments: post.comments
+      })),
+      fetchedAt: new Date()
+    };
+
+    // Update combined stats
+    profile.updateCombinedStats();
 
     await profile.save();
 
     res.json({
       success: true,
-      message: 'Instagram profile linked successfully',
-      data: profile
+      message: 'Instagram profile fetched and saved successfully',
+      cached: false,
+      method: result.method,
+      data: {
+        profile: profile.instagramData,
+        metrics: {
+          engagementRate: profile.instagramStats.engagementRate,
+          averageLikes: profile.instagramStats.averageLikes,
+          averageComments: profile.instagramStats.averageComments
+        },
+        recentPosts: result.data.recentPosts
+      }
     });
   } catch (error) {
     console.error('Fetch Instagram error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch Instagram data'
+      message: 'Failed to fetch Instagram data',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Refresh YouTube data (force refetch)
+ * POST /api/influencer/refresh-youtube
+ */
+exports.refreshYouTubeProfile = async (req, res) => {
+  try {
+    const profile = await InfluencerProfile.findOne({ user: req.user._id });
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profile not found. Create profile first.'
+      });
+    }
+
+    if (!profile.youtubeUrl) {
+      return res.status(400).json({
+        success: false,
+        message: 'No YouTube URL linked to profile. Please link a YouTube channel first.'
+      });
+    }
+
+    // Force refresh by calling fetchYouTubeProfile with forceRefresh flag
+    req.body = {
+      youtubeUrl: profile.youtubeUrl,
+      forceRefresh: true
+    };
+
+    return exports.fetchYouTubeProfile(req, res);
+  } catch (error) {
+    console.error('Refresh YouTube error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to refresh YouTube data',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Refresh Instagram data (force refetch)
+ * POST /api/influencer/refresh-instagram
+ */
+exports.refreshInstagramProfile = async (req, res) => {
+  try {
+    const profile = await InfluencerProfile.findOne({ user: req.user._id });
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profile not found. Create profile first.'
+      });
+    }
+
+    if (!profile.instagramUrl) {
+      return res.status(400).json({
+        success: false,
+        message: 'No Instagram URL linked to profile. Please link an Instagram account first.'
+      });
+    }
+
+    // Force refresh by calling fetchInstagramProfile with forceRefresh flag
+    req.body = {
+      instagramUrl: profile.instagramUrl,
+      forceRefresh: true
+    };
+
+    return exports.fetchInstagramProfile(req, res);
+  } catch (error) {
+    console.error('Refresh Instagram error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to refresh Instagram data',
+      error: error.message
     });
   }
 };
