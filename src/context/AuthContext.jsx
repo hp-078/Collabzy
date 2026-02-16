@@ -34,7 +34,6 @@ export const AuthProvider = ({ children }) => {
           }
           
           if (userData) {
-            console.log('✅ User data loaded:', userData);
             setUser(userData);
 
             // Also update localStorage with fresh user data
@@ -63,8 +62,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await authService.login(email, password);
-      console.log('✅ Login response:', response);
-      
+
       if (response && response.user) {
         setUser(response.user);
         
@@ -90,9 +88,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      console.log('📝 Registering user:', { ...userData, password: '***' });
       const response = await authService.register(userData);
-      console.log('✅ Registration response:', response);
       
       if (response && response.user) {
         setUser(response.user);

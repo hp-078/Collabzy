@@ -116,11 +116,7 @@ const Register = () => {
         registerData.companyName = formData.name.trim();
       }
 
-      console.log('📝 Submitting registration:', { ...registerData, password: '***' });
-
       const result = await register(registerData);
-
-      console.log('📨 Registration result:', result);
 
       if (result && result.success) {
         const userName = formData.role === 'brand' 

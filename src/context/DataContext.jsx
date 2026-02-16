@@ -5,7 +5,6 @@ import campaignService from '../services/campaign.service';
 import applicationService from '../services/application.service';
 import messageService from '../services/message.service';
 import dealService from '../services/deal.service';
-import brandService from '../services/brand.service';
 import reviewService from '../services/review.service';
 
 const DataContext = createContext(null);
@@ -160,24 +159,19 @@ export const DataProvider = ({ children }) => {
   // Fetch applications
   const fetchMyApplications = async (filters = {}, forceRefresh = false) => {
     if (!isAuthenticated) {
-      console.log('⚠️ Not authenticated, skipping application fetch');
       return [];
     }
 
     if (!forceRefresh && isCacheValid('applications')) {
-      console.log('📦 Using cached applications:', cache.applications.data?.length || 0);
       setApplications(cache.applications.data);
       return cache.applications.data;
     }
 
-    console.log('🔄 Fetching applications from API...');
     setLoading(true);
     setError(null);
     try {
       const response = await applicationService.getMyApplications(filters);
       const data = response.data || [];
-      console.log('✅ Fetched applications:', data.length);
-      console.log('📋 Applications data:', data);
       setApplications(data);
       updateCache('applications', data);
       return data;
@@ -403,34 +397,6 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Get my reviews (reviews I've written)
-  const getMyReviews = async () => {
-    try {
-      const response = await reviewService.getMyReviews();
-      return response.data || [];
-    } catch (error) {
-      console.error('Failed to fetch my reviews:', error);
-      return [];
-    }
-  };
-
-  // Respond to a review
-  const respondToReview = async (reviewId, responseText) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await reviewService.respondToReview(reviewId, responseText);
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error('Failed to respond to review:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to respond to review';
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // ============ MESSAGE FUNCTIONS (CAMPAIGN-CENTRIC) ============
 
   // Fetch all collaborations (applications) with their message threads
@@ -485,71 +451,6 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // ============ LEGACY MESSAGE FUNCTIONS (USER-TO-USER) ============
-
-  // Fetch all conversations (legacy)
-  const fetchConversations = async (forceRefresh = false) => {
-    if (!isAuthenticated) return [];
-
-    if (!forceRefresh && isCacheValid('conversations')) {
-      setConversations(cache.conversations.data);
-      return cache.conversations.data;
-    }
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await messageService.getAllConversations();
-      const data = response.data || [];
-      setConversations(data);
-      updateCache('conversations', data);
-      return data;
-    } catch (error) {
-      console.error('Failed to fetch conversations:', error);
-      setError('Failed to load conversations');
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Get messages with a specific user (legacy)
-  const getMessagesByUser = async (userId, page = 1) => {
-    if (!isAuthenticated) return [];
-    try {
-      const response = await messageService.getConversation(userId, page);
-      return response.data || [];
-    } catch (error) {
-      console.error('Failed to fetch messages:', error);
-      return [];
-    }
-  };
-
-  // Send a message (legacy)
-  const sendMessage = async (receiverId, content) => {
-    try {
-      const response = await messageService.sendMessage(receiverId, content);
-      // Invalidate conversations cache
-      updateCache('conversations', null);
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to send message';
-      return { success: false, error: errorMsg };
-    }
-  };
-
-  // Mark messages as read (legacy)
-  const markMessagesAsRead = async (userId) => {
-    try {
-      await messageService.markAsRead(userId);
-      return { success: true };
-    } catch (error) {
-      console.error('Failed to mark messages as read:', error);
-      return { success: false };
-    }
-  };
-
   // Create collaboration request (sends message to influencer)
   const createCollaboration = async (collaborationData) => {
     try {
@@ -572,32 +473,6 @@ export const DataProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to send collaboration request:', error);
       const errorMsg = error.response?.data?.message || 'Failed to send collaboration request. Make sure backend is running.';
-      return { success: false, error: errorMsg };
-    }
-  };
-
-  // ============ BRAND FUNCTIONS ============
-
-  // Get own brand profile
-  const fetchBrandProfile = async () => {
-    if (!isAuthenticated) return null;
-    try {
-      const response = await brandService.getOwnProfile();
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch brand profile:', error);
-      return null;
-    }
-  };
-
-  // Update brand profile
-  const updateBrandProfile = async (profileData) => {
-    try {
-      const response = await brandService.updateProfile(profileData);
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error('Failed to update brand profile:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to update brand profile';
       return { success: false, error: errorMsg };
     }
   };
@@ -632,18 +507,14 @@ export const DataProvider = ({ children }) => {
     fetchRecommendedCampaigns,
     fetchMyApplications,
     fetchMyDeals,
-    fetchCollaborations, // Primary: Application-based
-    fetchConversations, // Legacy: User-to-user
+    fetchCollaborations,
     fetchCampaignApplications,
-    fetchBrandProfile,
 
     // Get single item
     getCampaignById,
     getInfluencerById,
-    getApplicationMessages, // Primary: Messages for application
-    getMessagesByUser, // Legacy: Messages with user
+    getApplicationMessages,
     getReviewsForUser,
-    getMyReviews,
 
     // Create/Update functions
     createCampaign,
@@ -653,12 +524,8 @@ export const DataProvider = ({ children }) => {
     createDeal,
     updateDealStatus,
     createReview,
-    respondToReview,
-    sendApplicationMessage, // Primary: Send in application context
-    sendMessage, // Legacy: Send to user directly
-    markMessagesAsRead,
+    sendApplicationMessage,
     createCollaboration,
-    updateBrandProfile,
 
     // Utility
     clearCache,

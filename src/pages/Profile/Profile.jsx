@@ -30,9 +30,7 @@ const Profile = () => {
   const { user, updateUser, isInfluencer, isBrand } = useAuth();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
-  
-  console.log('Profile component rendered, user:', user); // Debug log
-  
+
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -47,8 +45,6 @@ const Profile = () => {
     services: user?.services || [],
     platforms: user?.platforms || [],
   });
-
-  console.log('Initial formData:', formData); // Debug log
 
   const [newService, setNewService] = useState({
     name: '',
@@ -74,7 +70,6 @@ const Profile = () => {
   // Update form data when user object changes
   useEffect(() => {
     if (user) {
-      console.log('User changed, updating formData with user:', user); // Debug log
       setFormData(prev => ({
         ...prev,
         name: user.name || prev.name,
@@ -100,12 +95,10 @@ const Profile = () => {
   // Fetch profile data on mount
   useEffect(() => {
     const loadProfile = async () => {
-      console.log('Loading profile, isInfluencer:', isInfluencer, 'isBrand:', isBrand);
       if (isInfluencer) {
         try {
           const response = await influencerService.getOwnProfile();
           const profileData = response.data || response;
-          console.log('Influencer profile loaded:', profileData);
           setProfile(profileData);
 
           if (profileData) {
@@ -125,7 +118,6 @@ const Profile = () => {
                 website: profileData.website || prev.website,
                 services: profileData.services || prev.services,
               };
-              console.log('Updated formData:', newData);
               return newData;
             });
 
@@ -226,13 +218,12 @@ const Profile = () => {
             }
           }
         } catch (error) {
-          console.log('No influencer profile yet or error loading:', error);
+          // Profile not found or error loading
         }
       } else if (isBrand) {
         try {
           const response = await brandService.getOwnProfile();
           const profileData = response.data || response;
-          console.log('Brand profile loaded:', profileData);
           setProfile(profileData);
 
           if (profileData) {
@@ -251,7 +242,7 @@ const Profile = () => {
             }
           }
         } catch (error) {
-          console.log('No brand profile yet or error loading:', error);
+          // Profile not found or error loading
         }
       }
       setLoading(false);
@@ -280,7 +271,6 @@ const Profile = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log('Form field changed:', name, value); // Debug log
     setFormData(prev => ({
       ...prev,
       [name]: value,
@@ -521,13 +511,10 @@ const Profile = () => {
     setFetchingYouTube(true);
     try {
       const response = await influencerService.fetchYouTubeProfile(youtubeUrl);
-      
-      console.log('YouTube API Response:', response); // Debug log
-      
+
       if (response.success && response.data) {
         const ytData = response.data;
-        console.log('YouTube Data:', ytData); // Debug log
-        
+
         // Update the stats state with fetched data
         const formattedData = {
           channel: {
@@ -569,9 +556,7 @@ const Profile = () => {
     setFetchingYouTube(true);
     try {
       const response = await influencerService.refreshYouTubeProfile();
-      
-      console.log('YouTube Refresh Response:', response);
-      
+
       if (response.success && response.data) {
         const ytData = response.data;
         
@@ -623,9 +608,7 @@ const Profile = () => {
     setFetchingInstagram(true);
     try {
       const response = await influencerService.fetchInstagramProfile(instagramUrl);
-      
-      console.log('Instagram API Response:', response);
-      
+
       if (response.requiresManualInput) {
         toast.error('Auto-fetch unavailable. Please enter your Instagram stats manually.');
         return;
@@ -633,8 +616,7 @@ const Profile = () => {
 
       if (response.success && response.data) {
         const igData = response.data;
-        console.log('Instagram Data:', igData);
-        
+
         // Update the stats state with fetched data
         const formattedData = {
           profile: {
@@ -679,9 +661,7 @@ const Profile = () => {
     setFetchingInstagram(true);
     try {
       const response = await influencerService.refreshInstagramProfile();
-      
-      console.log('Instagram Refresh Response:', response);
-      
+
       if (response.requiresManualInput) {
         toast.error('Auto-fetch unavailable. Please enter your Instagram stats manually.');
         return;

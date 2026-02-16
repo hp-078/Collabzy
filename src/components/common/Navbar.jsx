@@ -7,7 +7,6 @@ import socketService from '../../services/socket.service';
 import { 
   Menu, 
   X, 
-  User, 
   LogOut, 
   Settings, 
   MessageSquare, 
@@ -19,9 +18,7 @@ import {
     Sparkles,
     LayoutDashboard,
     Megaphone,
-    Check,
-    CheckCheck,
-    Trash2
+    CheckCheck
 } from 'lucide-react';
 import './Navbar.css';
 
