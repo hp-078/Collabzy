@@ -853,3 +853,65 @@
     width: 100%;
   }
 }
+
+/* ========================================
+   DARK MODE - Profile Page Overrides
+======================================== */
+[data-theme="dark"] .prof-section {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .prof-avatar-edit {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .prof-modal-content {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .youtube-icon-badge {
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .youtube-stat-box {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .prof-platform-icon {
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .prof-platform-status {
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .prof-stat-item {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .prof-input,
+[data-theme="dark"] .prof-textarea,
+[data-theme="dark"] .prof-select {
+  background: var(--surface-input);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .prof-input:focus,
+[data-theme="dark"] .prof-textarea:focus,
+[data-theme="dark"] .prof-select:focus {
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+}
+
+[data-theme="dark"] .prof-input::placeholder,
+[data-theme="dark"] .prof-textarea::placeholder {
+  color: var(--muted-text);
+}

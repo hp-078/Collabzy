@@ -1453,3 +1453,58 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ========================================
+   DARK MODE - Dashboard Overrides
+======================================== */
+[data-theme="dark"] .dash-hero-btn-secondary:hover {
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .dash-hero-avatar-placeholder {
+  background: linear-gradient(135deg, #5a3d40, var(--accent-coral));
+}
+
+[data-theme="dark"] .dash-tip-banner {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .dash-stat-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .dash-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .dash-profile-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .dash-profile-avatar-placeholder {
+  background: linear-gradient(135deg, #5a3d40, var(--accent-coral));
+}
+
+[data-theme="dark"] .dash-quick-actions-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .dash-deadlines-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .dash-goal-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .dash-error-banner {
+  background: linear-gradient(135deg, #2e1e1e 0%, #3d2525 100%);
+  border-color: rgba(255, 107, 107, 0.2);
+}

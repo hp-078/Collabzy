@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import notificationService from '../../services/notification.service';
 import messageService from '../../services/message.service';
 import socketService from '../../services/socket.service';
@@ -20,7 +21,9 @@ import {
     Megaphone,
     CheckCheck,
     BarChart3,
-    Shield
+    Shield,
+    Sun,
+    Moon
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -35,6 +38,7 @@ const Navbar = () => {
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
   const notifRef = useRef(null);
     const { user, logout, isAuthenticated, isInfluencer, isBrand, isAdmin } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -341,6 +345,19 @@ const Navbar = () => {
 
                   {/* Right Actions */}
           <div className="nav-actions">
+            {/* Dark Mode Toggle */}
+            <button 
+              className="nav-theme-toggle" 
+              onClick={toggleTheme}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={isDark ? 'Light mode' : 'Dark mode'}
+            >
+              <span className="nav-theme-icon-wrapper">
+                <Sun size={16} className={`nav-theme-icon nav-theme-sun ${!isDark ? 'nav-theme-active' : ''}`} />
+                <Moon size={16} className={`nav-theme-icon nav-theme-moon ${isDark ? 'nav-theme-active' : ''}`} />
+              </span>
+            </button>
+
             {isAuthenticated ? (
                           <div className="nav-user-section">
                               <Link to="/messages" className="nav-icon-btn nav-messages-btn">

@@ -837,3 +837,75 @@
     overflow-y: auto;
   }
 }
+
+/* ========================================
+   DARK MODE - Collaborations Page Overrides
+======================================== */
+[data-theme="dark"] .collab-search-box {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .collab-search-box:focus-within {
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+}
+
+[data-theme="dark"] .collab-search-box input {
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .collab-search-box input::placeholder {
+  color: var(--muted-text);
+}
+
+[data-theme="dark"] .collab-filter-tabs {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .collab-filter-tab:hover {
+  background: var(--surface-primary);
+}
+
+[data-theme="dark"] .collab-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .collab-card:hover {
+  border-color: var(--accent-coral);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .collab-empty-state {
+  background: var(--surface-elevated);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .collab-main-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .collab-main-tab.active {
+  background: var(--surface-elevated);
+  color: var(--accent-coral);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .collab-modal {
+  background: var(--surface-elevated);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .collab-modal-footer .btn-secondary {
+  background: var(--surface-primary);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .collab-modal-footer .btn-secondary:hover {
+  background: var(--surface-secondary);
+}

@@ -7,6 +7,7 @@
   padding-top: 90px;
   height: 100vh;
   background: var(--pastel-cream);
+  overflow: hidden;
 }
 
 .msg-container {
@@ -28,12 +29,15 @@
   display: flex;
   flex-direction: column;
   background: var(--pastel-cream);
+  height: 100%;
+  overflow: hidden;
 }
 
 .msg-sidebar-header {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid rgba(255, 181, 186, 0.2);
   background: white;
+  flex-shrink: 0;
 }
 
 .msg-sidebar-header h2 {
@@ -51,6 +55,7 @@
   padding: 1rem 1.5rem;
   border-bottom: 1px solid rgba(255, 181, 186, 0.2);
   background: white;
+  flex-shrink: 0;
 }
 
 .msg-sidebar-search svg {
@@ -69,6 +74,7 @@
 .msg-conversations-list {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .msg-conversation-item {
@@ -104,6 +110,7 @@
   font-family: var(--heading-font);
   border-radius: 50%;
   flex-shrink: 0;
+  position: relative;
 }
 
 .msg-conversation-info {
@@ -153,6 +160,8 @@
   display: flex;
   flex-direction: column;
   background: white;
+  height: 100%;
+  overflow: hidden;
 }
 
 .msg-chat-header {
@@ -162,6 +171,7 @@
   padding: 1rem 1.5rem;
   background: white;
   border-bottom: 1px solid rgba(255, 181, 186, 0.2);
+  flex-shrink: 0;
 }
 
 .msg-back-btn {
@@ -189,6 +199,7 @@
   font-weight: 700;
   font-family: var(--heading-font);
   border-radius: 50%;
+  position: relative;
 }
 
 .msg-chat-user-info h3 {
@@ -231,6 +242,8 @@
   flex-direction: column;
   gap: 1rem;
   background: var(--pastel-cream);
+  min-height: 0;
+  scroll-behavior: smooth;
 }
 
 .msg-message-date {
@@ -311,6 +324,7 @@
   padding: 1rem 1.5rem;
   background: white;
   border-top: 1px solid rgba(255, 181, 186, 0.2);
+  flex-shrink: 0;
 }
 
 .msg-input-actions {
@@ -500,4 +514,99 @@
   font-family: var(--body-font);
   border-radius: 50%;
   padding: 0 6px;
+}
+
+/* ========================================
+   DARK MODE - Messages Page Overrides
+======================================== */
+[data-theme="dark"] .msg-container {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .msg-sidebar {
+  border-right-color: var(--border-secondary);
+  background: var(--surface-primary);
+}
+
+[data-theme="dark"] .msg-sidebar-header {
+  background: var(--surface-elevated);
+  border-bottom-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .msg-sidebar-search {
+  background: var(--surface-elevated);
+  border-bottom-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .msg-sidebar-search input {
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .msg-sidebar-search input::placeholder {
+  color: var(--muted-text);
+}
+
+[data-theme="dark"] .msg-conversation-item {
+  background: var(--surface-primary);
+  border-bottom-color: var(--border-light);
+}
+
+[data-theme="dark"] .msg-conversation-item:hover {
+  background: var(--surface-secondary);
+}
+
+[data-theme="dark"] .msg-conversation-item.msg-active {
+  background: var(--surface-elevated);
+  border-left-color: var(--accent-coral);
+}
+
+[data-theme="dark"] .msg-chat {
+  background: var(--surface-primary);
+}
+
+[data-theme="dark"] .msg-chat-header {
+  background: var(--surface-elevated);
+  border-bottom-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .msg-message-date {
+  background: var(--surface-elevated);
+  color: var(--muted-text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .msg-message.msg-other .msg-message-bubble {
+  background: var(--surface-elevated);
+  color: var(--dark-text);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .msg-chat-input {
+  background: var(--surface-elevated);
+  border-top-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .msg-chat-input input {
+  background: var(--surface-input);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .msg-chat-input input:focus {
+  border-color: var(--accent-coral);
+  background: var(--surface-input);
+}
+
+[data-theme="dark"] .msg-chat-input input::placeholder {
+  color: var(--muted-text);
+}
+
+[data-theme="dark"] .msg-no-chat-selected {
+  background: var(--surface-primary);
+}
+
+[data-theme="dark"] .msg-online-dot {
+  border-color: var(--surface-elevated);
 }

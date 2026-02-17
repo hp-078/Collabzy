@@ -495,3 +495,63 @@
 .tiktok-icon {
   font-size: 1rem;
 }
+
+/* ========================================
+   DARK MODE - Influencers Page Overrides
+======================================== */
+[data-theme="dark"] .inf-stat-badge {
+  background: var(--surface-elevated);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .inf-search-input {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .inf-search-input:focus {
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+}
+
+[data-theme="dark"] .inf-search-input::placeholder {
+  color: var(--muted-text);
+}
+
+[data-theme="dark"] .inf-filters-panel {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .inf-filter-select {
+  background: var(--surface-input);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .inf-filter-select option {
+  background: var(--surface-elevated);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .inf-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .inf-card:hover {
+  border-color: var(--accent-coral);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .inf-verified-badge {
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .inf-platform-badge {
+  background: var(--surface-elevated);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}

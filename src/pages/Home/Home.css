@@ -1150,3 +1150,94 @@
     font-size: 1.25rem;
   }
 }
+
+/* ========================================
+   DARK MODE - Home Page Overrides
+======================================== */
+[data-theme="dark"] .home-hero-logo-area {
+  background: rgba(46, 43, 40, 0.6);
+}
+
+[data-theme="dark"] .home-hero::before {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 107, 107, 0.04) 0px,
+    rgba(255, 107, 107, 0.04) 1px,
+    transparent 1px,
+    transparent 80px
+  );
+}
+
+[data-theme="dark"] .home-mockup-overlay {
+  background: rgba(37, 34, 32, 0.95);
+}
+
+[data-theme="dark"] .home-floating-badge {
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+[data-theme="dark"] .home-portfolio-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .home-portfolio-card:hover {
+  border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .home-portfolio-stats {
+  border-top-color: var(--border-primary);
+  border-bottom-color: var(--border-primary);
+}
+
+[data-theme="dark"] .home-pricing-section::before {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 107, 107, 0.02) 0px,
+    rgba(255, 107, 107, 0.02) 1px,
+    transparent 1px,
+    transparent 60px
+  );
+}
+
+[data-theme="dark"] .home-pricing-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .home-pricing-header {
+  border-bottom-color: var(--border-primary);
+}
+
+[data-theme="dark"] .home-pricing-features li {
+  border-bottom-color: var(--border-light);
+}
+
+[data-theme="dark"] .home-contact-form {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .home-form-group input,
+[data-theme="dark"] .home-form-group textarea {
+  background: var(--surface-input);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .home-form-group input:focus,
+[data-theme="dark"] .home-form-group textarea:focus {
+  background: var(--surface-elevated);
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+}
+
+[data-theme="dark"] .home-form-group input::placeholder,
+[data-theme="dark"] .home-form-group textarea::placeholder {
+  color: var(--muted-text);
+}
+
+[data-theme="dark"] .home-final-cta-section {
+  border-top-color: var(--border-primary);
+}

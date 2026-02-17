@@ -540,3 +540,49 @@
     width: 100%;
   }
 }
+
+/* ========================================
+   DARK MODE - Auth Page Overrides
+======================================== */
+[data-theme="dark"] .auth-page::before {
+  background: radial-gradient(circle at 30% 40%, rgba(255, 107, 107, 0.12) 0%, transparent 50%);
+}
+
+[data-theme="dark"] .auth-page::after {
+  background: radial-gradient(circle at 70% 60%, rgba(180, 120, 204, 0.1) 0%, transparent 50%);
+}
+
+[data-theme="dark"] .auth-container {
+  background: rgba(37, 34, 32, 0.85);
+  border-color: var(--border-secondary);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .auth-role-btn {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .auth-role-btn:hover {
+  border-color: var(--accent-coral);
+}
+
+[data-theme="dark"] .auth-role-btn.active {
+  border-color: var(--accent-coral);
+}
+
+[data-theme="dark"] .auth-input-wrapper .input {
+  background: var(--surface-input);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .auth-input-wrapper .input:focus {
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+}
+
+[data-theme="dark"] .auth-input-wrapper .input::placeholder {
+  color: var(--muted-text);
+}

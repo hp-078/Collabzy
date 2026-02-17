@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 
@@ -123,6 +124,7 @@ function App() {
   return (
     <Router>
       <ErrorBoundary>
+        <ThemeProvider>
         <AuthProvider>
           <DataProvider>
             <Toaster 
@@ -161,6 +163,7 @@ function App() {
             <AppRoutes />
           </DataProvider>
         </AuthProvider>
+        </ThemeProvider>
       </ErrorBoundary>
     </Router>
   );

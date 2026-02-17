@@ -836,3 +836,84 @@
     gap: 0.5rem;
   }
 }
+
+/* ========================================
+   DARK MODE - Influencer Detail Overrides
+======================================== */
+[data-theme="dark"] .idet-back-link {
+  background: var(--surface-elevated);
+  color: var(--light-text);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .idet-back-link:hover {
+  color: var(--accent-coral);
+}
+
+[data-theme="dark"] .idet-not-found {
+  background: var(--surface-elevated);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .idet-profile-header {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .idet-section {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .idet-service-card:hover {
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .idet-sidebar-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .idet-youtube-icon {
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .idet-youtube-stat {
+  background: var(--surface-primary);
+  border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .idet-instagram-icon {
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .idet-instagram-stat {
+  background: var(--surface-primary);
+  border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .idet-cta-card .btn {
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .idet-modal-content {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .idet-modal-content input,
+[data-theme="dark"] .idet-modal-content textarea,
+[data-theme="dark"] .idet-modal-content select {
+  background: var(--surface-input);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .idet-modal-content input::placeholder,
+[data-theme="dark"] .idet-modal-content textarea::placeholder {
+  color: var(--muted-text);
+}

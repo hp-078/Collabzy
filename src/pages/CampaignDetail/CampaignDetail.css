@@ -474,3 +474,71 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ========================================
+   DARK MODE - Campaign Detail Overrides
+======================================== */
+[data-theme="dark"] .cdetail-back {
+  background: var(--surface-elevated);
+  color: var(--light-text);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .cdetail-back:hover {
+  color: var(--accent-coral);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .cdetail-hero {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .cdetail-meta-item {
+  background: var(--surface-primary);
+  border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .cdetail-section {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .cdetail-app-card {
+  border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .cdetail-app-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .cdetail-edit-input,
+[data-theme="dark"] .cdetail-edit-textarea,
+[data-theme="dark"] .cdetail-edit-select {
+  background: var(--surface-input);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .cdetail-edit-input:focus,
+[data-theme="dark"] .cdetail-edit-textarea:focus,
+[data-theme="dark"] .cdetail-edit-select:focus {
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+}
+
+[data-theme="dark"] .cdetail-edit-select option {
+  background: var(--surface-elevated);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .cdetail-actions-bar {
+  border-top-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .cdetail-edit-input::placeholder,
+[data-theme="dark"] .cdetail-edit-textarea::placeholder {
+  color: var(--muted-text);
+}

@@ -228,3 +228,42 @@ main > * {
   background-size: 200% 200%;
   animation: gradientShift 8s ease infinite;
 }
+
+/* ========================================
+   DARK MODE - App.css Overrides
+======================================== */
+[data-theme="dark"] .loading-screen {
+  background: linear-gradient(180deg, #252220 0%, #1e1c1a 50%, #2e2b28 100%);
+}
+
+[data-theme="dark"] .loading-spinner::before {
+  border-top-color: var(--accent-coral);
+  border-right-color: var(--accent-coral);
+}
+
+[data-theme="dark"] .loading-spinner::after {
+  border-bottom-color: var(--accent-purple);
+  border-left-color: var(--accent-purple);
+}
+
+[data-theme="dark"] .glass-card {
+  background: rgba(37, 34, 32, 0.7);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .gradient-border::before {
+  background: linear-gradient(135deg, #5a3d40, #4a3045, #2e4a42);
+}
+
+[data-theme="dark"] .shimmer-text {
+  background: linear-gradient(
+    120deg,
+    var(--dark-text) 30%,
+    var(--accent-coral) 50%,
+    var(--dark-text) 70%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

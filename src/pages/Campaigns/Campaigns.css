@@ -660,3 +660,82 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ========================================
+   DARK MODE - Campaigns Page Overrides
+======================================== */
+[data-theme="dark"] .camp-filter-select,
+[data-theme="dark"] .camp-search-input {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .camp-filter-select:focus,
+[data-theme="dark"] .camp-search-input:focus {
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+}
+
+[data-theme="dark"] .camp-filter-select option {
+  background: var(--surface-elevated);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .camp-search-input::placeholder {
+  color: var(--muted-text);
+}
+
+[data-theme="dark"] .camp-tabs {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .camp-card {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .camp-card:hover {
+  border-color: var(--accent-coral);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .camp-empty {
+  background: var(--surface-elevated);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .camp-modal {
+  background: var(--surface-elevated);
+  border-color: var(--border-secondary);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .camp-form-input,
+[data-theme="dark"] .camp-form-textarea,
+[data-theme="dark"] .camp-form-select {
+  background: var(--surface-input);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .camp-form-input:focus,
+[data-theme="dark"] .camp-form-textarea:focus,
+[data-theme="dark"] .camp-form-select:focus {
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+}
+
+[data-theme="dark"] .camp-form-select option {
+  background: var(--surface-elevated);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .camp-form-input::placeholder,
+[data-theme="dark"] .camp-form-textarea::placeholder {
+  color: var(--muted-text);
+}

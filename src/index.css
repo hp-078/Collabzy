@@ -64,6 +64,24 @@ html {
   --info: #87CEEB;
   --info-light: #F0F8FF;
 
+  /* === Dark Mode Surface & Component Tokens === */
+  --surface-primary: #ffffff;
+  --surface-secondary: var(--pastel-cream);
+  --surface-elevated: #ffffff;
+  --surface-glass: rgba(255, 249, 240, 0.85);
+  --surface-glass-hover: rgba(255, 249, 240, 0.92);
+  --surface-input: var(--white);
+  --surface-overlay: rgba(0, 0, 0, 0.4);
+  
+  --border-primary: rgba(255, 181, 186, 0.2);
+  --border-secondary: rgba(255, 181, 186, 0.3);
+  --border-light: rgba(255, 181, 186, 0.1);
+  
+  --shadow-soft: 0 4px 20px rgba(255, 181, 186, 0.15);
+  --shadow-medium: 0 8px 32px rgba(255, 181, 186, 0.2);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 10px 40px rgba(255, 181, 186, 0.2), 0 2px 10px rgba(0, 0, 0, 0.06);
+
   /* Font Sizes */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -75,6 +93,73 @@ html {
   --font-size-4xl: 2.25rem;
   --font-size-5xl: 3rem;
   --font-size-6xl: 3.75rem;
+}
+
+/* ========================================
+   DARK MODE VARIABLES
+======================================== */
+[data-theme="dark"] {
+  /* Pastel Palette → Deep warm tones */
+  --pastel-pink: #3d2a2e;
+  --pastel-peach: #332a25;
+  --pastel-yellow: #33312a;
+  --pastel-mint: #1e3029;
+  --pastel-lavender: #2e2533;
+  --pastel-cream: #1e1c1a;
+  --pastel-coral: #3d2d28;
+  --pastel-sky: #1e2d31;
+
+  /* Accent Colors — slightly muted for dark bg */
+  --accent-coral: #ff6b6b;
+  --accent-purple: #b478cc;
+  --accent-teal: #3bc9c1;
+
+  /* Text Colors */
+  --dark-text: #f0ebe5;
+  --light-text: #b5ada3;
+  --muted-text: #8a8279;
+
+  /* Neutral Colors */
+  --white: #252220;
+  --black: #f0ebe5;
+  --gray-50: #1e1c1a;
+  --gray-100: #282523;
+  --gray-200: #3a3633;
+  --gray-300: #4d4844;
+  --gray-400: #6e6961;
+  --gray-500: #8a8279;
+  --gray-600: #b5ada3;
+  --gray-700: #d4cec6;
+  --gray-800: #e8e3da;
+  --gray-900: #f0ebe5;
+
+  /* Semantic Colors */
+  --success: #5dab75;
+  --success-light: #1e2e22;
+  --warning: #c9a44d;
+  --warning-light: #2e2a1e;
+  --error: #d46a6a;
+  --error-light: #2e1e1e;
+  --info: #5aa3c5;
+  --info-light: #1e262e;
+
+  /* Surface & Component Tokens */
+  --surface-primary: #252220;
+  --surface-secondary: #1e1c1a;
+  --surface-elevated: #2e2b28;
+  --surface-glass: rgba(30, 28, 26, 0.88);
+  --surface-glass-hover: rgba(30, 28, 26, 0.95);
+  --surface-input: #2e2b28;
+  --surface-overlay: rgba(0, 0, 0, 0.6);
+
+  --border-primary: rgba(255, 181, 186, 0.1);
+  --border-secondary: rgba(255, 181, 186, 0.15);
+  --border-light: rgba(255, 181, 186, 0.06);
+
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 0 10px 40px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 /* ========================================
@@ -254,4 +339,99 @@ textarea:focus-visible,
 select:focus-visible {
   outline: 3px solid var(--pastel-pink);
   outline-offset: 1px;
+}
+
+/* ========================================
+   DARK MODE GLOBAL OVERRIDES
+======================================== */
+[data-theme="dark"] body {
+  color: var(--dark-text);
+  background-color: var(--pastel-cream);
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .btn-primary {
+  background: var(--accent-coral);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
+}
+
+[data-theme="dark"] .btn-primary:hover {
+  background: #ff5252;
+  box-shadow: 0 8px 30px rgba(255, 107, 107, 0.4);
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: var(--surface-elevated);
+  color: var(--dark-text);
+  border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background: var(--gray-200);
+}
+
+[data-theme="dark"] .btn-outline {
+  color: var(--dark-text);
+  border-color: var(--border-secondary);
+}
+
+[data-theme="dark"] .btn-outline:hover {
+  background: var(--surface-elevated);
+}
+
+[data-theme="dark"] .input {
+  background: var(--surface-input);
+  border-color: var(--border-primary);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .input:focus {
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+}
+
+[data-theme="dark"] .input::placeholder {
+  color: var(--muted-text);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--surface-secondary);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #5a3d40, #4a3045);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--accent-coral), var(--accent-purple));
+}
+
+[data-theme="dark"] ::selection {
+  background: rgba(255, 107, 107, 0.3);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .glass-card {
+  background: rgba(37, 34, 32, 0.7);
+  border-color: var(--border-primary);
+  box-shadow: var(--shadow-card);
+}
+
+[data-theme="dark"] .glass-card:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+/* Dark mode smooth transition */
+body,
+body *:not(script):not(style) {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
