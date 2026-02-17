@@ -20,6 +20,8 @@ import Messages from './pages/Messages/Messages';
 import Profile from './pages/Profile/Profile';
 import Campaigns from './pages/Campaigns/Campaigns';
 import CampaignDetail from './pages/CampaignDetail/CampaignDetail';
+import Analytics from './pages/Analytics/Analytics';
+import AdminPanel from './pages/Admin/AdminPanel';
 
 import './App.css';
 
@@ -28,7 +30,17 @@ const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return <div className="loading-screen">Loading...</div>;
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+        <div className="loading-text">
+          Collabzy
+          <span className="loading-dots">
+            <span></span><span></span><span></span>
+          </span>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -90,6 +102,16 @@ function AppRoutes() {
           <Layout><CampaignDetail /></Layout>
         </ProtectedRoute>
       } />
+      <Route path="/analytics" element={
+        <ProtectedRoute>
+          <Layout><Analytics /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin" element={
+        <ProtectedRoute>
+          <Layout><AdminPanel /></Layout>
+        </ProtectedRoute>
+      } />
 
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -108,21 +130,30 @@ function App() {
               toastOptions={{
                 duration: 3000,
                 style: {
-                  background: '#1e293b',
-                  color: '#fff',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '12px',
+                  background: 'white',
+                  color: '#1A1A1A',
+                  border: '1px solid rgba(255, 181, 186, 0.3)',
+                  borderRadius: '16px',
+                  fontFamily: "'DM Sans', sans-serif",
+                  boxShadow: '0 10px 40px rgba(255, 182, 193, 0.2), 0 4px 12px rgba(0,0,0,0.05)',
+                  padding: '12px 16px',
                 },
                 success: {
                   iconTheme: {
-                    primary: '#10b981',
+                    primary: '#98D8AA',
                     secondary: '#fff',
+                  },
+                  style: {
+                    borderLeft: '4px solid #98D8AA',
                   },
                 },
                 error: {
                   iconTheme: {
-                    primary: '#ef4444',
+                    primary: '#FF9B9B',
                     secondary: '#fff',
+                  },
+                  style: {
+                    borderLeft: '4px solid #FF9B9B',
                   },
                 },
               }}

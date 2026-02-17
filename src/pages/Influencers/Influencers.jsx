@@ -266,7 +266,7 @@ const Influencers = () => {
 
                 {influencer.services && influencer.services.length > 0 && (
                   <div className="inf-price-range">
-                    Starting from <strong>₹{Math.min(...influencer.services.map(s => s.price)).toLocaleString()}</strong>
+                    Starting from <strong>${Math.min(...influencer.services.map(s => s.price)).toLocaleString()}</strong>
                   </div>
                 )}
               </div>

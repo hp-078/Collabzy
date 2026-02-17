@@ -18,7 +18,9 @@ import {
     Sparkles,
     LayoutDashboard,
     Megaphone,
-    CheckCheck
+    CheckCheck,
+    BarChart3,
+    Shield
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -32,7 +34,7 @@ const Navbar = () => {
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
   const notifRef = useRef(null);
-    const { user, logout, isAuthenticated, isInfluencer, isBrand } = useAuth();
+    const { user, logout, isAuthenticated, isInfluencer, isBrand, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -324,6 +326,14 @@ const Navbar = () => {
                                           <span>Influencers</span>
                                       </Link>
                                   )}
+                                  <Link 
+                                      to="/analytics"
+                                      className={`nav-pill ${isActive('/analytics') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <BarChart3 size={16} />
+                                      <span>Analytics</span>
+                                  </Link>
                               </>
                           )}
                       </div>
@@ -412,6 +422,14 @@ const Navbar = () => {
                       <span>Dashboard</span>
                     </Link>
                     <Link 
+                      to="/analytics" 
+                      className="nav-dropdown-item"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <BarChart3 size={16} />
+                      <span>Analytics</span>
+                    </Link>
+                    <Link 
                       to="/profile" 
                       className="nav-dropdown-item"
                       onClick={() => setShowDropdown(false)}
@@ -419,6 +437,16 @@ const Navbar = () => {
                       <Settings size={16} />
                       <span>Settings</span>
                     </Link>
+                    {isAdmin && (
+                      <Link 
+                        to="/admin" 
+                        className="nav-dropdown-item"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <Shield size={16} />
+                        <span>Admin Panel</span>
+                      </Link>
+                    )}
                     <div className="nav-dropdown-divider"></div>
                     <button className="nav-dropdown-item nav-logout" onClick={handleLogout}>
                       <LogOut size={16} />
@@ -504,6 +532,14 @@ const Navbar = () => {
                           >
                               <MessageSquare size={20} />
                               <span>Messages</span>
+                          </Link>
+                          <Link
+                              to="/analytics"
+                              className={`nav-mobile-item ${isActive('/analytics') ? 'nav-active' : ''}`}
+                              onClick={closeMenu}
+                          >
+                              <BarChart3 size={20} />
+                              <span>Analytics</span>
                           </Link>
                       </>
                   )}

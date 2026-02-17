@@ -5,13 +5,11 @@ const messageSchema = new mongoose.Schema({
   campaign: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Campaign',
-    required: true,
     index: true
   },
   application: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Application',
-    required: true,
     index: true
   },
   deal: {

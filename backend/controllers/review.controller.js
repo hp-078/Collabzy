@@ -2,6 +2,7 @@ const Review = require('../models/Review.model');
 const Deal = require('../models/Deal.model');
 const InfluencerProfile = require('../models/InfluencerProfile.model');
 const BrandProfile = require('../models/BrandProfile.model');
+const mongoose = require('mongoose');
 const { createNotificationFromTemplate } = require('../services/notification.service');
 
 /**
@@ -149,7 +150,7 @@ exports.getReviewsForUser = async (req, res) => {
 
     // Calculate stats
     const stats = await Review.aggregate([
-      { $match: { reviewee: new require('mongoose').Types.ObjectId(userId), isPublic: true } },
+      { $match: { reviewee: new mongoose.Types.ObjectId(userId), isPublic: true } },
       {
         $group: {
           _id: null,

@@ -191,9 +191,14 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
    SCROLLBAR STYLES
 ======================================== */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--gray-100); }
-::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+::-webkit-scrollbar-track { background: var(--pastel-cream); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--pastel-pink), var(--pastel-lavender));
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--accent-coral), var(--accent-purple));
+}
 
 /* ========================================
    GLOBAL ANIMATIONS
@@ -203,9 +208,19 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(-20px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes spin {
@@ -217,4 +232,26 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
   animation: spin 1s linear infinite;
 }
 
-button:focus, button:focus-visible { outline: 4px auto -webkit-focus-ring-color; }
+/* ========================================
+   SELECTION STYLE
+======================================== */
+::selection {
+  background: var(--pastel-pink);
+  color: var(--dark-text);
+}
+
+/* ========================================
+   FOCUS STYLES
+======================================== */
+button:focus-visible {
+  outline: 3px solid var(--accent-coral);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--pastel-pink);
+  outline-offset: 1px;
+}

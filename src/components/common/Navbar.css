@@ -683,13 +683,8 @@
 
 .nav-mobile-item:hover,
 .nav-mobile-item.nav-active {
-  background: #f5f5f7;
-  color: #1a1a2e;
-}
-
-.nav-mobile-item.nav-active {
-  background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
-  color: var(--primary-700);
+  background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-peach));
+  color: var(--accent-coral);
 }
 
 .nav-mobile-auth {
@@ -698,7 +693,7 @@
   gap: 0.75rem;
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #f0f0f2;
+  border-top: 1px solid var(--gray-200);
 }
 
 .nav-mobile-login {
@@ -706,7 +701,7 @@
   align-items: center;
   justify-content: center;
   padding: 0.875rem;
-  color: #1a1a2e;
+  color: var(--dark-text);
   font-weight: 500;
   text-decoration: none;
   border-radius: 14px;
@@ -714,7 +709,7 @@
 }
 
 .nav-mobile-login:hover {
-  background: #f5f5f7;
+  background: var(--gray-100);
 }
 
 .nav-mobile-signup {
@@ -723,8 +718,8 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.875rem;
-  background: linear-gradient(135deg, #d4f441 0%, #a8e063 100%);
-  color: #1a1a2e;
+  background: linear-gradient(135deg, var(--accent-coral) 0%, var(--accent-purple) 100%);
+  color: white;
   font-weight: 600;
   text-decoration: none;
   border-radius: 14px;
@@ -733,7 +728,7 @@
 
 .nav-mobile-signup:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 244, 65, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
 }
 
 /* Responsive Styles */
@@ -838,7 +833,7 @@
   gap: 0.3rem;
   background: none;
   border: none;
-  color: #6366f1;
+  color: var(--accent-coral);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -848,7 +843,7 @@
 }
 
 .nav-notif-mark-all:hover {
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(255, 107, 107, 0.1);
 }
 
 .nav-notif-list {
@@ -880,8 +875,8 @@
 }
 
 .nav-notif-unread {
-  background: rgba(99, 102, 241, 0.06);
-  border-left: 3px solid #6366f1;
+  background: rgba(255, 107, 107, 0.06);
+  border-left: 3px solid var(--accent-coral);
 }
 
 .nav-notif-content {

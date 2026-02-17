@@ -2,17 +2,114 @@
    App Styles - Playful Pastel Theme
 ======================================== */
 
+/* ---- Loading Screen ---- */
 .loading-screen {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-size: 1.25rem;
+  gap: 2rem;
   font-family: var(--heading-font);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   color: var(--dark-text);
-  background: linear-gradient(180deg, var(--pastel-peach) 0%, var(--pastel-cream) 100%);
+  background: linear-gradient(180deg, var(--pastel-peach) 0%, var(--pastel-cream) 50%, var(--pastel-pink) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-screen::before {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 107, 107, 0.08) 0%, transparent 70%);
+  top: 20%;
+  left: 10%;
+  animation: loadingFloat 6s ease-in-out infinite;
+}
+
+.loading-screen::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(155, 89, 182, 0.06) 0%, transparent 70%);
+  bottom: 15%;
+  right: 15%;
+  animation: loadingFloat 8s ease-in-out infinite reverse;
+}
+
+@keyframes loadingFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+/* ---- Loading Spinner ---- */
+.loading-spinner {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.loading-spinner::before,
+.loading-spinner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid transparent;
+}
+
+.loading-spinner::before {
+  border-top-color: var(--accent-coral);
+  border-right-color: var(--accent-coral);
+  animation: spinPastel 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.loading-spinner::after {
+  inset: 6px;
+  border-bottom-color: var(--accent-purple);
+  border-left-color: var(--accent-purple);
+  animation: spinPastel 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite reverse;
+}
+
+@keyframes spinPastel {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-coral);
+  display: inline-block;
+  animation: dotBounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: 0s; }
+.loading-dots span:nth-child(2) { animation-delay: 0.16s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scale(0.4); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
 }
 
 main {
@@ -33,4 +130,101 @@ main > * {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ---- Futuristic Glow / Glassmorphism Utility Classes ---- */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 181, 186, 0.2);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+.glass-card:hover {
+  box-shadow: 0 12px 48px rgba(255, 107, 107, 0.08), 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Gradient border effect for cards */
+.gradient-border {
+  position: relative;
+  border: none !important;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-lavender), var(--pastel-mint));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Shimmer text effect */
+.shimmer-text {
+  background: linear-gradient(
+    120deg,
+    var(--dark-text) 30%,
+    var(--accent-coral) 50%,
+    var(--dark-text) 70%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerText 3s ease-in-out infinite;
+}
+
+@keyframes shimmerText {
+  0%, 100% { background-position: 200% center; }
+  50% { background-position: 0% center; }
+}
+
+/* Pulse badge animation */
+.pulse-badge {
+  position: relative;
+}
+
+.pulse-badge::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-coral);
+  animation: pulseBadge 2s ease-in-out infinite;
+}
+
+@keyframes pulseBadge {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+
+/* Floating animation for decorative elements */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.float-animation {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Gradient background animation */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
 }

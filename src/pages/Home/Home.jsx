@@ -408,7 +408,7 @@ const Home = () => {
         <div className="home-section-container">
           <div className="home-section-header" data-animate>
             <h2 className="home-section-title">
-              <span className="home-title-small">Servies</span>
+              <span className="home-title-small">Services</span>
               <span className="home-title-large">
                 we <span className="home-handwritten home-accent-pink">Offer!</span>
               </span>

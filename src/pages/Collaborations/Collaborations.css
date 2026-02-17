@@ -369,13 +369,13 @@
 
 .collab-main-tab.active {
   background: white;
-  color: var(--primary-color);
+  color: var(--accent-coral);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .collab-tab-count {
   background: var(--pastel-lavender);
-  color: var(--primary-color);
+  color: var(--accent-coral);
   padding: 0.1rem 0.5rem;
   border-radius: 10px;
   font-size: 0.75rem;
@@ -383,7 +383,7 @@
 }
 
 .collab-main-tab.active .collab-tab-count {
-  background: var(--primary-color);
+  background: var(--accent-coral);
   color: white;
 }
 
@@ -391,22 +391,22 @@
    Error Message
 ======================================== */
 .collab-error-message {
-  background: #fef2f2;
-  color: #dc2626;
+  background: var(--error-light);
+  color: var(--accent-coral);
   padding: 1rem;
   border-radius: 12px;
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border: 1px solid rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(255, 107, 107, 0.2);
 }
 
 /* ========================================
    Deal Card Styles
 ======================================== */
 .collab-deal-card {
-  border-left: 4px solid var(--primary-color);
+  border-left: 4px solid var(--accent-coral);
 }
 
 .collab-deal-stats {
@@ -427,7 +427,7 @@
 }
 
 .collab-deal-stat svg {
-  color: var(--primary-color);
+  color: var(--accent-coral);
 }
 
 .collab-deal-stat > div {
@@ -464,7 +464,7 @@
 .collab-deal-status-active,
 .collab-deal-status-in_progress {
   background: var(--pastel-lavender);
-  color: var(--primary-color);
+  color: var(--accent-coral);
 }
 
 .collab-deal-status-pending_review {
@@ -474,7 +474,7 @@
 
 .collab-deal-status-completed {
   background: var(--pastel-mint);
-  color: var(--secondary-color);
+  color: var(--accent-teal);
 }
 
 .collab-deal-status-cancelled {
@@ -545,23 +545,23 @@
 }
 
 .collab-deliverable-approved {
-  color: var(--secondary-color);
+  color: var(--accent-teal);
 }
 
 .collab-deliverable-approved .deliverable-status {
   background: var(--pastel-mint);
-  color: var(--secondary-color);
+  color: var(--accent-teal);
 }
 
 /* ========================================
    Success State
 ======================================== */
 .collab-completed-info.collab-success {
-  color: var(--secondary-color);
+  color: var(--accent-teal);
 }
 
 .collab-completed-info.collab-success svg {
-  color: var(--secondary-color);
+  color: var(--accent-teal);
 }
 
 /* ========================================
@@ -659,7 +659,7 @@
 }
 
 .collab-modal-info strong {
-  color: var(--primary-color);
+  color: var(--accent-coral);
 }
 
 .collab-form-group {
@@ -686,8 +686,8 @@
 
 .collab-form-group input:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
 .collab-modal-footer {
@@ -722,13 +722,13 @@
 }
 
 .collab-modal-footer .btn-primary {
-  background: var(--primary-color);
+  background: var(--accent-coral);
   border: none;
   color: white;
 }
 
 .collab-modal-footer .btn-primary:hover:not(:disabled) {
-  background: var(--primary-hover);
+  background: var(--accent-purple);
 }
 
 .collab-modal-footer .btn-primary:disabled {
@@ -802,8 +802,8 @@
 
 .collab-form-group textarea:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
 .collab-char-count {
