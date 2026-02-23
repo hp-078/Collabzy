@@ -117,6 +117,7 @@ const Profile = () => {
                 location: profileData.location || prev.location,
                 website: profileData.website || prev.website,
                 services: profileData.services || prev.services,
+                platforms: profileData.platforms || prev.platforms || [],
               };
               return newData;
             });
@@ -321,14 +322,25 @@ const Profile = () => {
         addedAt: new Date().toISOString(),
       };
 
+      const updatedPlatforms = [...(formData.platforms || []), platform];
+      
       setFormData({
         ...formData,
-        platforms: [...(formData.platforms || []), platform],
+        platforms: updatedPlatforms,
       });
+
+      // Auto-save to backend
+      try {
+        await influencerService.updateProfile({
+          platforms: updatedPlatforms,
+        });
+      } catch (err) {
+        console.warn('Failed to auto-save platform:', err);
+      }
 
       setNewPlatform({ type: 'YouTube', url: '' });
       setShowPlatformModal(false);
-      toast.success(`${newPlatform.type} platform added successfully! Auto-fetch coming soon.`);
+      toast.success(`✅ ${newPlatform.type} platform connected and saved! It will appear in your Connected Platforms list.`);
       return;
     }
 
@@ -345,13 +357,27 @@ const Profile = () => {
             url: newPlatform.url,
             addedAt: new Date().toISOString(),
           };
+          
+          const updatedPlatforms = [...(formData.platforms || []), platform];
+          
           setFormData({
             ...formData,
-            platforms: [...(formData.platforms || []), platform],
+            platforms: updatedPlatforms,
           });
+          
+          // Auto-save to backend
+          try {
+            await influencerService.updateProfile({
+              instagramUrl: newPlatform.url,
+              platforms: updatedPlatforms,
+            });
+          } catch (err) {
+            console.warn('Failed to auto-save Instagram platform:', err);
+          }
+          
           setNewPlatform({ type: 'YouTube', url: '' });
           setShowPlatformModal(false);
-          toast.success('Instagram added! Auto-fetch unavailable — enter stats manually.');
+          toast.success('✅ Instagram connected and saved! Check Connected Platforms section below.');
           return;
         }
 
@@ -370,11 +396,13 @@ const Profile = () => {
             username: igData.profile?.username,
           };
 
+          const updatedPlatforms = [...(formData.platforms || []), platform];
+
           // Also set instagramUrl so backend stores it and Social Media Analytics section shows
           setFormData(prev => ({
             ...prev,
             instagramUrl: newPlatform.url,
-            platforms: [...(prev.platforms || []), platform],
+            platforms: updatedPlatforms,
           }));
 
           // Populate instagramStats state so it shows immediately in Social Media Analytics
@@ -400,16 +428,21 @@ const Profile = () => {
           };
           setInstagramStats(formattedIgStats);
 
-          // Also persist to DB via influencer service so data survives reload
+          // Persist to DB via influencer service so data survives reload
           try {
             await influencerService.fetchInstagramProfile(newPlatform.url);
+            // Also update platforms array in backend
+            await influencerService.updateProfile({
+              instagramUrl: newPlatform.url,
+              platforms: updatedPlatforms,
+            });
           } catch (persistErr) {
             console.warn('Instagram data shown but failed to persist to DB:', persistErr);
           }
 
           setNewPlatform({ type: 'YouTube', url: '' });
           setShowPlatformModal(false);
-          toast.success('Instagram platform added with stats!');
+          toast.success('🎉 Instagram connected with stats! Check Connected Platforms section 📸');
         }
       } catch (error) {
         console.error('Error adding Instagram platform:', error);
@@ -442,11 +475,13 @@ const Profile = () => {
           channelTitle: ytData.channel?.title,
         };
 
+        const updatedPlatforms = [...(formData.platforms || []), platform];
+
         // Also set youtubeUrl so the backend stores it and Social Media Analytics section shows
         setFormData(prev => ({
           ...prev,
           youtubeUrl: newPlatform.url,
-          platforms: [...(prev.platforms || []), platform],
+          platforms: updatedPlatforms,
         }));
 
         // Populate youtubeStats state so it shows immediately in Social Media Analytics
@@ -469,16 +504,21 @@ const Profile = () => {
         };
         setYoutubeStats(formattedYtStats);
 
-        // Also persist to DB via influencer service so data survives reload
+        // Persist to DB via influencer service so data survives reload
         try {
           await influencerService.fetchYouTubeProfile(newPlatform.url);
+          // Also update platforms array in backend
+          await influencerService.updateProfile({
+            youtubeUrl: newPlatform.url,
+            platforms: updatedPlatforms,
+          });
         } catch (persistErr) {
           console.warn('YouTube data shown but failed to persist to DB:', persistErr);
         }
 
         setNewPlatform({ type: 'YouTube', url: '' });
         setShowPlatformModal(false);
-        toast.success('YouTube platform added successfully!');
+        toast.success('🎉 YouTube connected with stats! Check Connected Platforms section 🎥');
       }
     } catch (error) {
       console.error('Error adding platform:', error);
@@ -488,13 +528,23 @@ const Profile = () => {
     }
   };
 
-  const handleRemovePlatform = (index) => {
+  const handleRemovePlatform = async (index) => {
     const updatedPlatforms = formData.platforms.filter((_, i) => i !== index);
     setFormData({
       ...formData,
       platforms: updatedPlatforms,
     });
-    toast.success('Platform removed successfully');
+    
+    // Auto-save to backend
+    try {
+      await influencerService.updateProfile({
+        platforms: updatedPlatforms,
+      });
+      toast.success('Platform removed and saved successfully');
+    } catch (err) {
+      console.warn('Failed to auto-save after removing platform:', err);
+      toast.success('Platform removed locally (click Save Profile to persist)');
+    }
   };
 
 
@@ -1039,15 +1089,16 @@ const Profile = () => {
                   </div>
                 </div>
 
-                {/* Social Media Stats Section */}
-                <div className="prof-section" style={{ marginTop: '2rem' }}>
-                  <h2>Social Media Analytics</h2>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                    View and refresh your social media statistics
-                  </p>
+                {/* Social Media Stats Section - Only show if user has connected platforms */}
+                {(formData.platforms || []).length > 0 && (
+                  <div className="prof-section" style={{ marginTop: '2rem' }}>
+                    <h2>Social Media Analytics</h2>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                      Detailed statistics for your connected platforms
+                    </p>
 
-                  {/* YouTube Stats */}
-                  {(formData.youtubeUrl || (formData.platforms || []).some(p => p.type === 'YouTube')) && (
+                    {/* YouTube Stats - Only show if YouTube is connected */}
+                    {(formData.platforms || []).some(p => p.type === 'YouTube') && (
                     <div className="prof-social-stats-card" style={{ marginBottom: '1.5rem' }}>
                       <div className="prof-stats-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1121,10 +1172,10 @@ const Profile = () => {
                         </div>
                       )}
                     </div>
-                  )}
+                    )}
 
-                  {/* Instagram Stats */}
-                  {(formData.instagramUrl || (formData.platforms || []).some(p => p.type === 'Instagram')) && (
+                    {/* Instagram Stats - Only show if Instagram is connected */}
+                    {(formData.platforms || []).some(p => p.type === 'Instagram') && (
                     <div className="prof-social-stats-card">
                       <div className="prof-stats-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1198,17 +1249,9 @@ const Profile = () => {
                         </div>
                       )}
                     </div>
-                  )}
-
-                  {!formData.youtubeUrl && !formData.instagramUrl && 
-                   !(formData.platforms || []).some(p => p.type === 'YouTube' || p.type === 'Instagram') && (
-                    <div className="prof-empty-state">
-                      <Globe size={48} />
-                      <p>No social media accounts linked</p>
-                      <p className="prof-empty-hint">Add your YouTube or Instagram URL in the platforms section above to track your stats</p>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Services Section */}
                 <div className="prof-section prof-services-section">

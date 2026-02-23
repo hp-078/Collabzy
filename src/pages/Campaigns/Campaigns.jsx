@@ -55,7 +55,7 @@ const Campaigns = () => {
     budgetMin: '',
     budgetMax: '',
     deadline: '',
-    startDate: '',
+    startDate: new Date().toISOString().split('T')[0],
     deliverables: [{ type: '', quantity: 1, description: '' }],
     eligibility: {
       minFollowers: 0,
@@ -144,7 +144,7 @@ const Campaigns = () => {
         budget: {
           min: Number(form.budgetMin),
           max: Number(form.budgetMax),
-          currency: 'USD',
+          currency: 'INR',
         },
         startDate: form.startDate || new Date().toISOString(),
         deadline: form.deadline,
@@ -218,7 +218,7 @@ const Campaigns = () => {
   const resetForm = () => {
     setForm({
       title: '', description: '', category: '', platformType: 'Any',
-      budgetMin: '', budgetMax: '', deadline: '', startDate: '',
+      budgetMin: '', budgetMax: '', deadline: '', startDate: new Date().toISOString().split('T')[0],
       deliverables: [{ type: '', quantity: 1, description: '' }],
       eligibility: { minFollowers: 0, maxFollowers: 10000000, minEngagementRate: 0, requiredNiches: [], minTrustScore: 0 },
       tags: '', maxInfluencers: 10, status: 'active',
@@ -255,7 +255,7 @@ const Campaigns = () => {
     if (!budget) return 'N/A';
     const min = budget.min?.toLocaleString() || '0';
     const max = budget.max?.toLocaleString() || '0';
-    return `$${min} - $${max}`;
+    return `₹${min} - ₹${max}`;
   };
 
   return (
@@ -420,13 +420,13 @@ const Campaigns = () => {
 
               <div className="camp-form-row">
                 <div className="camp-form-group">
-                  <label>Budget Min ($) *</label>
+                  <label>Budget Min (₹) *</label>
                   <input type="number" className="camp-form-input" value={form.budgetMin}
                     onChange={e => setForm({ ...form, budgetMin: e.target.value })}
                     placeholder="500" min="0" required />
                 </div>
                 <div className="camp-form-group">
-                  <label>Budget Max ($) *</label>
+                  <label>Budget Max (₹) *</label>
                   <input type="number" className="camp-form-input" value={form.budgetMax}
                     onChange={e => setForm({ ...form, budgetMax: e.target.value })}
                     placeholder="5000" min="0" required />
@@ -435,15 +435,21 @@ const Campaigns = () => {
 
               <div className="camp-form-row">
                 <div className="camp-form-group">
-                  <label>Start Date</label>
+                  <label>Start Date *</label>
                   <input type="date" className="camp-form-input" value={form.startDate}
-                    onChange={e => setForm({ ...form, startDate: e.target.value })} />
+                    onChange={e => setForm({ ...form, startDate: e.target.value, deadline: '' })}
+                    min={new Date().toISOString().split('T')[0]}
+                    required />
                 </div>
-                <div className="camp-form-group">
-                  <label>Deadline *</label>
-                  <input type="date" className="camp-form-input" value={form.deadline}
-                    onChange={e => setForm({ ...form, deadline: e.target.value })} required />
-                </div>
+                {form.startDate && (
+                  <div className="camp-form-group">
+                    <label>Deadline *</label>
+                    <input type="date" className="camp-form-input" value={form.deadline}
+                      onChange={e => setForm({ ...form, deadline: e.target.value })}
+                      min={form.startDate}
+                      required />
+                  </div>
+                )}
               </div>
 
               {/* Deliverables */}
@@ -541,7 +547,7 @@ const Campaigns = () => {
                   placeholder="Tell the brand why you're a great fit for this campaign..." required />
               </div>
               <div className="camp-form-group">
-                <label>Proposed Rate ($)</label>
+                <label>Proposed Rate (₹)</label>
                 <input type="number" className="camp-form-input" value={applyForm.proposedRate}
                   onChange={e => setApplyForm({ ...applyForm, proposedRate: e.target.value })}
                   placeholder="Your rate for this campaign" min="0" />
@@ -618,7 +624,7 @@ const CampaignCard = ({ campaign, isBrand, onView, onApply, onEdit, isRecommende
       <div className="camp-card-meta">
         <span className="camp-card-budget">
           <DollarSign size={14} />
-          {campaign.budget ? `$${campaign.budget.min?.toLocaleString()} - $${campaign.budget.max?.toLocaleString()}` : 'N/A'}
+          {campaign.budget ? `₹${campaign.budget.min?.toLocaleString()} - ₹${campaign.budget.max?.toLocaleString()}` : 'N/A'}
         </span>
         <span className="camp-card-deadline">
           <Calendar size={14} />
@@ -676,7 +682,7 @@ const CampaignDetailModal = ({ campaign, onClose, onApply, isBrand, isInfluencer
           <div className="camp-detail-item">
             <span className="label">Budget</span>
             <span className="value">
-              {campaign.budget ? `$${campaign.budget.min?.toLocaleString()} - $${campaign.budget.max?.toLocaleString()}` : 'N/A'}
+              {campaign.budget ? `₹${campaign.budget.min?.toLocaleString()} - ₹${campaign.budget.max?.toLocaleString()}` : 'N/A'}
             </span>
           </div>
           <div className="camp-detail-item">
