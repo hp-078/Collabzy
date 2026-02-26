@@ -53,11 +53,26 @@
   margin-right: auto;
   box-shadow: 0 8px 32px rgba(255, 181, 186, 0.15);
 }
+.idet-not-found p {
+  margin-top: 1rem;
+  color: var(--text-secondary, #6b7280);
+  font-size: 1rem;
+}
 .idet-not-found h2 {
   margin-bottom: 1.5rem;
   font-family: var(--heading-font);
   font-weight: 800;
   color: var(--dark-text);
+}
+
+/* Loader spinner */
+@keyframes spin-animation-kf {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.idet-not-found .spin-animation {
+  animation: spin-animation-kf 1s linear infinite;
+  color: var(--primary, #e91e63);
 }
 
 /* ═══════════════════════════════════════

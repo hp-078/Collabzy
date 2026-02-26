@@ -109,6 +109,88 @@ exports.updateProfile = async (req, res) => {
       profile.platformType = req.body.platformType;
     }
 
+    // ── Sync platforms array stats into dedicated stats fields ──
+    // When the frontend sends an updated `platforms` array (e.g. after
+    // adding / removing a platform via the modal), make sure the canonical
+    // youtubeStats / instagramStats / youtubeData / instagramData fields
+    // stay in sync so that the public profile shows the latest data.
+    if (Array.isArray(req.body.platforms)) {
+      const ytPlatform = req.body.platforms.find(p => p.type === 'YouTube');
+      const igPlatform = req.body.platforms.find(p => p.type === 'Instagram');
+
+      // Sync YouTube from platforms array → dedicated fields (only if the
+      // dedicated fields are empty or the platforms entry has fresher data)
+      if (ytPlatform?.stats) {
+        const hasExistingYt = profile.youtubeStats?.subscribers > 0;
+        if (!hasExistingYt) {
+          profile.youtubeStats = {
+            subscribers: ytPlatform.stats.subscribers || 0,
+            totalViews:  ytPlatform.stats.views || 0,
+            videoCount:  ytPlatform.stats.videos || 0,
+            engagementRate: ytPlatform.stats.engagementRate || 0,
+            averageViews: 0,
+            lastFetched: ytPlatform.lastFetched ? new Date(ytPlatform.lastFetched) : new Date(),
+          };
+          if (!profile.youtubeData?.title && ytPlatform.channelTitle) {
+            profile.youtubeData = {
+              ...profile.youtubeData?.toObject?.() || {},
+              title: ytPlatform.channelTitle,
+              fetchedAt: ytPlatform.lastFetched ? new Date(ytPlatform.lastFetched) : new Date(),
+            };
+          }
+          if (ytPlatform.channelId) {
+            profile.youtubeChannelId = ytPlatform.channelId;
+          }
+        }
+        if (ytPlatform.url && !profile.youtubeUrl) {
+          profile.youtubeUrl = ytPlatform.url;
+        }
+      }
+
+      // If YouTube platform was removed, clear the dedicated fields
+      if (!ytPlatform && !req.body.youtubeUrl) {
+        profile.youtubeStats = { subscribers: 0, totalViews: 0, videoCount: 0, averageViews: 0, engagementRate: 0 };
+        profile.youtubeData = undefined;
+        profile.youtubeChannelId = '';
+        profile.youtubeUrl = '';
+      }
+
+      // Sync Instagram from platforms array → dedicated fields
+      if (igPlatform?.stats) {
+        const hasExistingIg = profile.instagramStats?.followers > 0;
+        if (!hasExistingIg) {
+          profile.instagramStats = {
+            followers:  igPlatform.stats.followers || 0,
+            following:  igPlatform.stats.following || 0,
+            posts:      igPlatform.stats.posts || 0,
+            engagementRate: igPlatform.stats.engagementRate || 0,
+            averageLikes: 0,
+            averageComments: 0,
+            lastFetched: igPlatform.lastFetched ? new Date(igPlatform.lastFetched) : new Date(),
+          };
+          if (!profile.instagramData?.username && igPlatform.username) {
+            profile.instagramData = {
+              ...profile.instagramData?.toObject?.() || {},
+              username: igPlatform.username,
+              fetchedAt: igPlatform.lastFetched ? new Date(igPlatform.lastFetched) : new Date(),
+            };
+            profile.instagramUsername = igPlatform.username;
+          }
+        }
+        if (igPlatform.url && !profile.instagramUrl) {
+          profile.instagramUrl = igPlatform.url;
+        }
+      }
+
+      // If Instagram platform was removed, clear the dedicated fields
+      if (!igPlatform && !req.body.instagramUrl) {
+        profile.instagramStats = { followers: 0, following: 0, posts: 0, averageLikes: 0, averageComments: 0, engagementRate: 0 };
+        profile.instagramData = undefined;
+        profile.instagramUsername = '';
+        profile.instagramUrl = '';
+      }
+    }
+
     // Update combined stats and trust score
     profile.updateCombinedStats();
 

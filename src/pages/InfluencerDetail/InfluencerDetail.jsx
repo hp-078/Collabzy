@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -22,7 +22,8 @@ import {
   BookOpen,
   FolderOpen,
   Languages,
-  Tag
+  Tag,
+  Loader
 } from 'lucide-react';
 import './InfluencerDetail.css';
 
@@ -58,9 +59,11 @@ const truncate = (str, len = 60) => {
 const InfluencerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { influencers, createCollaboration } = useData();
+  const { influencers, createCollaboration, getInfluencerById } = useData();
   const { user, isAuthenticated, isBrand } = useAuth();
 
+  const [influencer, setInfluencer] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [message, setMessage] = useState('');
@@ -68,7 +71,39 @@ const InfluencerDetail = () => {
   const ytScrollRef = useRef(null);
   const igScrollRef = useRef(null);
 
-  const influencer = influencers.find(i => i._id === id);
+  /* Always fetch fresh profile data from API so brand sees latest updates */
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setProfileLoading(true);
+
+      try {
+        // Always hit API so platform data is up-to-date
+        const data = await getInfluencerById(id);
+        if (!cancelled) setInfluencer(data || null);
+      } catch (err) {
+        console.error('Failed to load influencer profile:', err);
+        // Fallback: try the cached list (e.g. when backend is down)
+        const fromList = influencers.find(i => i._id === id);
+        if (!cancelled) setInfluencer(fromList || null);
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  /* Loading state */
+  if (profileLoading) {
+    return (
+      <div className="idet-not-found">
+        <Loader size={48} className="spin-animation" />
+        <p>Loading influencer profile…</p>
+      </div>
+    );
+  }
 
   if (!influencer) {
     return (
@@ -89,7 +124,7 @@ const InfluencerDetail = () => {
   const services = influencer.services || [];
   const niches = Array.isArray(influencer.niche) ? influencer.niche : (influencer.niche ? [influencer.niche] : []);
 
-  const engagementRate = influencer.averageEngagementRate || yt.engagementRate || ig.engagementRate || 0;
+  const engagementRate = Number(influencer.averageEngagementRate || yt.engagementRate || ig.engagementRate || 0);
 
   /* carousel scroll */
   const scrollCarousel = (ref, dir) => {
@@ -110,7 +145,7 @@ const InfluencerDetail = () => {
     if (!selectedService || !message) { alert('Please fill in all required fields'); return; }
 
     const collaboration = {
-      influencerId: influencer._id,
+      influencerId: influencer.user?._id || influencer.user,
       service: selectedService.name,
       budget: selectedService.price,
       message,
@@ -369,7 +404,7 @@ const InfluencerDetail = () => {
                     <div className="idet-eng-item">
                       <span className="idet-eng-dot" style={{ background: '#9B59B6' }}></span>
                       <span className="idet-eng-label">Average Likes</span>
-                      <span className="idet-eng-val">{formatCount(ig.averageLikes || yt.averageViews || 0)}</span>
+                      <span className="idet-eng-val">{formatCount(ig.averageLikes || 0)}</span>
                     </div>
                     <div className="idet-eng-item">
                       <span className="idet-eng-dot" style={{ background: '#FF6B6B' }}></span>

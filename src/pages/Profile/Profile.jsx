@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
 import influencerService from '../../services/influencer.service';
 import brandService from '../../services/brand.service';
 import authService from '../../services/auth.service';
@@ -28,6 +29,7 @@ import './Profile.css';
 
 const Profile = () => {
   const { user, updateUser, isInfluencer, isBrand } = useAuth();
+  const { clearCache } = useData();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
 
@@ -436,6 +438,7 @@ const Profile = () => {
               instagramUrl: newPlatform.url,
               platforms: updatedPlatforms,
             });
+            clearCache();
           } catch (persistErr) {
             console.warn('Instagram data shown but failed to persist to DB:', persistErr);
           }
@@ -512,6 +515,7 @@ const Profile = () => {
             youtubeUrl: newPlatform.url,
             platforms: updatedPlatforms,
           });
+          clearCache();
         } catch (persistErr) {
           console.warn('YouTube data shown but failed to persist to DB:', persistErr);
         }
@@ -586,6 +590,9 @@ const Profile = () => {
         
         setYoutubeStats(formattedData);
         
+        // Invalidate influencer list cache so public profile shows fresh data
+        clearCache();
+
         // Show success message with stats
         const message = response.cached
           ? `📦 YouTube data loaded from cache\n📊 ${formattedData.channel.subscriberCount?.toLocaleString()} subscribers`
@@ -631,6 +638,9 @@ const Profile = () => {
         
         setYoutubeStats(formattedData);
         
+        // Invalidate cache so public profile shows fresh data
+        clearCache();
+
         toast.success(
           `🔄 YouTube data refreshed!\n📊 ${formattedData.channel.subscriberCount?.toLocaleString()} subscribers\n📹 ${formattedData.channel.videoCount} videos\n💫 ${formattedData.metrics.engagementRate?.toFixed(2)}% engagement`,
           { duration: 5000 }
@@ -691,6 +701,9 @@ const Profile = () => {
         
         setInstagramStats(formattedData);
         
+        // Invalidate cache so public profile shows fresh data
+        clearCache();
+
         // Show success message with stats
         const message = response.cached
           ? `📦 Instagram data loaded from cache\n👥 ${formattedData.profile.followers?.toLocaleString()} followers`
@@ -744,6 +757,9 @@ const Profile = () => {
         
         setInstagramStats(formattedData);
         
+        // Invalidate cache so public profile shows fresh data
+        clearCache();
+
         toast.success(
           `🔄 Instagram data refreshed!\n👥 ${formattedData.profile.followers?.toLocaleString()} followers\n📸 ${formattedData.profile.posts} posts\n💫 ${formattedData.metrics.engagementRate?.toFixed(2)}% engagement`,
           { duration: 5000 }
@@ -781,6 +797,8 @@ const Profile = () => {
 
         try {
           await influencerService.updateProfile(updatedData);
+          // Invalidate DataContext cache so influencer list reflects changes
+          clearCache();
           toast.success('Profile updated successfully!');
         } catch (updateError) {
           if (updateError.response?.status === 404) {
