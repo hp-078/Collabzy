@@ -241,13 +241,18 @@ exports.getMyCollaborations = async (req, res) => {
         ]);
 
         // Structure response to match frontend expectations
+        // Protect against deleted campaigns
+        if (!app.campaign) {
+          return null;
+        }
+
         return {
           application: {
             _id: app._id,
             status: app.status
           },
           campaign: {
-            _id: app.campaign?._id,
+            _id: app.campaign._id,
             title: app.campaign?.title || 'Campaign'
           },
           otherUser: userRole === 'brand' 
@@ -274,8 +279,11 @@ exports.getMyCollaborations = async (req, res) => {
       })
     );
 
+    // Filter out null collaborations (deleted campaigns)
+    const validCollaborations = collaborations.filter(c => c !== null);
+
     // Sort by last message time or update time
-    collaborations.sort((a, b) => {
+    validCollaborations.sort((a, b) => {
       const timeA = a.lastMessage?.createdAt || a.updatedAt;
       const timeB = b.lastMessage?.createdAt || b.updatedAt;
       return new Date(timeB) - new Date(timeA);
@@ -283,7 +291,7 @@ exports.getMyCollaborations = async (req, res) => {
 
     res.json({
       success: true,
-      data: collaborations
+      data: validCollaborations
     });
   } catch (error) {
     console.error('Get collaborations error:', error);

@@ -194,7 +194,14 @@ exports.getDealById = async (req, res) => {
 exports.updateDealStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const validStatuses = ['in_progress', 'pending_review', 'completed', 'cancelled'];
+    const validStatuses = ['active', 'in_progress', 'pending_review', 'completed', 'cancelled', 'disputed'];
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status is required'
+      });
+    }
 
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -296,6 +303,15 @@ exports.updateDeliverable = async (req, res) => {
     const { id, deliverableIndex } = req.params;
     const { status } = req.body;
 
+    // Validate status
+    const validStatuses = ['pending', 'in_progress', 'submitted', 'approved', 'rejected'];
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
     const deal = await Deal.findById(id);
 
     if (!deal) {
@@ -305,8 +321,19 @@ exports.updateDeliverable = async (req, res) => {
       });
     }
 
+    // Check authorization
+    const isParty = deal.brand.toString() === req.user._id.toString() ||
+      deal.influencer.toString() === req.user._id.toString();
+
+    if (!isParty) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
     const index = parseInt(deliverableIndex);
-    if (index < 0 || index >= deal.deliverables.length) {
+    if (isNaN(index) || index < 0 || index >= deal.deliverables.length) {
       return res.status(400).json({
         success: false,
         message: 'Invalid deliverable index'

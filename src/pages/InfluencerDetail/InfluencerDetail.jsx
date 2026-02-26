@@ -18,8 +18,6 @@ import {
   ChevronRight,
   Briefcase,
   Play,
-  Linkedin,
-  BookOpen,
   FolderOpen,
   Languages,
   Tag,
@@ -178,35 +176,6 @@ const InfluencerDetail = () => {
           <ArrowLeft size={20} /> Back to Influencers
         </Link>
 
-        {/* Top Stats Bar */}
-        <div className="idet-stats-bar">
-          <div className={`idet-stat-pill ${ig.followers > 0 ? (ig.followers > yt.subscribers ? 'idet-stat-highlight-ig' : '') : 'idet-stat-zero'}`}>
-            <div className="idet-stat-pill-val">{formatCount(ig.followers)}</div>
-            <div className="idet-stat-pill-lbl">Instagram followers</div>
-            <div className="idet-stat-pill-icon idet-ig-icon"><Instagram size={18} /></div>
-          </div>
-          <div className={`idet-stat-pill idet-stat-pill-yt ${yt.subscribers > 0 ? 'idet-stat-highlight' : 'idet-stat-zero'}`}>
-            <div className="idet-stat-pill-val">{formatCount(yt.subscribers)}</div>
-            <div className="idet-stat-pill-lbl">Youtube followers</div>
-            <div className="idet-stat-pill-icon idet-yt-icon"><Youtube size={18} /></div>
-          </div>
-          <div className="idet-stat-pill idet-stat-zero">
-            <div className="idet-stat-pill-val">0</div>
-            <div className="idet-stat-pill-lbl">LinkedIn followers</div>
-            <div className="idet-stat-pill-icon idet-li-icon"><Linkedin size={18} /></div>
-          </div>
-          <div className="idet-stat-pill idet-stat-zero">
-            <div className="idet-stat-pill-val">0</div>
-            <div className="idet-stat-pill-lbl">Blog Average Visit</div>
-            <div className="idet-stat-pill-icon idet-blog-icon"><BookOpen size={18} /></div>
-          </div>
-          <div className="idet-stat-pill idet-stat-zero">
-            <div className="idet-stat-pill-val">{influencer.campaignsCompleted || 0}</div>
-            <div className="idet-stat-pill-lbl">Projects Overview</div>
-            <div className="idet-stat-pill-icon idet-proj-icon"><FolderOpen size={18} /></div>
-          </div>
-        </div>
-
         {/* Two-column body */}
         <div className="idet-body">
 
@@ -260,6 +229,25 @@ const InfluencerDetail = () => {
 
           {/* MAIN CONTENT */}
           <main className="idet-main">
+
+            {/* Top Stats Bar */}
+            <div className="idet-stats-bar">
+              <div className={`idet-stat-pill ${ig.followers > 0 ? (ig.followers > yt.subscribers ? 'idet-stat-highlight-ig' : '') : 'idet-stat-zero'}`}>
+                <div className="idet-stat-pill-val">{formatCount(ig.followers)}</div>
+                <div className="idet-stat-pill-lbl">Instagram Followers</div>
+                <div className="idet-stat-pill-icon idet-ig-icon"><Instagram size={20} /></div>
+              </div>
+              <div className={`idet-stat-pill idet-stat-pill-yt ${yt.subscribers > 0 ? 'idet-stat-highlight' : 'idet-stat-zero'}`}>
+                <div className="idet-stat-pill-val">{formatCount(yt.subscribers)}</div>
+                <div className="idet-stat-pill-lbl">YouTube Subscribers</div>
+                <div className="idet-stat-pill-icon idet-yt-icon"><Youtube size={20} /></div>
+              </div>
+              <div className="idet-stat-pill">
+                <div className="idet-stat-pill-val">{influencer.campaignsCompleted || 0}</div>
+                <div className="idet-stat-pill-lbl">Projects Completed</div>
+                <div className="idet-stat-pill-icon idet-proj-icon"><FolderOpen size={20} /></div>
+              </div>
+            </div>
 
             {/* YouTube Channel Info */}
             {yt.subscribers > 0 && (

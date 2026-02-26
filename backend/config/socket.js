@@ -86,15 +86,25 @@ const getIO = () => {
 
 // Emit to specific user
 const emitToUser = (userId, event, data) => {
-  if (io) {
-    io.to(`user:${userId}`).emit(event, data);
+  try {
+    if (io) {
+      io.to(`user:${userId}`).emit(event, data);
+      console.log(`📤 Emitted ${event} to user ${userId}`);
+    }
+  } catch (error) {
+    console.error(`❌ Error emitting to user ${userId}:`, error.message);
   }
 };
 
 // Emit to conversation
 const emitToConversation = (conversationId, event, data) => {
-  if (io) {
-    io.to(`conversation:${conversationId}`).emit(event, data);
+  try {
+    if (io) {
+      io.to(`conversation:${conversationId}`).emit(event, data);
+      console.log(`📤 Emitted ${event} to conversation ${conversationId}`);
+    }
+  } catch (error) {
+    console.error(`❌ Error emitting to conversation ${conversationId}:`, error.message);
   }
 };
 

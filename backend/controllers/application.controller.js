@@ -19,6 +19,16 @@ exports.submitApplication = async (req, res) => {
       });
     }
 
+    // Validate proposedRate if provided
+    if (proposedRate !== undefined) {
+      if (isNaN(proposedRate) || proposedRate < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Proposed rate must be a positive number'
+        });
+      }
+    }
+
     // Get campaign
     const campaign = await Campaign.findById(campaignId);
     if (!campaign) {
@@ -163,9 +173,12 @@ exports.getMyApplications = async (req, res) => {
       Application.countDocuments(filter)
     ]);
 
+    // Filter out applications with deleted campaigns
+    const validApplications = applications.filter(app => app.campaign !== null);
+
     res.json({
       success: true,
-      data: applications,
+      data: validApplications,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -469,8 +482,17 @@ exports.updateApplication = async (req, res) => {
     // Update allowed fields
     const { message, proposedRate, proposedDeliverables, portfolioLinks } = req.body;
 
+    if (proposedRate !== undefined) {
+      if (isNaN(proposedRate) || proposedRate < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Proposed rate must be a positive number'
+        });
+      }
+      application.proposedRate = proposedRate;
+    }
+
     if (message !== undefined) application.message = message;
-    if (proposedRate !== undefined) application.proposedRate = proposedRate;
     if (proposedDeliverables !== undefined) application.proposedDeliverables = proposedDeliverables;
     if (portfolioLinks !== undefined) application.portfolioLinks = portfolioLinks;
 

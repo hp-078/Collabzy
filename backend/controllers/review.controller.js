@@ -20,6 +20,14 @@ exports.createReview = async (req, res) => {
       });
     }
 
+    // Validate rating is a number
+    if (isNaN(rating) || typeof rating !== 'number') {
+      return res.status(400).json({
+        success: false,
+        message: 'Rating must be a valid number'
+      });
+    }
+
     // Get deal
     const deal = await Deal.findById(dealId).populate('campaign');
 

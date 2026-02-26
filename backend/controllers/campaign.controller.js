@@ -13,6 +13,44 @@ exports.createCampaign = async (req, res) => {
     // Get brand profile
     const brandProfile = await BrandProfile.findOne({ user: brandId });
 
+    // Validate budget
+    const budgetMin = req.body.budgetMin || req.body.budget?.min || 0;
+    const budgetMax = req.body.budgetMax || req.body.budget?.max || 0;
+
+    if (budgetMin < 0 || budgetMax < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Budget values cannot be negative'
+      });
+    }
+
+    if (budgetMin > budgetMax) {
+      return res.status(400).json({
+        success: false,
+        message: 'Minimum budget cannot exceed maximum budget'
+      });
+    }
+
+    // Validate dates
+    const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
+    const deadline = new Date(req.body.deadline);
+
+    if (deadline <= startDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Deadline must be after start date'
+      });
+    }
+
+    // Validate maxInfluencers
+    const maxInfluencers = req.body.maxInfluencers || 10;
+    if (maxInfluencers <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Maximum influencers must be greater than 0'
+      });
+    }
+
     const campaignData = {
       brand: brandId,
       brandProfile: brandProfile?._id,
@@ -21,12 +59,12 @@ exports.createCampaign = async (req, res) => {
       category: req.body.category,
       platformType: req.body.platformType || 'Any',
       budget: {
-        min: req.body.budgetMin || req.body.budget?.min || 0,
-        max: req.body.budgetMax || req.body.budget?.max || 0
+        min: budgetMin,
+        max: budgetMax
       },
       deliverables: req.body.deliverables || [],
-      startDate: req.body.startDate || new Date(),
-      deadline: req.body.deadline,
+      startDate: startDate,
+      deadline: deadline,
       eligibility: {
         minFollowers: req.body.eligibility?.minFollowers || req.body.minFollowers || 0,
         maxFollowers: req.body.eligibility?.maxFollowers || req.body.maxFollowers || 10000000,
@@ -38,7 +76,7 @@ exports.createCampaign = async (req, res) => {
       status: req.body.status || 'active',
       termsAndConditions: req.body.termsAndConditions || '',
       tags: req.body.tags || [],
-      maxInfluencers: req.body.maxInfluencers || 10
+      maxInfluencers: maxInfluencers
     };
 
     const campaign = await Campaign.create(campaignData);
@@ -224,12 +262,50 @@ exports.updateCampaign = async (req, res) => {
       }
     });
 
-    // Update budget
+    // Update budget with validation
     if (req.body.budget || req.body.budgetMin || req.body.budgetMax) {
+      const newBudgetMin = req.body.budgetMin || req.body.budget?.min || campaign.budget.min;
+      const newBudgetMax = req.body.budgetMax || req.body.budget?.max || campaign.budget.max;
+
+      if (newBudgetMin < 0 || newBudgetMax < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Budget values cannot be negative'
+        });
+      }
+
+      if (newBudgetMin > newBudgetMax) {
+        return res.status(400).json({
+          success: false,
+          message: 'Minimum budget cannot exceed maximum budget'
+        });
+      }
+
       campaign.budget = {
-        min: req.body.budgetMin || req.body.budget?.min || campaign.budget.min,
-        max: req.body.budgetMax || req.body.budget?.max || campaign.budget.max
+        min: newBudgetMin,
+        max: newBudgetMax
       };
+    }
+
+    // Validate deadline if updated
+    if (req.body.deadline) {
+      const newDeadline = new Date(req.body.deadline);
+      if (newDeadline <= campaign.startDate) {
+        return res.status(400).json({
+          success: false,
+          message: 'Deadline must be after start date'
+        });
+      }
+    }
+
+    // Validate maxInfluencers if updated
+    if (req.body.maxInfluencers !== undefined) {
+      if (req.body.maxInfluencers <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Maximum influencers must be greater than 0'
+        });
+      }
     }
 
     // Update eligibility
