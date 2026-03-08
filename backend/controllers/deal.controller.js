@@ -4,6 +4,7 @@ const Campaign = require('../models/Campaign.model');
 const InfluencerProfile = require('../models/InfluencerProfile.model');
 const BrandProfile = require('../models/BrandProfile.model');
 const { createNotificationFromTemplate } = require('../services/notification.service');
+const trustScoreService = require('../services/trustScore.service');
 
 /**
  * Create deal from accepted application (Brand only)
@@ -119,6 +120,7 @@ exports.getMyDeals = async (req, res) => {
         .populate('campaign', 'title')
         .populate('brand', 'name')
         .populate('influencer', 'name')
+        .populate('paymentId') // Populate payment details
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit)),
@@ -252,9 +254,31 @@ exports.updateDealStatus = async (req, res) => {
           $inc: { completedCampaigns: 1, totalSpent: deal.agreedRate, activeCampaigns: -1 }
         }
       );
+
+      // Update trust score for completed deal
+      try {
+        await trustScoreService.updateTrustScore(
+          deal.influencer.toString(),
+          'DEAL_COMPLETED',
+          { dealId: deal._id, amount: deal.agreedRate }
+        );
+      } catch (trustErr) {
+        console.error('Trust score update error:', trustErr);
+      }
     }
     if (status === 'cancelled') {
       deal.cancelledAt = new Date();
+
+      // Penalize trust score for cancelled deal
+      try {
+        await trustScoreService.updateTrustScore(
+          deal.influencer.toString(),
+          'DEAL_CANCELLED',
+          { dealId: deal._id, amount: deal.agreedRate }
+        );
+      } catch (trustErr) {
+        console.error('Trust score update error:', trustErr);
+      }
     }
 
     await deal.save();

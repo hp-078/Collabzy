@@ -773,6 +773,108 @@
 }
 
 .collab-star.active {
+  color: var(--accent-coral);
+}
+
+/* ========================================
+   Payment UI Styles
+======================================== */
+.collab-payment-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  background: rgba(232, 213, 242, 0.2);
+  color: var(--light-text);
+  border: 1px solid rgba(232, 213, 242, 0.4);
+}
+
+.collab-payment-info.success {
+  background: rgba(134, 239, 172, 0.15);
+  color: var(--success);
+  border-color: rgba(134, 239, 172, 0.3);
+}
+
+.collab-payment-info.warning {
+  background: rgba(251, 191, 36, 0.15);
+  color: #f59e0b;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.collab-payment-info svg {
+  flex-shrink: 0;
+}
+
+.btn-payment {
+  background: linear-gradient(135deg, var(--accent-coral) 0%, #ff6b6b 100%);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-payment::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-payment:hover::before {
+  left: 100%;
+}
+
+.btn-payment:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+}
+
+.btn-payment:disabled {
+  background: var(--muted-text);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-payment:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--success) 0%, #10b981 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+/* Dark theme support */
+[data-theme="dark"] .collab-payment-info {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+[data-theme="dark"] .collab-payment-info.success {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .collab-payment-info.warning {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.3);
+}
   color: #f59e0b;
 }
 

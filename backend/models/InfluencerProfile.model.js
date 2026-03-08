@@ -155,9 +155,19 @@ const influencerProfileSchema = new mongoose.Schema({
     default: 50
   },
 
+  // Trust Score History
+  trustScoreHistory: [{
+    score: { type: Number, required: true },
+    change: { type: Number, required: true },
+    reason: { type: String, required: true },
+    metadata: { type: mongoose.Schema.Types.Mixed },
+    date: { type: Date, default: Date.now }
+  }],
+
   // Verification
   isVerified: { type: Boolean, default: false },
   verifiedAt: { type: Date },
+  verified: { type: Boolean, default: false }, // For new trust system
 
   // Services offered
   services: [{

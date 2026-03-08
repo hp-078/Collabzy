@@ -19,9 +19,12 @@ import {
   Upload,
   AlertCircle,
   Handshake,
-  Star
+  Star,
+  CreditCard,
+  Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import paymentService from '../../services/payment.service';
 import './Collaborations.css';
 
 const Collaborations = () => {
@@ -58,6 +61,11 @@ const Collaborations = () => {
   const [showReviewModal, setShowReviewModal] = useState(null); // holds deal to review
   const [reviewForm, setReviewForm] = useState({ rating: 5, title: '', content: '' });
 
+  // Payment state
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [dealPayments, setDealPayments] = useState({}); // Cache payment status by deal ID
+
   // Fetch data on mount
   useEffect(() => {
     const loadData = async () => {
@@ -81,6 +89,16 @@ const Collaborations = () => {
         // Load deals
         const dealsData = await fetchMyDeals(true);
         setMyDeals(dealsData || []);
+
+        // Load Razorpay script
+        if (isBrand) {
+          try {
+            await paymentService.loadRazorpayScript();
+            setRazorpayLoaded(true);
+          } catch (err) {
+            console.error('Failed to load Razorpay:', err);
+          }
+        }
       } catch (err) {
         console.error('Error loading data:', err);
       } finally {
@@ -241,6 +259,129 @@ const Collaborations = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Handle payment initiation (Brand only)
+  const handleInitiatePayment = async (deal) => {
+    if (!razorpayLoaded) {
+      toast.error('Payment gateway not loaded. Please refresh the page.');
+      return;
+    }
+
+    setPaymentProcessing(true);
+    try {
+      // Step 1: Create order
+      const orderResult = await paymentService.createPaymentOrder(deal._id, deal.agreedRate);
+      
+      if (!orderResult.success) {
+        throw new Error(orderResult.message || 'Failed to create payment order');
+      }
+
+      const orderData = orderResult.data;
+      
+      // Step 2: Initiate Razorpay checkout
+      paymentService.initiateRazorpayCheckout(
+        {
+          ...orderData,
+          brandName: user?.name,
+          brandEmail: user?.email
+        },
+        async (response) => {
+          // Payment successful - verify it
+          try {
+            const verifyResult = await paymentService.verifyPayment({
+              orderId: response.orderId,
+              paymentId: response.paymentId,
+              signature: response.signature,
+              dealId: deal._id
+            });
+
+            if (verifyResult.success) {
+              toast.success('Payment successful! Deal is now active.');
+              // Refresh deals
+              const dealsData = await fetchMyDeals(true);
+              setMyDeals(dealsData || []);
+              // Update payment cache
+              setDealPayments(prev => ({
+                ...prev,
+                [deal._id]: { status: 'paid', ...verifyResult.data }
+              }));
+            } else {
+              toast.error('Payment verification failed. Please contact support.');
+            }
+          } catch (verifyErr) {
+            console.error('Payment verification error:', verifyErr);
+            toast.error('Payment verification failed. Please contact support.');
+          } finally {
+            setPaymentProcessing(false);
+          }
+        },
+        (error) => {
+          // Payment failed or cancelled
+          console.error('Payment error:', error);
+          toast.error(error.message || 'Payment failed');
+          setPaymentProcessing(false);
+        }
+      );
+    } catch (err) {
+      console.error('Payment initiation error:', err);
+      toast.error(err.message || 'Failed to initiate payment');
+      setPaymentProcessing(false);
+    }
+  };
+
+  // Handle release payment (Brand only, after deal completion)
+  const handleReleasePayment = async (dealId) => {
+    if (!window.confirm('Release payment to influencer? This action cannot be undone.')) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const result = await paymentService.releasePayment(dealId);
+      
+      if (result.success) {
+        toast.success('Payment released to influencer successfully!');
+        // Refresh deals
+        const dealsData = await fetchMyDeals(true);
+        setMyDeals(dealsData || []);
+        // Update payment cache
+        setDealPayments(prev => ({
+          ...prev,
+          [dealId]: { ...prev[dealId], status: 'released' }
+        }));
+      } else {
+        toast.error(result.message || 'Failed to release payment');
+      }
+    } catch (err) {
+      console.error('Release payment error:', err);
+      toast.error('Failed to release payment');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Fetch payment status for a deal
+  const fetchPaymentStatus = async (dealId) => {
+    // Return cached if available
+    if (dealPayments[dealId]) {
+      return dealPayments[dealId];
+    }
+
+    try {
+      const result = await paymentService.getPaymentByDeal(dealId);
+      if (result.success && result.data) {
+        const paymentData = { status: result.data.paymentStatus, ...result.data };
+        setDealPayments(prev => ({
+          ...prev,
+          [dealId]: paymentData
+        }));
+        return paymentData;
+      }
+    } catch (err) {
+      console.error('Fetch payment status error:', err);
+    }
+    return null;
   };
 
   // Handle submit review
@@ -700,6 +841,37 @@ const Collaborations = () => {
                       </div>
 
                       <div className="collab-footer">
+                        {/* Payment status display */}
+                        {deal.paymentStatus && (
+                          <div className={`collab-payment-info ${deal.paymentStatus === 'paid' ? 'success' : deal.paymentStatus === 'pending' ? 'warning' : ''}`}>
+                            <Lock size={16} />
+                            <span>
+                              Payment: {deal.paymentStatus === 'paid' ? 'Secured in Escrow' : 
+                                       deal.paymentStatus === 'processing' ? 'Processing...' :
+                                       deal.paymentStatus === 'pending' ? 'Payment Required' :
+                                       deal.paymentStatus}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Brand: Pay for deal */}
+                        {isBrand && (deal.status === 'pending_payment' || deal.status === 'active') && (!deal.paymentId || deal.paymentStatus === 'pending') && (
+                          <div className="collab-action-buttons">
+                            <button 
+                              className="btn btn-primary btn-sm btn-payment"
+                              onClick={() => handleInitiatePayment(deal)}
+                              disabled={paymentProcessing || !razorpayLoaded}
+                              title={!razorpayLoaded ? 'Payment gateway loading...' : ''}
+                            >
+                              {paymentProcessing ? (
+                                <><Loader size={16} className="spin-animation" /> Processing...</>
+                              ) : (
+                                <><CreditCard size={16} /> Pay Now (${deal.agreedRate})</>
+                              )}
+                            </button>
+                          </div>
+                        )}
+
                         {/* Influencer actions */}
                         {isInfluencer && (deal.status === 'active' || deal.status === 'in_progress') && (
                           <div className="collab-action-buttons">
@@ -739,16 +911,35 @@ const Collaborations = () => {
                               <CheckCircle size={18} />
                               <span>Deal completed{deal.completedAt ? ` on ${formatDate(deal.completedAt)}` : ''}</span>
                             </div>
-                            <button 
-                              className="btn btn-primary btn-sm"
-                              onClick={() => {
-                                setShowReviewModal(deal);
-                                setReviewForm({ rating: 5, title: '', content: '' });
-                              }}
-                            >
-                              <Star size={16} />
-                              Leave Review
-                            </button>
+                            <div className="collab-action-buttons">
+                              {/* Brand: Release payment to influencer */}
+                              {isBrand && deal.paymentStatus === 'escrow' && (
+                                <button 
+                                  className="btn btn-success btn-sm"
+                                  onClick={() => handleReleasePayment(deal._id)}
+                                  disabled={submitting}
+                                >
+                                  {submitting ? <Loader size={16} className="spin-animation" /> : <DollarSign size={16} />}
+                                  Release Payment
+                                </button>
+                              )}
+                              {isBrand && deal.paymentStatus === 'released' && (
+                                <div className="collab-completed-info collab-success">
+                                  <CheckCircle size={16} />
+                                  <span>Payment released to influencer</span>
+                                </div>
+                              )}
+                              <button 
+                                className="btn btn-primary btn-sm"
+                                onClick={() => {
+                                  setShowReviewModal(deal);
+                                  setReviewForm({ rating: 5, title: '', content: '' });
+                                }}
+                              >
+                                <Star size={16} />
+                                Leave Review
+                              </button>
+                            </div>
                           </div>
                         )}
                         {deal.status === 'cancelled' && (

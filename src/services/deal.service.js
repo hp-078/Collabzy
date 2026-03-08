@@ -29,6 +29,33 @@ const dealService = {
   updateDeliverable: async (dealId, deliverableIndex, data) => {
     const response = await api.put(`/deals/${dealId}/deliverables/${deliverableIndex}`, data);
     return response.data;
+  },
+
+  // Helper: Check if deal needs payment
+  needsPayment: (deal) => {
+    return deal && 
+           (deal.status === 'pending_payment' || deal.status === 'active') && 
+           (!deal.paymentId || deal.paymentStatus === 'pending');
+  },
+
+  // Helper: Check if payment can be released
+  canReleasePayment: (deal) => {
+    return deal && 
+           deal.status === 'completed' && 
+           deal.paymentStatus === 'escrow';
+  },
+
+  // Helper: Get payment status label
+  getPaymentStatusLabel: (paymentStatus) => {
+    const labels = {
+      'pending': 'Payment Required',
+      'processing': 'Processing Payment',
+      'paid': 'Payment Secured',
+      'escrow': 'In Escrow',
+      'released': 'Released to Influencer',
+      'refunded': 'Refunded'
+    };
+    return labels[paymentStatus] || paymentStatus;
   }
 };
 

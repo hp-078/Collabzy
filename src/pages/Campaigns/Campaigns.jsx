@@ -59,7 +59,6 @@ const Campaigns = () => {
     deliverables: [{ type: '', quantity: 1, description: '' }],
     eligibility: {
       minFollowers: 0,
-      maxFollowers: 10000000,
       minEngagementRate: 0,
       requiredNiches: [],
       minTrustScore: 0,
@@ -220,7 +219,7 @@ const Campaigns = () => {
       title: '', description: '', category: '', platformType: 'Any',
       budgetMin: '', budgetMax: '', deadline: '', startDate: new Date().toISOString().split('T')[0],
       deliverables: [{ type: '', quantity: 1, description: '' }],
-      eligibility: { minFollowers: 0, maxFollowers: 10000000, minEngagementRate: 0, requiredNiches: [], minTrustScore: 0 },
+      eligibility: { minFollowers: 0, minEngagementRate: 0, requiredNiches: [], minTrustScore: 0 },
       tags: '', maxInfluencers: 10, status: 'active',
     });
   };

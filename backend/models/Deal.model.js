@@ -58,11 +58,15 @@ const dealSchema = new mongoose.Schema({
   // Status
   status: {
     type: String,
-    enum: ['active', 'in_progress', 'pending_review', 'completed', 'cancelled', 'disputed'],
+    enum: ['pending_payment', 'active', 'in_progress', 'pending_review', 'completed', 'cancelled', 'disputed'],
     default: 'active'
   },
 
   // Payment
+  paymentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Payment'
+  },
   paymentStatus: {
     type: String,
     enum: ['pending', 'processing', 'paid', 'refunded'],

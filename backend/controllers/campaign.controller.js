@@ -67,7 +67,6 @@ exports.createCampaign = async (req, res) => {
       deadline: deadline,
       eligibility: {
         minFollowers: req.body.eligibility?.minFollowers || req.body.minFollowers || 0,
-        maxFollowers: req.body.eligibility?.maxFollowers || req.body.maxFollowers || 10000000,
         minEngagementRate: req.body.eligibility?.minEngagementRate || 0,
         requiredNiches: req.body.eligibility?.requiredNiches || [],
         minTrustScore: req.body.eligibility?.minTrustScore || 0,

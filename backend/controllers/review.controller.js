@@ -4,6 +4,7 @@ const InfluencerProfile = require('../models/InfluencerProfile.model');
 const BrandProfile = require('../models/BrandProfile.model');
 const mongoose = require('mongoose');
 const { createNotificationFromTemplate } = require('../services/notification.service');
+const trustScoreService = require('../services/trustScore.service');
 
 /**
  * Create review
@@ -95,6 +96,18 @@ exports.createReview = async (req, res) => {
         influencerProfile.averageRating = Math.round(avgRating * 10) / 10;
         influencerProfile.totalReviews = allReviews.length;
         await influencerProfile.save();
+
+        // Update trust score based on review rating
+        try {
+          const eventType = rating >= 4 ? 'POSITIVE_REVIEW' : 'NEGATIVE_REVIEW';
+          await trustScoreService.updateTrustScore(
+            reviewee.toString(),
+            eventType,
+            { reviewId: review._id, rating, dealId }
+          );
+        } catch (trustErr) {
+          console.error('Trust score update error:', trustErr);
+        }
       }
     } else {
       const brandProfile = await BrandProfile.findOne({ user: reviewee });
