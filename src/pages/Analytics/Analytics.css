@@ -6,7 +6,12 @@
 .analytics-page {
   min-height: 100vh;
   padding: 120px 0 80px;
-  background: linear-gradient(180deg, var(--pastel-cream) 0%, var(--pastel-peach) 40%, var(--pastel-cream) 100%);
+  background:
+    linear-gradient(180deg,
+      rgba(197, 232, 241, 0.2) 0%,
+      rgba(232, 213, 242, 0.1) 15%,
+      var(--pastel-cream) 30%,
+      var(--pastel-cream) 100%);
 }
 
 .analytics-container {

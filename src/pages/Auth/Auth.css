@@ -4,7 +4,11 @@
 
 .auth-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, var(--pastel-peach) 0%, var(--pastel-pink) 50%, var(--pastel-cream) 100%);
+  background:
+    linear-gradient(180deg,
+      var(--pastel-peach) 0%,
+      rgba(255, 221, 224, 0.35) 40%,
+      var(--pastel-cream) 100%);
   position: relative;
   overflow: hidden;
   display: flex;

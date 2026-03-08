@@ -5,7 +5,11 @@
 .inf-page {
   padding: 120px 0 60px;
   min-height: 100vh;
-  background: var(--pastel-cream);
+  background:
+    linear-gradient(180deg,
+      rgba(184, 229, 208, 0.2) 0%,
+      var(--pastel-cream) 20%,
+      var(--pastel-cream) 100%);
   animation: fadeIn 0.4s ease;
 }
 

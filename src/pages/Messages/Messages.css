@@ -6,7 +6,11 @@
 .msg-page {
   padding-top: 90px;
   height: 100vh;
-  background: var(--pastel-cream);
+  background:
+    linear-gradient(180deg,
+      rgba(197, 232, 241, 0.2) 0%,
+      var(--pastel-cream) 15%,
+      var(--pastel-cream) 100%);
   overflow: hidden;
 }
 

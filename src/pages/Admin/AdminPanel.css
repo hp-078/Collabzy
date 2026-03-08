@@ -6,7 +6,11 @@
 .admin-page {
   min-height: 100vh;
   padding: 120px 0 80px;
-  background: linear-gradient(180deg, var(--pastel-cream) 0%, var(--pastel-lavender) 30%, var(--pastel-cream) 100%);
+  background:
+    linear-gradient(180deg,
+      rgba(232, 213, 242, 0.25) 0%,
+      var(--pastel-cream) 20%,
+      var(--pastel-cream) 100%);
 }
 
 .admin-container {

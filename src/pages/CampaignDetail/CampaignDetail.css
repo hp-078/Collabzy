@@ -6,7 +6,11 @@
 .cdetail-page {
   min-height: 100vh;
   padding: 120px 0 60px;
-  background: linear-gradient(180deg, var(--pastel-peach) 0%, var(--pastel-cream) 100%);
+  background:
+    linear-gradient(180deg,
+      rgba(255, 240, 232, 0.5) 0%,
+      var(--pastel-cream) 20%,
+      var(--pastel-cream) 100%);
 }
 
 .cdetail-container {

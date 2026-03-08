@@ -7,7 +7,11 @@
 .idet-page {
   padding: 120px 0 60px;
   min-height: 100vh;
-  background: linear-gradient(180deg, var(--pastel-peach) 0%, var(--pastel-cream) 100%);
+  background:
+    linear-gradient(180deg,
+      rgba(255, 221, 224, 0.3) 0%,
+      var(--pastel-cream) 18%,
+      var(--pastel-cream) 100%);
   overflow-x: hidden;
 }
 

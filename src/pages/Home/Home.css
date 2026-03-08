@@ -6,7 +6,11 @@
 .home-page {
   font-family: var(--body-font);
   color: var(--dark-text);
-  background: var(--pastel-cream);
+  background:
+    linear-gradient(180deg,
+      var(--pastel-peach) 0%,
+      var(--pastel-cream) 18%,
+      var(--pastel-cream) 100%);
   /* Note: overflow-x removed to allow sticky positioning */
 }
 
