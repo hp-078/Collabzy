@@ -49,15 +49,15 @@
   gap: 0.75rem;
   background: white;
   padding: 0.875rem 1.25rem;
-  border-radius: 50px;
-  border: 2px solid rgba(232, 213, 242, 0.4);
+  border-radius: var(--clay-radius-pill);
+  border: none;
   min-width: 280px;
   transition: all 0.3s ease;
+  box-shadow: var(--clay-shadow-input);
 }
 
 .collab-search-box:focus-within {
-  border-color: var(--pastel-lavender);
-  box-shadow: 0 0 0 4px rgba(232, 213, 242, 0.3);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 .collab-search-box svg {
@@ -78,9 +78,9 @@
   gap: 0.5rem;
   background: white;
   padding: 0.35rem;
-  border-radius: 50px;
-  box-shadow: 0 4px 20px rgba(232, 213, 242, 0.2);
-  border: 1px solid rgba(232, 213, 242, 0.3);
+  border-radius: var(--clay-radius-pill);
+  box-shadow: var(--clay-shadow-sm);
+  border: none;
 }
 
 .collab-filter-tab {
@@ -92,7 +92,7 @@
   font-weight: 600;
   font-family: var(--body-font);
   color: var(--light-text);
-  border-radius: 50px;
+  border-radius: var(--clay-radius-pill);
   transition: all 0.3s ease;
 }
 
@@ -125,16 +125,16 @@
 
 .collab-card {
   background: white;
-  border-radius: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(232, 213, 242, 0.3);
+  border-radius: var(--clay-radius);
+  box-shadow: var(--clay-shadow);
+  border: none;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .collab-card:hover {
-  box-shadow: 0 12px 40px rgba(232, 213, 242, 0.3);
-  transform: translateY(-4px);
+  box-shadow: var(--clay-shadow-hover);
+  transform: translateY(-3px);
 }
 
 .collab-header {
@@ -162,11 +162,13 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.5rem 1rem;
-  border-radius: 50px;
+  border-radius: var(--clay-radius-pill);
   font-size: 0.75rem;
   font-weight: 600;
   font-family: var(--body-font);
   text-transform: capitalize;
+  box-shadow: var(--clay-shadow-xs);
+  border: none;
 }
 
 .collab-status-pending {
@@ -254,8 +256,8 @@
   text-align: center;
   padding: 4rem 2rem;
   background: white;
-  border-radius: 24px;
-  box-shadow: 0 4px 20px rgba(255, 181, 186, 0.1);
+  border-radius: var(--clay-radius);
+  box-shadow: var(--clay-shadow);
 }
 
 .collab-empty-state svg {
@@ -341,8 +343,9 @@
   margin-bottom: 1.5rem;
   background: rgba(255, 255, 255, 0.5);
   padding: 0.5rem;
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--clay-radius-sm);
+  border: none;
+  box-shadow: var(--clay-shadow-sm);
 }
 
 .collab-main-tab {
@@ -370,7 +373,7 @@
 .collab-main-tab.active {
   background: white;
   color: var(--accent-coral);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--clay-shadow-button);
 }
 
 .collab-tab-count {
@@ -394,12 +397,13 @@
   background: var(--error-light);
   color: var(--accent-coral);
   padding: 1rem;
-  border-radius: 12px;
+  border-radius: var(--clay-radius-sm);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  border: none;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 /* ========================================
@@ -424,6 +428,7 @@
   background: var(--pastel-lavender);
   border-radius: 10px;
   min-width: 140px;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .collab-deal-stat svg {
@@ -593,11 +598,12 @@
 
 .collab-modal {
   background: white;
-  border-radius: 20px;
+  border-radius: var(--clay-radius-lg);
   width: 100%;
   max-width: 480px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--clay-shadow-lg);
+  border: none;
   animation: slideUp 0.3s ease;
 }
 
@@ -677,17 +683,17 @@
 .collab-form-group input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  border: none;
   border-radius: 10px;
   font-size: 0.95rem;
   transition: all 0.2s ease;
   font-family: var(--body-font);
+  box-shadow: var(--clay-shadow-input);
 }
 
 .collab-form-group input:focus {
   outline: none;
-  border-color: var(--accent-coral);
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 .collab-modal-footer {
@@ -706,15 +712,16 @@
   gap: 0.5rem;
   padding: 0.75rem;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: var(--clay-radius-sm);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .collab-modal-footer .btn-secondary {
   background: white;
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  border: none;
   color: var(--dark-text);
+  box-shadow: var(--clay-shadow-button);
 }
 
 .collab-modal-footer .btn-secondary:hover {
@@ -725,10 +732,13 @@
   background: var(--accent-coral);
   border: none;
   color: white;
+  box-shadow: var(--clay-shadow-button);
 }
 
 .collab-modal-footer .btn-primary:hover:not(:disabled) {
   background: var(--accent-purple);
+  box-shadow: var(--clay-shadow-button-hover);
+  transform: scale(1.02);
 }
 
 .collab-modal-footer .btn-primary:disabled {
@@ -784,13 +794,14 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  border-radius: 12px;
+  border-radius: var(--clay-radius-sm);
   font-size: 0.875rem;
   font-weight: 600;
   margin-bottom: 1rem;
   background: rgba(232, 213, 242, 0.2);
   color: var(--light-text);
-  border: 1px solid rgba(232, 213, 242, 0.4);
+  border: none;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .collab-payment-info.success {
@@ -834,8 +845,8 @@
 }
 
 .btn-payment:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--clay-shadow-button-hover);
 }
 
 .btn-payment:disabled {
@@ -856,8 +867,8 @@
 }
 
 .btn-success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--clay-shadow-button-hover);
 }
 
 /* Dark theme support */
@@ -893,19 +904,19 @@
 .collab-form-group textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  border: none;
   border-radius: 10px;
   font-size: 0.95rem;
   transition: all 0.2s ease;
   font-family: var(--body-font);
   resize: vertical;
   min-height: 100px;
+  box-shadow: var(--clay-shadow-input);
 }
 
 .collab-form-group textarea:focus {
   outline: none;
-  border-color: var(--accent-coral);
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 .collab-char-count {
@@ -945,12 +956,12 @@
 ======================================== */
 [data-theme="dark"] .collab-search-box {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow-input);
 }
 
 [data-theme="dark"] .collab-search-box:focus-within {
-  border-color: var(--accent-coral);
-  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 [data-theme="dark"] .collab-search-box input {
@@ -963,8 +974,8 @@
 
 [data-theme="dark"] .collab-filter-tabs {
   background: var(--surface-elevated);
-  border-color: var(--border-secondary);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: none;
+  box-shadow: var(--clay-shadow-sm);
 }
 
 [data-theme="dark"] .collab-filter-tab:hover {
@@ -973,18 +984,17 @@
 
 [data-theme="dark"] .collab-card {
   background: var(--surface-elevated);
-  border-color: var(--border-secondary);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: none;
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .collab-card:hover {
-  border-color: var(--accent-coral);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 [data-theme="dark"] .collab-empty-state {
   background: var(--surface-elevated);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .collab-main-tab:hover {
@@ -994,18 +1004,19 @@
 [data-theme="dark"] .collab-main-tab.active {
   background: var(--surface-elevated);
   color: var(--accent-coral);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--clay-shadow-button);
 }
 
 [data-theme="dark"] .collab-modal {
   background: var(--surface-elevated);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--clay-shadow-lg);
 }
 
 [data-theme="dark"] .collab-modal-footer .btn-secondary {
   background: var(--surface-primary);
-  border-color: var(--border-primary);
+  border: none;
   color: var(--dark-text);
+  box-shadow: var(--clay-shadow-button);
 }
 
 [data-theme="dark"] .collab-modal-footer .btn-secondary:hover {

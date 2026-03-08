@@ -30,24 +30,24 @@
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 50px;
-  box-shadow: 0 4px 12px rgba(255, 181, 186, 0.15);
+  box-shadow: var(--clay-shadow-xs);
   transition: all 0.3s ease;
 }
 
 .cdetail-back:hover {
   color: var(--accent-coral);
   transform: translateX(-4px);
-  box-shadow: 0 8px 20px rgba(255, 181, 186, 0.25);
+  box-shadow: var(--clay-shadow-sm);
 }
 
 /* Hero */
 .cdetail-hero {
   background: white;
-  border: 1px solid rgba(255, 181, 186, 0.2);
-  border-radius: 24px;
+  border: none;
+  border-radius: var(--clay-radius);
   padding: 2.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 8px 32px rgba(255, 181, 186, 0.15);
+  box-shadow: var(--clay-shadow);
 }
 
 .cdetail-hero-top {
@@ -80,6 +80,8 @@
   font-weight: 600;
   font-family: var(--body-font);
   text-transform: capitalize;
+  border: none;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .cdetail-meta-grid {
@@ -91,10 +93,11 @@
 
 .cdetail-meta-item {
   background: var(--pastel-cream);
-  border-radius: 16px;
+  border-radius: var(--clay-radius-sm);
   padding: 1.25rem;
   text-align: center;
-  border: 1px solid rgba(255, 181, 186, 0.2);
+  border: none;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .cdetail-meta-label {
@@ -118,11 +121,11 @@
 /* Sections */
 .cdetail-section {
   background: white;
-  border: 1px solid rgba(255, 181, 186, 0.2);
-  border-radius: 24px;
+  border: none;
+  border-radius: var(--clay-radius);
   padding: 2rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 20px rgba(255, 181, 186, 0.1);
+  box-shadow: var(--clay-shadow);
 }
 
 .cdetail-section h3 {
@@ -206,16 +209,16 @@
 
 .cdetail-app-card {
   background: var(--pastel-cream);
-  border: 1px solid rgba(255, 181, 186, 0.2);
-  border-radius: 16px;
+  border: none;
+  border-radius: var(--clay-radius-sm);
   padding: 1.25rem;
   margin-bottom: 0.75rem;
   transition: all 0.3s ease;
+  box-shadow: var(--clay-shadow-sm);
 }
 
 .cdetail-app-card:hover {
-  border-color: var(--pastel-pink);
-  box-shadow: 0 8px 24px rgba(255, 181, 186, 0.2);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 .cdetail-app-top {
@@ -330,7 +333,7 @@
   width: 100%;
   padding: 0.875rem 1rem;
   background: white;
-  border: 2px solid var(--gray-200);
+  border: none;
   border-radius: 12px;
   color: var(--dark-text);
   font-size: 0.9rem;
@@ -338,13 +341,13 @@
   outline: none;
   box-sizing: border-box;
   transition: all 0.3s ease;
+  box-shadow: var(--clay-shadow-input);
 }
 
 .cdetail-edit-input:focus,
 .cdetail-edit-textarea:focus,
 .cdetail-edit-select:focus {
-  border-color: var(--pastel-pink);
-  box-shadow: 0 0 0 3px rgba(255, 221, 224, 0.3);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 .cdetail-edit-textarea {
@@ -379,12 +382,12 @@
 .cdetail-save-btn {
   background: var(--dark-text);
   color: white;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--clay-shadow-button);
 }
 
 .cdetail-save-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--clay-shadow-button-hover);
   background: var(--accent-coral);
 }
 
@@ -393,12 +396,13 @@
 .cdetail-cancel-btn {
   background: var(--pastel-cream);
   color: var(--dark-text);
-  border: 2px solid var(--gray-200);
+  border: none;
+  box-shadow: var(--clay-shadow-button);
 }
 
 .cdetail-cancel-btn:hover {
   background: var(--pastel-peach);
-  border-color: var(--pastel-pink);
+  box-shadow: var(--clay-shadow-button-hover);
 }
 
 /* Apply section (influencer) */
@@ -407,11 +411,11 @@
   align-items: center;
   justify-content: space-between;
   background: linear-gradient(135deg, var(--pastel-peach), var(--pastel-pink));
-  border: 1px solid rgba(255, 181, 186, 0.3);
-  border-radius: 24px;
+  border: none;
+  border-radius: var(--clay-radius);
   padding: 1.5rem 2rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 20px rgba(255, 181, 186, 0.2);
+  box-shadow: var(--clay-shadow);
 }
 
 .cdetail-apply-bar p {
@@ -432,12 +436,12 @@
   font-family: var(--body-font);
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--clay-shadow-button);
 }
 
 .cdetail-apply-action:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--clay-shadow-button-hover);
   background: var(--accent-coral);
 }
 
@@ -481,52 +485,49 @@
 [data-theme="dark"] .cdetail-back {
   background: var(--surface-elevated);
   color: var(--light-text);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--clay-shadow-xs);
 }
 
 [data-theme="dark"] .cdetail-back:hover {
   color: var(--accent-coral);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--clay-shadow-sm);
 }
 
 [data-theme="dark"] .cdetail-hero {
   background: var(--surface-elevated);
-  border-color: var(--border-secondary);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .cdetail-meta-item {
   background: var(--surface-primary);
-  border-color: var(--border-secondary);
+  box-shadow: var(--clay-shadow-xs);
 }
 
 [data-theme="dark"] .cdetail-section {
   background: var(--surface-elevated);
-  border-color: var(--border-secondary);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .cdetail-app-card {
-  border-color: var(--border-secondary);
+  box-shadow: var(--clay-shadow-sm);
 }
 
 [data-theme="dark"] .cdetail-app-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 [data-theme="dark"] .cdetail-edit-input,
 [data-theme="dark"] .cdetail-edit-textarea,
 [data-theme="dark"] .cdetail-edit-select {
   background: var(--surface-input);
-  border-color: var(--border-primary);
   color: var(--dark-text);
+  box-shadow: var(--clay-shadow-input);
 }
 
 [data-theme="dark"] .cdetail-edit-input:focus,
 [data-theme="dark"] .cdetail-edit-textarea:focus,
 [data-theme="dark"] .cdetail-edit-select:focus {
-  border-color: var(--accent-coral);
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 [data-theme="dark"] .cdetail-edit-select option {

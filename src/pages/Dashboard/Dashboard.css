@@ -60,12 +60,13 @@
   background: linear-gradient(135deg, #fff0f0, #ffe8e8);
   color: var(--accent-coral);
   padding: 1rem 1.25rem;
-  border-radius: 16px;
+  border-radius: var(--clay-radius-sm);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  border: none;
+  box-shadow: inset 2px 2px 4px rgba(255,107,107,0.08), inset -2px -2px 4px rgba(255,255,255,0.5);
   font-family: var(--body-font);
   font-weight: 500;
 }
@@ -80,7 +81,7 @@
   margin-bottom: 1.75rem;
   background: linear-gradient(135deg, var(--pastel-lavender) 0%, var(--pastel-pink) 50%, var(--pastel-peach) 100%);
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--clay-shadow-lg);
 }
 
 .dash-hero-bg-shapes {
@@ -145,8 +146,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
+  background: var(--white);
   padding: 0.5rem 1rem;
   border-radius: 50px;
   font-family: var(--body-font);
@@ -154,7 +154,8 @@
   font-size: 0.875rem;
   color: var(--dark-text);
   margin-bottom: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: none;
+  box-shadow: var(--clay-shadow-xs);
   animation: slide-in 0.5s ease-out;
 }
 
@@ -208,24 +209,26 @@
 .dash-hero-btn-primary {
   background: linear-gradient(135deg, var(--accent-coral), var(--accent-purple));
   color: white;
-  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
+  border: none;
+  box-shadow: var(--clay-shadow-button);
 }
 
 .dash-hero-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(255, 107, 107, 0.4);
+  box-shadow: var(--clay-shadow-button-hover);
 }
 
 .dash-hero-btn-secondary {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--white, #fff);
   color: var(--dark-text);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: none;
+  box-shadow: var(--clay-shadow-button);
 }
 
 .dash-hero-btn-secondary:hover {
   background: white;
   transform: translateY(-2px);
+  box-shadow: var(--clay-shadow-button-hover);
 }
 
 /* Hero Avatar */
@@ -301,11 +304,11 @@
   align-items: center;
   gap: 0.75rem;
   background: white;
-  border-radius: 16px;
+  border-radius: var(--clay-radius-sm);
   padding: 1rem 1.5rem;
   margin-bottom: 1.75rem;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: var(--clay-shadow-sm);
+  border: none;
   animation: tip-slide 0.5s ease-out;
 }
 
@@ -324,6 +327,7 @@
   background: linear-gradient(135deg, var(--pastel-yellow), var(--pastel-peach));
   color: var(--accent-coral);
   flex-shrink: 0;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .dash-tip-text {
@@ -368,10 +372,10 @@
 .dash-stat-card {
   position: relative;
   background: white;
-  border-radius: 22px;
+  border-radius: var(--clay-radius);
   overflow: hidden;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: var(--clay-shadow-sm);
+  border: none;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   animation: card-rise 0.5s ease-out both;
 }
@@ -383,7 +387,7 @@
 
 .dash-stat-card:hover {
   transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 .dash-stat-card-inner {
@@ -424,6 +428,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 14px;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .dash-stat-primary .dash-stat-icon {
@@ -505,9 +510,9 @@
 /* ── Cards ── */
 .dash-card {
   background: white;
-  border-radius: 24px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--clay-radius);
+  box-shadow: var(--clay-shadow);
+  border: none;
   overflow: hidden;
   animation: card-rise 0.5s ease-out both;
 }
@@ -915,17 +920,18 @@
 
 .dash-badge-unlocked {
   background: linear-gradient(135deg, rgba(255, 107, 107, 0.08), rgba(155, 89, 182, 0.08));
-  border: 1px solid rgba(255, 107, 107, 0.15);
+  border: none;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .dash-badge-unlocked:hover {
   transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.12);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 .dash-badge-locked {
   background: rgba(0, 0, 0, 0.03);
-  border: 1px dashed rgba(0, 0, 0, 0.1);
+  border: none;
   opacity: 0.5;
   filter: grayscale(100%);
 }
@@ -937,6 +943,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 12px;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .dash-badge-unlocked .dash-badge-icon {
@@ -968,10 +975,10 @@
 /* ── Profile Card ── */
 .dash-profile-card {
   background: white;
-  border-radius: 24px;
+  border-radius: var(--clay-radius);
   padding: 1.75rem 1.5rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: var(--clay-shadow);
+  border: none;
   text-align: center;
   animation: card-rise 0.5s ease-out both;
 }
@@ -1080,20 +1087,21 @@
   transition: all 0.3s ease;
   margin-top: 0.75rem;
   border: none;
+  box-shadow: var(--clay-shadow-button);
 }
 
 .dash-profile-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--clay-shadow-button-hover);
 }
 
 /* ── Quick Actions ── */
 .dash-quick-actions-card {
   background: white;
-  border-radius: 24px;
+  border-radius: var(--clay-radius);
   padding: 1.5rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: var(--clay-shadow);
+  border: none;
   animation: card-rise 0.5s ease-out both;
   animation-delay: 0.1s;
 }
@@ -1127,7 +1135,7 @@
 
 .dash-quick-action:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 .dash-quick-action span {
@@ -1144,6 +1152,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 14px;
+  box-shadow: var(--clay-shadow-xs);
   transition: transform 0.3s ease;
 }
 
@@ -1174,10 +1183,10 @@
 /* ── Deadlines ── */
 .dash-deadlines-card {
   background: white;
-  border-radius: 24px;
+  border-radius: var(--clay-radius);
   padding: 1.5rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: var(--clay-shadow);
+  border: none;
   animation: card-rise 0.5s ease-out both;
   animation-delay: 0.2s;
 }
@@ -1260,10 +1269,10 @@
 /* ── Goal Tracker ── */
 .dash-goal-card {
   background: white;
-  border-radius: 24px;
+  border-radius: var(--clay-radius);
   padding: 1.5rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: var(--clay-shadow);
+  border: none;
   animation: card-rise 0.5s ease-out both;
   animation-delay: 0.3s;
 }
@@ -1467,22 +1476,26 @@
 
 [data-theme="dark"] .dash-tip-banner {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow-sm);
 }
 
 [data-theme="dark"] .dash-stat-card {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow-sm);
 }
 
 [data-theme="dark"] .dash-card {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .dash-profile-card {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .dash-profile-avatar-placeholder {
@@ -1491,20 +1504,24 @@
 
 [data-theme="dark"] .dash-quick-actions-card {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .dash-deadlines-card {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .dash-goal-card {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .dash-error-banner {
   background: linear-gradient(135deg, #2e1e1e 0%, #3d2525 100%);
-  border-color: rgba(255, 107, 107, 0.2);
+  border: none;
+  box-shadow: inset 2px 2px 4px rgba(255,107,107,0.08), inset -2px -2px 4px rgba(0,0,0,0.3);
 }
