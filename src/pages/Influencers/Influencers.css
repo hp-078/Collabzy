@@ -5,7 +5,11 @@
 .inf-page {
   padding: 120px 0 60px;
   min-height: 100vh;
-  background: var(--pastel-cream);
+  background:
+    linear-gradient(180deg,
+      rgba(184, 229, 208, 0.2) 0%,
+      var(--pastel-cream) 20%,
+      var(--pastel-cream) 100%);
   animation: fadeIn 0.4s ease;
 }
 
@@ -53,11 +57,12 @@
   padding: 0.5rem 1.25rem;
   background: white;
   color: var(--dark-text);
-  border-radius: 50px;
+  border-radius: var(--clay-radius-pill);
   font-size: 0.875rem;
   font-weight: 600;
   font-family: var(--body-font);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--clay-shadow-xs);
+  border: none;
 }
 
 /* Search and Filters */
@@ -83,19 +88,18 @@
 .inf-search-input {
   width: 100%;
   padding: 1rem 1rem 1rem 3.5rem;
-  border: 2px solid rgba(0, 0, 0, 0.08);
-  border-radius: 50px;
+  border: none;
+  border-radius: var(--clay-radius-pill);
   font-size: 1rem;
   font-family: var(--body-font);
   background: white;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--clay-shadow-input);
 }
 
 .inf-search-input:focus {
   outline: none;
-  border-color: var(--pastel-pink);
-  box-shadow: 0 0 0 4px rgba(255, 221, 224, 0.3);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 .inf-filter-toggle {
@@ -110,9 +114,9 @@
   align-items: flex-end;
   padding: 1.5rem;
   background: white;
-  border-radius: 24px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
-  border: 2px solid transparent;
+  border-radius: var(--clay-radius);
+  box-shadow: var(--clay-shadow);
+  border: none;
   margin-bottom: 1.5rem;
   animation: fadeIn 0.2s ease;
 }
@@ -133,18 +137,19 @@
 
 .inf-filter-select {
   padding: 0.875rem 1.25rem;
-  border: 2px solid var(--gray-200);
-  border-radius: 16px;
+  border: none;
+  border-radius: var(--clay-radius-sm);
   font-size: 0.875rem;
   font-family: var(--body-font);
   background: white;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: var(--clay-shadow-input);
 }
 
 .inf-filter-select:focus {
   outline: none;
-  border-color: var(--pastel-pink);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 .inf-results-info {
@@ -180,10 +185,10 @@
 
 .inf-card {
   background: white;
-  border-radius: 24px;
+  border-radius: var(--clay-radius);
   overflow: hidden;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
-  border: 2px solid transparent;
+  box-shadow: var(--clay-shadow);
+  border: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
   display: flex;
@@ -191,9 +196,8 @@
 }
 
 .inf-card:hover {
-  box-shadow: 0 15px 50px rgba(255, 181, 186, 0.25);
-  transform: translateY(-5px);
-  border-color: var(--accent-coral);
+  box-shadow: var(--clay-shadow-hover);
+  transform: translateY(-3px);
 }
 
 .inf-card-header {
@@ -244,7 +248,7 @@
   background: white;
   color: var(--accent-coral);
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(255, 181, 186, 0.2);
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .inf-platform-badge {
@@ -253,7 +257,7 @@
   right: 1rem;
   padding: 0.375rem 0.875rem;
   background: white;
-  border-radius: 50px;
+  border-radius: var(--clay-radius-pill);
   font-size: 0.75rem;
   font-weight: 600;
   font-family: var(--body-font);
@@ -261,7 +265,7 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .inf-card-body {
@@ -317,7 +321,8 @@
   padding: 0.25rem 0.625rem;
   background: rgba(255, 181, 186, 0.15);
   border-radius: 12px;
-  border: 1px solid rgba(255, 181, 186, 0.2);
+  border: none;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .inf-description {
@@ -347,7 +352,8 @@
   color: var(--dark-text);
   padding: 0.375rem 0.75rem;
   background: rgba(0, 0, 0, 0.03);
-  border-radius: 50px;
+  border-radius: var(--clay-radius-pill);
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .inf-stats .inf-stat svg {
@@ -482,13 +488,14 @@
   background: rgba(231, 76, 60, 0.1);
   color: #e74c3c;
   padding: 1rem 1.5rem;
-  border-radius: 12px;
+  border-radius: var(--clay-radius-sm);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   font-family: var(--body-font);
   font-weight: 500;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 /* TikTok Icon */
@@ -501,18 +508,18 @@
 ======================================== */
 [data-theme="dark"] .inf-stat-badge {
   background: var(--surface-elevated);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--clay-shadow-xs);
 }
 
 [data-theme="dark"] .inf-search-input {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
   color: var(--dark-text);
+  box-shadow: var(--clay-shadow-input);
 }
 
 [data-theme="dark"] .inf-search-input:focus {
-  border-color: var(--accent-coral);
-  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 [data-theme="dark"] .inf-search-input::placeholder {
@@ -521,14 +528,15 @@
 
 [data-theme="dark"] .inf-filters-panel {
   background: var(--surface-elevated);
-  border-color: var(--border-secondary);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: none;
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .inf-filter-select {
   background: var(--surface-input);
-  border-color: var(--border-primary);
+  border: none;
   color: var(--dark-text);
+  box-shadow: var(--clay-shadow-input);
 }
 
 [data-theme="dark"] .inf-filter-select option {
@@ -538,13 +546,12 @@
 
 [data-theme="dark"] .inf-card {
   background: var(--surface-elevated);
-  border-color: var(--border-secondary);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border: none;
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .inf-card:hover {
-  border-color: var(--accent-coral);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 [data-theme="dark"] .inf-verified-badge {
@@ -553,5 +560,5 @@
 
 [data-theme="dark"] .inf-platform-badge {
   background: var(--surface-elevated);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--clay-shadow-xs);
 }

@@ -6,49 +6,39 @@
 .footer-wrapper {
   padding: 3rem 1.5rem 1.5rem;
   position: relative;
-  background: var(--pastel-cream);
+  background: transparent;
 }
 
-/* Floating Footer Container - Pastel Theme */
+/* Floating Footer Container - Claymorphism Theme */
 .footer-floating {
   max-width: 1200px;
   margin: 0 auto;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 249, 240, 0.9) 0%,
-    rgba(255, 228, 214, 0.8) 50%,
-    rgba(255, 249, 240, 0.9) 100%
-  );
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-radius: 32px;
-  box-shadow: 
-    0 8px 32px rgba(255, 181, 186, 0.15),
-    0 4px 16px rgba(0, 0, 0, 0.04),
-    inset 0 2px 4px rgba(255, 255, 255, 0.9),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(255, 181, 186, 0.3);
+  background: var(--pastel-cream);
+  border-radius: var(--clay-radius-lg);
+  box-shadow: var(--clay-shadow-lg);
+  border: none;
   position: relative;
   overflow: visible;
 }
 
-/* Top highlight for glass effect */
+/* Top highlight for clay depth */
 .footer-floating::after {
   content: '';
   position: absolute;
   top: 0;
   left: 10%;
   right: 10%;
-  height: 1px;
+  height: 2px;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.8) 30%,
-    rgba(255, 255, 255, 0.9) 50%,
-    rgba(255, 255, 255, 0.8) 70%,
+    rgba(255, 255, 255, 0.6) 30%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.6) 70%,
     transparent 100%
   );
   pointer-events: none;
+  border-radius: var(--clay-radius-lg);
 }
 
 .footer-container {
@@ -127,14 +117,16 @@
   justify-content: center;
   background: var(--pastel-pink);
   color: var(--dark-text);
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: var(--clay-shadow-xs);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .footer-social-link:hover {
   background: var(--dark-text);
   color: white;
-  transform: translateY(-3px);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: var(--clay-shadow-sm);
 }
 
 /* Footer Links - Pastel Theme */
@@ -275,26 +267,18 @@
    DARK MODE Footer Overrides
    ================================ */
 [data-theme="dark"] .footer-floating {
-  background: linear-gradient(
-    135deg,
-    rgba(30, 28, 26, 0.9) 0%,
-    rgba(46, 43, 40, 0.85) 50%,
-    rgba(30, 28, 26, 0.9) 100%
-  );
-  border-color: var(--border-secondary);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 4px 16px rgba(0, 0, 0, 0.15),
-    inset 0 1px 2px rgba(255, 255, 255, 0.05);
+  background: var(--surface-primary);
+  border: none;
+  box-shadow: var(--clay-shadow-lg);
 }
 
 [data-theme="dark"] .footer-floating::after {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.04) 30%,
-    rgba(255, 255, 255, 0.06) 50%,
-    rgba(255, 255, 255, 0.04) 70%,
+    rgba(255, 255, 255, 0.03) 30%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.03) 70%,
     transparent 100%
   );
 }
@@ -305,6 +289,7 @@
 
 [data-theme="dark"] .footer-social-link {
   background: var(--surface-elevated);
+  box-shadow: var(--clay-shadow-xs);
 }
 
 [data-theme="dark"] .footer-social-link:hover {

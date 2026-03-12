@@ -6,7 +6,11 @@
 .home-page {
   font-family: var(--body-font);
   color: var(--dark-text);
-  background: var(--pastel-cream);
+  background:
+    linear-gradient(180deg,
+      var(--pastel-peach) 0%,
+      var(--pastel-cream) 18%,
+      var(--pastel-cream) 100%);
   /* Note: overflow-x removed to allow sticky positioning */
 }
 
@@ -81,10 +85,11 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50px;
+  background: var(--white);
+  border-radius: var(--clay-radius-pill);
   margin-bottom: 2rem;
-  backdrop-filter: blur(10px);
+  border: none;
+  box-shadow: var(--clay-shadow-sm);
 }
 
 .home-hero-logo-icon {
@@ -164,16 +169,17 @@
   background: var(--dark-text);
   color: white;
   text-decoration: none;
-  border-radius: 50px;
+  border-radius: var(--clay-radius-pill);
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: none;
+  box-shadow: var(--clay-shadow-button);
 }
 
 .home-hero-cta-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: var(--clay-shadow-button-hover);
   background: #1a1a1a;
 }
 
@@ -184,9 +190,9 @@
 
 .home-hero-mockup {
   position: relative;
-  border-radius: 20px;
+  border-radius: var(--clay-radius);
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--clay-shadow-lg);
   transform: rotate(3deg);
   transition: transform 0.5s ease;
 }
@@ -205,10 +211,11 @@
   position: absolute;
   bottom: 20px;
   right: 20px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--white);
   padding: 1rem 1.5rem;
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
+  border-radius: var(--clay-radius-sm);
+  border: none;
+  box-shadow: var(--clay-shadow-sm);
 }
 
 .home-mockup-stat .home-stat-value {
@@ -231,8 +238,9 @@
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
   background: white;
-  border-radius: 50px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border-radius: var(--clay-radius-pill);
+  box-shadow: var(--clay-shadow-sm);
+  border: none;
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--dark-text);
@@ -366,9 +374,10 @@
   gap: 3rem;
   align-items: center;
   background: white;
-  border-radius: 24px;
+  border-radius: var(--clay-radius);
   padding: 2.5rem;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: none;
+  box-shadow: var(--clay-shadow);
   
   /* Smoother transitions */
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
@@ -384,25 +393,25 @@
 .home-portfolio-card:nth-child(1) {
   top: 100px;
   z-index: 1;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--clay-shadow);
 }
 
 .home-portfolio-card:nth-child(2) {
   top: 150px;
   z-index: 2;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--clay-shadow);
 }
 
 .home-portfolio-card:nth-child(3) {
   top: 200px;
   z-index: 3;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--clay-shadow-lg);
 }
 
 /* Hover effect */
 .home-portfolio-card:hover {
   transform: translateY(-8px) scale(1.01);
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 .home-portfolio-card.home-reverse {
@@ -417,11 +426,13 @@
   display: inline-block;
   padding: 0.5rem 1rem;
   background: var(--pastel-lavender);
-  border-radius: 50px;
+  border-radius: var(--clay-radius-pill);
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--accent-purple);
   margin-bottom: 1rem;
+  border: none;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .home-portfolio-title {
@@ -661,21 +672,21 @@
 
 .home-pricing-card {
   background: white;
-  border-radius: 24px;
+  border-radius: var(--clay-radius);
   padding: 2.5rem;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
-  border: 2px solid transparent;
+  box-shadow: var(--clay-shadow);
+  border: none;
   transition: all 0.3s ease;
   position: relative;
 }
 
 .home-pricing-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 .home-pricing-card.home-popular {
-  border-color: var(--accent-coral);
+  box-shadow: var(--clay-shadow-lg);
 }
 
 .home-popular-badge {
@@ -796,15 +807,18 @@
   color: white;
   text-align: center;
   text-decoration: none;
-  border-radius: 12px;
+  border-radius: var(--clay-radius-sm);
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.3s ease;
+  border: none;
+  box-shadow: var(--clay-shadow-button);
 }
 
 .home-pricing-cta:hover {
   background: #1a1a1a;
   transform: translateY(-2px);
+  box-shadow: var(--clay-shadow-button-hover);
 }
 
 /* ========================================
@@ -885,8 +899,9 @@
 .home-contact-form {
   background: white;
   padding: 2.5rem;
-  border-radius: 24px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  border-radius: var(--clay-radius-lg);
+  box-shadow: var(--clay-shadow-lg);
+  border: none;
   text-align: left;
 }
 
@@ -906,19 +921,20 @@
 .home-form-group textarea {
   width: 100%;
   padding: 1rem;
-  border: 2px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
+  border: none;
+  border-radius: var(--clay-radius-sm);
   font-size: 1rem;
   font-family: var(--body-font);
   transition: all 0.3s ease;
   background: var(--pastel-cream);
+  box-shadow: var(--clay-shadow-input);
 }
 
 .home-form-group input:focus,
 .home-form-group textarea:focus {
   outline: none;
-  border-color: var(--accent-coral);
   background: white;
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 .home-form-group textarea {
@@ -936,16 +952,18 @@
   background: var(--accent-coral);
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--clay-radius-sm);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: var(--clay-shadow-button);
 }
 
 .home-submit-btn:hover {
   background: #ff5252;
   transform: translateY(-2px);
+  box-shadow: var(--clay-shadow-button-hover);
 }
 
 /* ========================================
@@ -988,16 +1006,17 @@
   background: var(--dark-text);
   color: white;
   text-decoration: none;
-  border-radius: 50px;
+  border-radius: var(--clay-radius-pill);
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: none;
+  box-shadow: var(--clay-shadow-button);
 }
 
 .home-cta-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: var(--clay-shadow-button-hover);
   background: #1a1a1a;
 }
 
@@ -1038,7 +1057,7 @@
   .home-portfolio-card:nth-child(2),
   .home-portfolio-card:nth-child(3) {
     z-index: auto !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--clay-shadow);
   }
 
   .home-portfolio-list {
@@ -1155,7 +1174,8 @@
    DARK MODE - Home Page Overrides
 ======================================== */
 [data-theme="dark"] .home-hero-logo-area {
-  background: rgba(46, 43, 40, 0.6);
+  background: var(--surface-elevated);
+  box-shadow: var(--clay-shadow-sm);
 }
 
 [data-theme="dark"] .home-hero::before {
@@ -1169,21 +1189,23 @@
 }
 
 [data-theme="dark"] .home-mockup-overlay {
-  background: rgba(37, 34, 32, 0.95);
+  background: var(--surface-elevated);
+  box-shadow: var(--clay-shadow-sm);
 }
 
 [data-theme="dark"] .home-floating-badge {
   background: var(--surface-elevated);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--clay-shadow-sm);
 }
 
 [data-theme="dark"] .home-portfolio-card {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .home-portfolio-card:hover {
-  border-color: var(--border-secondary);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 [data-theme="dark"] .home-portfolio-stats {
@@ -1203,7 +1225,8 @@
 
 [data-theme="dark"] .home-pricing-card {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .home-pricing-header {
@@ -1216,21 +1239,22 @@
 
 [data-theme="dark"] .home-contact-form {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow-lg);
 }
 
 [data-theme="dark"] .home-form-group input,
 [data-theme="dark"] .home-form-group textarea {
   background: var(--surface-input);
-  border-color: var(--border-primary);
+  border: none;
+  box-shadow: var(--clay-shadow-input);
   color: var(--dark-text);
 }
 
 [data-theme="dark"] .home-form-group input:focus,
 [data-theme="dark"] .home-form-group textarea:focus {
   background: var(--surface-elevated);
-  border-color: var(--accent-coral);
-  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 [data-theme="dark"] .home-form-group input::placeholder,

@@ -4,7 +4,11 @@
 
 .auth-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, var(--pastel-peach) 0%, var(--pastel-pink) 50%, var(--pastel-cream) 100%);
+  background:
+    linear-gradient(180deg,
+      var(--pastel-peach) 0%,
+      rgba(255, 221, 224, 0.35) 40%,
+      var(--pastel-cream) 100%);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -72,15 +76,11 @@
   width: 100%;
   max-width: 1100px;
   min-height: 650px;
-  border-radius: 32px;
+  border-radius: var(--clay-radius-xl);
   overflow: hidden;
-  background: rgba(255, 249, 240, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 181, 186, 0.3);
-  box-shadow: 
-    0 25px 50px -12px rgba(255, 181, 186, 0.3),
-    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  background: var(--pastel-cream);
+  border: none;
+  box-shadow: var(--clay-shadow-lg);
 }
 
 /* Left Side - Branding - Pastel Theme */
@@ -140,13 +140,13 @@
   width: 52px;
   height: 52px;
   background: var(--dark-text);
-  border-radius: 16px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
   font-size: 1.5rem;
-  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.2);
+  box-shadow: var(--clay-shadow-button);
   color: white;
 }
 
@@ -192,8 +192,8 @@
 }
 
 .auth-feature-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   background: var(--pastel-yellow);
   border-radius: 50%;
   display: flex;
@@ -202,7 +202,7 @@
   font-size: 0.75rem;
   color: var(--dark-text);
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(255, 240, 165, 0.4);
+  box-shadow: var(--clay-shadow-xs);
 }
 
 /* Right Side - Form - Pastel Theme */
@@ -248,14 +248,17 @@
 }
 
 .auth-error {
-  background: linear-gradient(135deg, #fff0f0 0%, #ffe8e8 100%);
+  background: var(--error-light);
   color: var(--accent-coral);
   padding: 1rem;
-  border-radius: 16px;
+  border-radius: var(--clay-radius-sm);
   margin-bottom: 1.5rem;
   font-size: 0.875rem;
   font-family: var(--body-font);
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  border: none;
+  box-shadow: 
+    inset 2px 2px 4px rgba(255, 107, 107, 0.08),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.5);
 }
 
 /* Role Selector - Pastel Theme */
@@ -272,26 +275,28 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1.25rem;
-  border: 2px solid var(--gray-200);
-  border-radius: 20px;
+  border: none;
+  border-radius: var(--clay-radius);
   background: white;
   color: var(--light-text);
   font-weight: 600;
   font-family: var(--body-font);
   transition: all 0.3s ease;
   cursor: pointer;
+  box-shadow: var(--clay-shadow-sm);
 }
 
 .auth-role-btn:hover {
-  border-color: var(--pastel-pink);
-  background: var(--pastel-cream);
+  background: var(--pastel-peach);
+  box-shadow: var(--clay-shadow);
+  transform: translateY(-2px);
 }
 
 .auth-role-btn.auth-active {
-  border-color: var(--accent-coral);
   background: linear-gradient(135deg, var(--pastel-peach) 0%, var(--pastel-cream) 100%);
   color: var(--dark-text);
-  box-shadow: 0 4px 16px rgba(255, 181, 186, 0.3);
+  box-shadow: var(--clay-shadow-hover);
+  transform: translateY(-2px);
 }
 
 /* Form Styles */
@@ -349,19 +354,19 @@
 .auth-input-wrapper .input {
   width: 100%;
   padding: 0.875rem 1rem 0.875rem 3rem;
-  border: 2px solid var(--gray-200);
-  border-radius: 16px;
+  border: none;
+  border-radius: var(--clay-radius-sm);
   font-size: 1rem;
   font-family: var(--body-font);
   transition: all 0.3s ease;
   background: white;
   color: var(--dark-text);
+  box-shadow: var(--clay-shadow-input);
 }
 
 .auth-input-wrapper .input:focus {
   outline: none;
-  border-color: var(--pastel-pink);
-  box-shadow: 0 0 0 4px rgba(255, 181, 186, 0.3);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 .auth-input-wrapper .input::placeholder {
@@ -424,19 +429,19 @@
   font-weight: 700;
   font-family: var(--body-font);
   border: none;
-  border-radius: 50px;
+  border-radius: var(--clay-radius-pill);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(26, 26, 26, 0.2);
+  box-shadow: var(--clay-shadow-button);
 }
 
 .auth-submit:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(26, 26, 26, 0.3);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: var(--clay-shadow-button-hover);
   background: var(--accent-coral);
 }
 
@@ -473,20 +478,21 @@
   flex: 1;
   min-width: fit-content;
   padding: 0.625rem 1rem;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
-  color: #7c3aed;
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  border-radius: 10px;
+  background: var(--pastel-lavender);
+  color: var(--accent-purple);
+  border: none;
+  border-radius: 14px;
   font-weight: 500;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: var(--clay-shadow-xs);
 }
 
 .auth-demo-buttons .btn:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
-  border-color: #8b5cf6;
-  transform: translateY(-1px);
+  background: var(--pastel-pink);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--clay-shadow-sm);
 }
 
 /* Responsive Styles */
@@ -553,34 +559,35 @@
 }
 
 [data-theme="dark"] .auth-container {
-  background: rgba(37, 34, 32, 0.85);
-  border-color: var(--border-secondary);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+  background: var(--surface-primary);
+  border: none;
+  box-shadow: var(--clay-shadow-lg);
 }
 
 [data-theme="dark"] .auth-role-btn {
   background: var(--surface-elevated);
-  border-color: var(--border-primary);
+  border: none;
   color: var(--dark-text);
+  box-shadow: var(--clay-shadow-sm);
 }
 
 [data-theme="dark"] .auth-role-btn:hover {
-  border-color: var(--accent-coral);
+  box-shadow: var(--clay-shadow);
 }
 
 [data-theme="dark"] .auth-role-btn.active {
-  border-color: var(--accent-coral);
+  box-shadow: var(--clay-shadow-hover);
 }
 
 [data-theme="dark"] .auth-input-wrapper .input {
   background: var(--surface-input);
-  border-color: var(--border-primary);
+  border: none;
   color: var(--dark-text);
+  box-shadow: var(--clay-shadow-input);
 }
 
 [data-theme="dark"] .auth-input-wrapper .input:focus {
-  border-color: var(--accent-coral);
-  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.15);
+  box-shadow: var(--clay-shadow-input-focus);
 }
 
 [data-theme="dark"] .auth-input-wrapper .input::placeholder {

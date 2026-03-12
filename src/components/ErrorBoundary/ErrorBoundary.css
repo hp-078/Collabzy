@@ -12,9 +12,9 @@
   max-width: 500px;
   padding: 48px 32px;
   background: white;
-  border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(255, 181, 186, 0.15);
-  border: 1px solid rgba(255, 181, 186, 0.2);
+  border-radius: var(--clay-radius);
+  box-shadow: var(--clay-shadow-lg);
+  border: none;
 }
 
 .error-icon {
@@ -48,19 +48,19 @@
   background: var(--dark-text);
   color: white;
   border: none;
-  border-radius: 50px;
+  border-radius: var(--clay-radius-pill);
   font-size: 1rem;
   font-weight: 600;
   font-family: var(--body-font);
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--clay-shadow-button);
 }
 
 .error-retry-btn:hover {
   background: var(--accent-coral);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(255, 107, 107, 0.3);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--clay-shadow-button-hover);
 }
 
 @keyframes shake {
@@ -74,6 +74,6 @@
 ======================================== */
 [data-theme="dark"] .error-boundary-content {
   background: var(--surface-elevated);
-  border-color: var(--border-secondary);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  border: none;
+  box-shadow: var(--clay-shadow-lg);
 }

@@ -872,13 +872,13 @@ const Profile = () => {
     <div className="prof-page">
       <div className="prof-container">
         <div className="prof-page-header">
-          <h1>Profile Settings</h1>
-          <p>Manage your account information and preferences</p>
+          <h1>Settings</h1>
+          <p>Manage your profile, account information and preferences</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="prof-grid">
-            {/* Avatar Section */}
+            {/* Profile Header */}
             <div className="prof-section prof-avatar-section">
               <div className="prof-avatar-wrapper">
                 {previewImage ? (
@@ -889,7 +889,7 @@ const Profile = () => {
                   </div>
                 )}
                 <label htmlFor="avatar-upload" className="prof-avatar-upload">
-                  <Camera size={20} />
+                  <Camera size={18} />
                   <input
                     id="avatar-upload"
                     type="file"
@@ -899,8 +899,11 @@ const Profile = () => {
                   />
                 </label>
               </div>
-              <h3>{user?.name}</h3>
-              <p className="prof-user-role">{user?.role}</p>
+              <div className="prof-avatar-details">
+                <h3>{user?.name}</h3>
+                <span className="prof-user-role">{user?.role}</span>
+                <p className="prof-avatar-hint">Click the camera icon to change your photo</p>
+              </div>
             </div>
 
             {/* Basic Info */}
@@ -934,8 +937,7 @@ const Profile = () => {
                     name="email"
                     value={formData.email}
                     readOnly
-                    className="input"
-                    style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                    className="input prof-input-readonly"
                     title="Email cannot be changed"
                   />
                 </div>
@@ -1353,7 +1355,7 @@ const Profile = () => {
 
           {/* Save Button */}
           <div className="prof-form-actions">
-            <button type="submit" className="btn btn-primary btn-lg" disabled={saving}>
+            <button type="submit" className="btn btn-primary btn-lg prof-save-btn" disabled={saving}>
               <Save size={18} />
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
