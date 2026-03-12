@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import {
-  Search, Plus, Filter, Calendar, DollarSign, Users, Eye,
+  Search, Plus, Filter, Calendar, IndianRupee, Users, Eye,
   Briefcase, ChevronDown, X, CheckCircle, Clock, Tag, MapPin,
   TrendingUp, Star, Megaphone, Target
 } from 'lucide-react';
@@ -254,7 +254,7 @@ const Campaigns = () => {
     if (!budget) return 'N/A';
     const min = budget.min?.toLocaleString() || '0';
     const max = budget.max?.toLocaleString() || '0';
-    return `₹${min} - ₹${max}`;
+    return `₹${min} - ${max}`;
   };
 
   return (
@@ -622,8 +622,8 @@ const CampaignCard = ({ campaign, isBrand, onView, onApply, onEdit, isRecommende
 
       <div className="camp-card-meta">
         <span className="camp-card-budget">
-          <DollarSign size={14} />
-          {campaign.budget ? `₹${campaign.budget.min?.toLocaleString()} - ₹${campaign.budget.max?.toLocaleString()}` : 'N/A'}
+          <IndianRupee size={14} />
+          {campaign.budget ? `${campaign.budget.min?.toLocaleString()} - ${campaign.budget.max?.toLocaleString()}` : 'N/A'}
         </span>
         <span className="camp-card-deadline">
           <Calendar size={14} />
@@ -681,7 +681,7 @@ const CampaignDetailModal = ({ campaign, onClose, onApply, isBrand, isInfluencer
           <div className="camp-detail-item">
             <span className="label">Budget</span>
             <span className="value">
-              {campaign.budget ? `₹${campaign.budget.min?.toLocaleString()} - ₹${campaign.budget.max?.toLocaleString()}` : 'N/A'}
+              {campaign.budget ? `₹${campaign.budget.min?.toLocaleString()} - ${campaign.budget.max?.toLocaleString()}` : 'N/A'}
             </span>
           </div>
           <div className="camp-detail-item">

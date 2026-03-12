@@ -18,7 +18,7 @@ import {
   Save,
   Plus,
   X,
-  DollarSign,
+  IndianRupee,
   Loader,
   RefreshCw,
   TrendingUp,
@@ -1295,7 +1295,7 @@ const Profile = () => {
                           </div>
                           <div className="prof-service-actions">
                             <span className="prof-service-price">
-                              <DollarSign size={16} />
+                              <IndianRupee size={16} />
                               {service.price}
                             </span>
                             <button 
@@ -1389,7 +1389,7 @@ const Profile = () => {
                 </div>
 
                 <div className="input-group">
-                  <label htmlFor="servicePrice">Price ($)</label>
+                  <label htmlFor="servicePrice">Price (₹)</label>
                   <input
                     type="number"
                     id="servicePrice"

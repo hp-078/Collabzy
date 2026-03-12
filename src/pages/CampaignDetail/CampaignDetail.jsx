@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import {
-  ArrowLeft, Calendar, DollarSign, Users, Eye, Edit3, Save,
+  ArrowLeft, Calendar, IndianRupee, Users, Eye, Edit3, Save,
   CheckCircle, XCircle, Clock, Star, TrendingUp, Target,
   Briefcase, Tag, X, Send, UserCheck, AlertCircle
 } from 'lucide-react';
@@ -94,7 +94,7 @@ const CampaignDetail = () => {
         budget: {
           min: Number(editForm.budgetMin),
           max: Number(editForm.budgetMax),
-          currency: 'USD',
+          currency: 'INR',
         },
         deadline: editForm.deadline,
         status: editForm.status,
@@ -249,9 +249,9 @@ const CampaignDetail = () => {
 
           <div className="cdetail-meta-grid">
             <div className="cdetail-meta-item">
-              <span className="cdetail-meta-label"><DollarSign size={13} style={{ verticalAlign: 'middle' }} /> Budget</span>
+              <span className="cdetail-meta-label"><IndianRupee size={13} style={{ verticalAlign: 'middle' }} /> Budget</span>
               <span className="cdetail-meta-value">
-                ${campaign.budget?.min?.toLocaleString()} - ${campaign.budget?.max?.toLocaleString()}
+                {campaign.budget?.min?.toLocaleString()} - {campaign.budget?.max?.toLocaleString()}
               </span>
             </div>
             <div className="cdetail-meta-item">
@@ -293,7 +293,7 @@ const CampaignDetail = () => {
               </div>
               <div className="cdetail-edit-row">
                 <div className="cdetail-edit-group">
-                  <label>Proposed Rate ($)</label>
+                  <label>Proposed Rate (₹)</label>
                   <input type="number" className="cdetail-edit-input" value={applyForm.proposedRate}
                     onChange={e => setApplyForm({ ...applyForm, proposedRate: e.target.value })}
                     placeholder="Your rate" min="0" />
@@ -354,12 +354,12 @@ const CampaignDetail = () => {
               </div>
               <div className="cdetail-edit-row">
                 <div className="cdetail-edit-group">
-                  <label>Budget Min ($)</label>
+                  <label>Budget Min (₹)</label>
                   <input type="number" className="cdetail-edit-input" value={editForm.budgetMin}
                     onChange={e => setEditForm({ ...editForm, budgetMin: e.target.value })} />
                 </div>
                 <div className="cdetail-edit-group">
-                  <label>Budget Max ($)</label>
+                  <label>Budget Max (₹)</label>
                   <input type="number" className="cdetail-edit-input" value={editForm.budgetMax}
                     onChange={e => setEditForm({ ...editForm, budgetMax: e.target.value })} />
                 </div>
@@ -494,7 +494,7 @@ const CampaignDetail = () => {
 
                   <div className="cdetail-app-meta">
                     {app.proposedRate && (
-                      <span><DollarSign size={12} /> Rate: <strong>${app.proposedRate.toLocaleString()}</strong></span>
+                      <span><IndianRupee size={12} /> Rate: <strong>{app.proposedRate.toLocaleString()}</strong></span>
                     )}
                     <span><Clock size={12} /> Applied {new Date(app.createdAt).toLocaleDateString()}</span>
                   </div>

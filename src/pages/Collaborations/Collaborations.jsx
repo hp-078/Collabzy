@@ -7,7 +7,7 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  DollarSign,
+  IndianRupee,
   Calendar,
   MessageSquare,
   Filter,
@@ -586,8 +586,8 @@ const Collaborations = () => {
                       
                       <div className="collab-details">
                         <div className="collab-detail-item">
-                          <DollarSign size={16} />
-                          <span>Proposed Rate: <strong>${app.proposedRate || 'N/A'}</strong></span>
+                          <IndianRupee size={16} />
+                          <span>Proposed Rate: <strong>{app.proposedRate || 'N/A'}</strong></span>
                         </div>
                         {app.campaign?.deadline && (
                           <div className="collab-detail-item">
@@ -601,8 +601,8 @@ const Collaborations = () => {
                         </div>
                         {app.campaign?.budget && (
                           <div className="collab-detail-item">
-                            <DollarSign size={16} />
-                            <span>Campaign Budget: <strong>${app.campaign.budget.min} - ${app.campaign.budget.max}</strong></span>
+                            <IndianRupee size={16} />
+                            <span>Campaign Budget: <strong>{app.campaign.budget.min} - {app.campaign.budget.max}</strong></span>
                           </div>
                         )}
                       </div>
@@ -795,10 +795,10 @@ const Collaborations = () => {
                       <div className="collab-body">
                         <div className="collab-deal-stats">
                           <div className="collab-deal-stat">
-                            <DollarSign size={20} />
+                            <IndianRupee size={20} />
                             <div>
                               <span className="stat-label">Agreed Rate</span>
-                              <span className="stat-value">${deal.agreedRate?.toLocaleString() || 'N/A'}</span>
+                              <span className="stat-value">₹{deal.agreedRate?.toLocaleString() || 'N/A'}</span>
                             </div>
                           </div>
                           <div className="collab-deal-stat">
@@ -866,7 +866,7 @@ const Collaborations = () => {
                               {paymentProcessing ? (
                                 <><Loader size={16} className="spin-animation" /> Processing...</>
                               ) : (
-                                <><CreditCard size={16} /> Pay Now (${deal.agreedRate})</>
+                                <><CreditCard size={16} /> Pay Now (₹{deal.agreedRate})</>
                               )}
                             </button>
                           </div>
@@ -919,7 +919,7 @@ const Collaborations = () => {
                                   onClick={() => handleReleasePayment(deal._id)}
                                   disabled={submitting}
                                 >
-                                  {submitting ? <Loader size={16} className="spin-animation" /> : <DollarSign size={16} />}
+                                  {submitting ? <Loader size={16} className="spin-animation" /> : <IndianRupee size={16} />}
                                   Release Payment
                                 </button>
                               )}
@@ -982,7 +982,7 @@ const Collaborations = () => {
                   Creating deal with <strong>{showCreateDealModal.influencer?.name || showCreateDealModal.influencerProfile?.name || 'Influencer'}</strong> for campaign <strong>{showCreateDealModal.campaign?.title || 'Campaign'}</strong>
                 </p>
                 <div className="collab-form-group">
-                  <label>Agreed Rate ($)</label>
+                  <label>Agreed Rate (₹)</label>
                   <input
                     type="number"
                     value={dealForm.agreedRate}

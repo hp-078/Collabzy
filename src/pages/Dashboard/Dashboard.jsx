@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import {
-  Users, Briefcase, MessageSquare, TrendingUp, DollarSign, Clock,
+  Users, Briefcase, MessageSquare, TrendingUp, IndianRupee, Clock,
   CheckCircle, ArrowRight, Star, Calendar, Loader, Sparkles,
   Award, Target, Zap, ArrowUpRight, Shield, Eye, Rocket, Heart,
   BarChart3, Coffee, Sun, Moon, Sunset, Activity
@@ -32,7 +32,7 @@ const motivationalTips = {
     { icon: <Users size={18} />, tip: 'Look for influencers whose audience matches your target demographic.' },
     { icon: <Zap size={18} />, tip: 'Respond to applications within 48 hours for best engagement.' },
     { icon: <Star size={18} />, tip: 'Leave reviews after collaborations — it builds trust on the platform.' },
-    { icon: <DollarSign size={18} />, tip: 'Setting competitive budgets attracts top-tier creators.' },
+    { icon: <IndianRupee size={18} />, tip: 'Setting competitive budgets attracts top-tier creators.' },
   ],
   admin: [
     { icon: <Shield size={18} />, tip: 'Monitor platform health regularly for the best user experience.' },
@@ -158,7 +158,7 @@ const Dashboard = () => {
     { icon: <Briefcase size={22} />, label: 'Active Deals', value: activeDeals.length, color: 'primary', trend: activeDeals.length > 0 ? '+' + activeDeals.length : '—' },
     { icon: <Clock size={22} />, label: 'Pending Apps', value: pendingApps.length, color: 'warning', trend: pendingApps.length > 0 ? pendingApps.length + ' waiting' : 'All clear' },
     { icon: <CheckCircle size={22} />, label: 'Completed', value: completedDeals.length, color: 'success', trend: completedDeals.length > 0 ? '✓ ' + completedDeals.length : 'None yet' },
-    { icon: <DollarSign size={22} />, label: 'Earnings', value: `$${totalEarnings.toLocaleString()}`, color: 'info', trend: totalEarnings > 0 ? 'Lifetime' : 'Start earning' },
+    { icon: <IndianRupee size={22} />, label: 'Earnings', value: `₹${totalEarnings.toLocaleString()}`, color: 'info', trend: totalEarnings > 0 ? 'Lifetime' : 'Start earning' },
   ] : isBrand ? [
     { icon: <Briefcase size={22} />, label: 'My Campaigns', value: myCampaigns.length, color: 'primary', trend: myCampaigns.filter(c => c.status === 'active').length + ' active' },
     { icon: <Clock size={22} />, label: 'Active Deals', value: activeDeals.length, color: 'warning', trend: activeDeals.length > 0 ? 'In progress' : '—' },
@@ -176,7 +176,7 @@ const Dashboard = () => {
     { icon: <Rocket size={18} />, title: 'First Apply', unlocked: applications.length >= 1 },
     { icon: <Briefcase size={18} />, title: '5 Applications', unlocked: applications.length >= 5 },
     { icon: <CheckCircle size={18} />, title: 'Deal Closer', unlocked: completedDeals.length >= 1 },
-    { icon: <DollarSign size={18} />, title: '$1k Earned', unlocked: totalEarnings >= 1000 },
+    { icon: <IndianRupee size={18} />, title: '100k Earned', unlocked: totalEarnings >= 100000 },
     { icon: <Star size={18} />, title: 'Top Creator', unlocked: completedDeals.length >= 10 },
     { icon: <Award size={18} />, title: 'Elite Status', unlocked: completedDeals.length >= 25 },
   ] : isBrand ? [
@@ -360,7 +360,7 @@ const Dashboard = () => {
                           <p className="dash-timeline-meta">
                             {app.campaign?.brandProfile?.companyName || 'Brand'}
                             <span className="dash-dot-sep">·</span>
-                            <DollarSign size={13} />{app.proposedRate || app.campaign?.budget?.min || 'N/A'}
+                            <IndianRupee size={13} />{app.proposedRate || app.campaign?.budget?.min || 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -379,7 +379,7 @@ const Dashboard = () => {
                           <p className="dash-timeline-meta">
                             {campaign.applicationCount || 0} applications
                             <span className="dash-dot-sep">·</span>
-                            <DollarSign size={13} />{campaign.budget?.min || 0} – {campaign.budget?.max || 0}
+                            <IndianRupee size={13} />{campaign.budget?.min || 0} – {campaign.budget?.max || 0}
                           </p>
                         </div>
                       </div>
@@ -425,7 +425,7 @@ const Dashboard = () => {
                           <p className="dash-timeline-meta">
                             {app.campaign?.brandProfile?.companyName || 'Brand'}
                             <span className="dash-dot-sep">·</span>
-                            ${app.proposedRate || 0}
+                            ₹{app.proposedRate || 0}
                           </p>
                         </div>
                       </div>
@@ -585,11 +585,11 @@ const Dashboard = () => {
                     </div>
                     <div className="dash-goal-item">
                       <div className="dash-goal-header">
-                        <span>Earn $500</span>
-                        <span className="dash-goal-num">${Math.min(totalEarnings, 500)}/$500</span>
+                        <span>Earn ₹50,000</span>
+                        <span className="dash-goal-num">₹{Math.min(totalEarnings, 50000).toLocaleString()}/50,000</span>
                       </div>
                       <div className="dash-goal-bar">
-                        <div className="dash-goal-fill dash-goal-fill-teal" style={{ width: `${Math.min((totalEarnings / 500) * 100, 100)}%` }} />
+                        <div className="dash-goal-fill dash-goal-fill-teal" style={{ width: `${Math.min((totalEarnings / 50000) * 100, 100)}%` }} />
                       </div>
                     </div>
                   </>

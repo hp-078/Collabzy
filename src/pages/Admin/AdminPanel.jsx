@@ -4,7 +4,7 @@ import { useData } from '../../context/DataContext';
 import { useNavigate } from 'react-router-dom';
 import {
   Shield, Users, Briefcase, TrendingUp, Activity, Eye,
-  Search, RefreshCw, BarChart3, Megaphone, DollarSign,
+  Search, RefreshCw, BarChart3, Megaphone, IndianRupee,
   CheckCircle, Clock, XCircle, Star, Loader, AlertTriangle,
   Zap, Award, Globe
 } from 'lucide-react';
@@ -159,10 +159,10 @@ const AdminPanel = () => {
                 gradient="sky"
               />
               <AdminStatCard
-                icon={<DollarSign size={24} />}
+                icon={<IndianRupee size={24} />}
                 label="Total Budget"
-                value={`$${totalBudget.toLocaleString()}`}
-                sub={`$${avgBudget} avg`}
+                value={`₹${totalBudget.toLocaleString()}`}
+                sub={`₹${avgBudget} avg`}
                 gradient="lavender"
               />
               <AdminStatCard
@@ -236,7 +236,7 @@ const AdminPanel = () => {
                     <div className="admin-recent-info">
                       <p className="admin-recent-title">{camp.title}</p>
                       <p className="admin-recent-sub">
-                        {camp.brandProfile?.companyName || 'Brand'} &bull; {camp.category || 'General'} &bull; ${camp.budget || 0}
+                        {camp.brandProfile?.companyName || 'Brand'} &bull; {camp.category || 'General'} &bull; ₹{camp.budget || 0}
                       </p>
                     </div>
                     <span className={`admin-status-badge admin-badge-${camp.status}`}>{camp.status}</span>
@@ -368,7 +368,7 @@ const AdminPanel = () => {
                       </td>
                       <td>{camp.brandProfile?.companyName || 'N/A'}</td>
                       <td><span className="admin-niche-tag">{camp.category || 'General'}</span></td>
-                      <td className="admin-num">${(camp.budget || 0).toLocaleString()}</td>
+                      <td className="admin-num">₹{(camp.budget || 0).toLocaleString()}</td>
                       <td className="admin-num">{camp.applicationCount || 0}</td>
                       <td>
                         <span className={`admin-status-badge admin-badge-${camp.status}`}>

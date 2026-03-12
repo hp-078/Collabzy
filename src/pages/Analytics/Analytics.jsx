@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import {
-  TrendingUp, DollarSign, Users, Briefcase, Star, CheckCircle,
+  TrendingUp, IndianRupee, Users, Briefcase, Star, CheckCircle,
   Clock, BarChart3, PieChart, Activity, ArrowUpRight, ArrowDownRight,
   Calendar, Target, Zap, Award, Eye, MessageSquare, Loader
 } from 'lucide-react';
@@ -138,9 +138,9 @@ const Analytics = () => {
           {isInfluencer ? (
             <>
               <StatsCard
-                icon={<DollarSign size={24} />}
+                icon={<IndianRupee size={24} />}
                 label="Total Earnings"
-                value={`$${totalEarnings.toLocaleString()}`}
+                value={`₹${totalEarnings.toLocaleString()}`}
                 change="+12.5%"
                 positive={true}
                 gradient="mint"
@@ -189,9 +189,9 @@ const Analytics = () => {
                 gradient="sky"
               />
               <StatsCard
-                icon={<DollarSign size={24} />}
+                icon={<IndianRupee size={24} />}
                 label="Total Investment"
-                value={`$${totalSpent.toLocaleString()}`}
+                value={`₹${totalSpent.toLocaleString()}`}
                 change="in collaborations"
                 positive={true}
                 gradient="lavender"
@@ -307,7 +307,7 @@ const Analytics = () => {
                     <div className="analytics-activity-info">
                       <p className="analytics-activity-title">{app.campaign?.title || 'Campaign'}</p>
                       <p className="analytics-activity-sub">
-                        {app.campaign?.brandProfile?.companyName || 'Brand'} &bull; ${app.proposedRate || 0}
+                        {app.campaign?.brandProfile?.companyName || 'Brand'} &bull; ₹{app.proposedRate || 0}
                       </p>
                     </div>
                     <span className={`analytics-activity-badge analytics-badge-${app.status}`}>

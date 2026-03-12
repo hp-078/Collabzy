@@ -471,7 +471,7 @@ const InfluencerDetail = () => {
                       {services.map((s, i) => (
                         <tr key={s._id || i}>
                           <td>{s.name}</td>
-                          <td className="idet-price-cell">${s.price}</td>
+                          <td className="idet-price-cell">₹{s.price}</td>
                           <td>
                             <span className="idet-svc-desc">{s.description || '\u2014'}</span>
                             {isBrand && (
@@ -513,7 +513,7 @@ const InfluencerDetail = () => {
                 </div>
                 <div className="idet-info-row">
                   <span className="idet-info-label">Budget:</span>
-                  <span className="idet-info-value idet-price">${selectedService?.price}</span>
+                  <span className="idet-info-value idet-price">₹{selectedService?.price}</span>
                 </div>
               </div>
               <div className="input-group">

@@ -459,7 +459,7 @@ export const DataProvider = ({ children }) => {
       // Format collaboration request message
       const formattedMessage = `🤝 Collaboration Request\n\n` +
         `Service: ${service || 'Not specified'}\n` +
-        `Budget: $${budget || 'To be discussed'}\n` +
+        `Budget: ₹${budget || 'To be discussed'}\n` +
         `Deadline: ${deadline || 'To be discussed'}\n\n` +
         `Message:\n${message}`;
       

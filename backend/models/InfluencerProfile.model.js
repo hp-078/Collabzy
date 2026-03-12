@@ -174,7 +174,7 @@ const influencerProfileSchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String },
     price: { type: Number, required: true },
-    currency: { type: String, default: 'USD' }
+    currency: { type: String, default: 'INR' }
   }],
 
   // Portfolio
