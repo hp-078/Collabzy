@@ -481,6 +481,11 @@
   color: #b45309;
 }
 
+.collab-deal-status-pending_payment {
+  background: #fde68a;
+  color: #92400e;
+}
+
 .collab-deal-status-completed {
   background: var(--pastel-mint);
   color: var(--accent-teal);
@@ -489,6 +494,11 @@
 .collab-deal-status-cancelled {
   background: #fee2e2;
   color: #dc2626;
+}
+
+.collab-deal-status-disputed {
+  background: #fecaca;
+  color: #991b1b;
 }
 
 /* ========================================
@@ -2152,6 +2162,124 @@
   background: var(--accent-coral);
   color: white;
   box-shadow: var(--clay-shadow-button);
+}
+
+/* ========================================
+   BRAND DEALS VIEW
+======================================== */
+.brand-stat-pill.brand-stat-payment.active {
+  background: #fde68a;
+  color: #92400e;
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.brand-stat-pill.brand-stat-review.active {
+  background: #fef3c7;
+  color: #b45309;
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.brand-stat-pill.brand-stat-cancelled.active {
+  background: #fee2e2;
+  color: #dc2626;
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.brand-deal-table thead th {
+  background: linear-gradient(180deg, var(--pastel-cream), #fff7ef);
+}
+
+.deal-row .collab-status-badge {
+  font-size: 0.7rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.brand-payment-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--clay-radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  box-shadow: var(--clay-shadow-xs);
+}
+
+.brand-payment-pending {
+  background: #fde68a;
+  color: #92400e;
+}
+
+.brand-payment-processing {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.brand-payment-paid,
+.brand-payment-escrow,
+.brand-payment-released {
+  background: var(--pastel-mint);
+  color: #166534;
+}
+
+.brand-payment-refunded {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.brand-deal-deadline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.brand-deal-deadline span {
+  color: var(--dark-text);
+  font-weight: 600;
+}
+
+.brand-deal-deadline small {
+  color: var(--muted-text);
+  font-size: 0.7rem;
+}
+
+.brand-deal-deadline.overdue span,
+.brand-deal-deadline.overdue small {
+  color: #b91c1c;
+}
+
+.brand-cg-icon.direct {
+  background: var(--pastel-sky);
+  color: var(--accent-teal);
+}
+
+.brand-flat-deals-wrap {
+  margin-bottom: 1.5rem;
+}
+
+.inf-campaign-tag.direct {
+  background: var(--pastel-sky);
+  color: #065f73;
+}
+
+.brand-overdue-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--light-text);
+  background: var(--pastel-cream);
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  box-shadow: var(--clay-shadow-xs);
+}
+
+.brand-overdue-check input {
+  accent-color: var(--accent-coral);
+}
+
+.brand-deal-actions .inf-act-btn {
+  padding: 0.32rem 0.58rem;
 }
 
 /* ──────────────────────────────────────

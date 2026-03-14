@@ -96,6 +96,26 @@ const Collaborations = () => {
   const [expandedCampaigns, setExpandedCampaigns] = useState({});
   const [selectedApp, setSelectedApp] = useState(null);
 
+  // === Brand deals state ===
+  const [dealViewMode, setDealViewMode] = useState('campaign'); // 'campaign' | 'table'
+  const [dealSearchTerm, setDealSearchTerm] = useState('');
+  const [showDealAdvancedFilters, setShowDealAdvancedFilters] = useState(false);
+  const [expandedDealGroups, setExpandedDealGroups] = useState({});
+  const [brandDealFilters, setBrandDealFilters] = useState({
+    selectedCampaign: 'all',
+    status: 'all',
+    source: 'all',
+    paymentStatus: 'all',
+    rateMin: '',
+    rateMax: '',
+    deadlineFrom: '',
+    deadlineTo: '',
+    createdFrom: '',
+    createdTo: '',
+    overdueOnly: false,
+    sortBy: 'newest',
+  });
+
   const NICHES = ['Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel', 'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports'];
 
   const isCampaignObject = (campaignValue) => (
@@ -124,6 +144,23 @@ const Collaborations = () => {
       campaignId: normalizedCampaignId,
     };
   };
+
+  const getCampaignIdFromDeal = (deal) => (
+    deal?.campaign?._id ||
+    deal?.campaignId ||
+    (typeof deal?.campaign === 'string' ? deal.campaign : null)
+  );
+
+  const getDealCampaignTitle = (deal) => {
+    if (deal?.campaign?.title) return deal.campaign.title;
+    const campaignId = getCampaignIdFromDeal(deal);
+    if (!campaignId) return 'Direct Outreach';
+    return `Campaign ${String(campaignId).slice(-6)}`;
+  };
+
+  const getDealPaymentStatus = (deal) => (
+    deal?.paymentStatus || deal?.paymentId?.paymentStatus || (deal?.paymentId ? 'paid' : 'pending')
+  );
 
   // Fetch data on mount
   useEffect(() => {
@@ -259,6 +296,166 @@ const Collaborations = () => {
     completed: myDeals.filter(d => d.status === 'completed').length,
   };
 
+  const brandDealCampaignOptions = useMemo(() => {
+    const seen = new Set();
+    const options = [];
+    let hasDirect = false;
+
+    myDeals.forEach(deal => {
+      const campaignId = getCampaignIdFromDeal(deal);
+      if (!campaignId) {
+        hasDirect = true;
+        return;
+      }
+
+      if (!seen.has(campaignId)) {
+        seen.add(campaignId);
+        options.push({
+          id: campaignId,
+          title: getDealCampaignTitle(deal),
+        });
+      }
+    });
+
+    options.sort((a, b) => a.title.localeCompare(b.title));
+
+    return {
+      campaigns: options,
+      hasDirect,
+    };
+  }, [myDeals]);
+
+  const brandDealStatusCounts = useMemo(() => ({
+    all: myDeals.length,
+    payment: myDeals.filter(d => d.status === 'pending_payment').length,
+    active: myDeals.filter(d => d.status === 'active' || d.status === 'in_progress').length,
+    review: myDeals.filter(d => d.status === 'pending_review').length,
+    completed: myDeals.filter(d => d.status === 'completed').length,
+    cancelled: myDeals.filter(d => d.status === 'cancelled' || d.status === 'disputed').length,
+  }), [myDeals]);
+
+  const filteredBrandDeals = useMemo(() => {
+    const f = brandDealFilters;
+    let list = myDeals.filter(deal => {
+      const campaignId = getCampaignIdFromDeal(deal);
+      const isDirect = !campaignId;
+      const influencerName = deal.influencer?.name || '';
+      const campaignTitle = getDealCampaignTitle(deal);
+
+      if (dealSearchTerm) {
+        const q = dealSearchTerm.toLowerCase();
+        if (!influencerName.toLowerCase().includes(q) && !campaignTitle.toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+
+      if (f.selectedCampaign !== 'all') {
+        if (f.selectedCampaign === 'direct') {
+          if (!isDirect) return false;
+        } else if (campaignId !== f.selectedCampaign) {
+          return false;
+        }
+      }
+
+      if (f.source === 'direct' && !isDirect) return false;
+      if (f.source === 'campaign' && isDirect) return false;
+
+      if (f.status !== 'all') {
+        if (f.status === 'active' && deal.status !== 'active' && deal.status !== 'in_progress') return false;
+        if (f.status === 'review' && deal.status !== 'pending_review') return false;
+        if (f.status === 'payment' && deal.status !== 'pending_payment') return false;
+        if (f.status === 'completed' && deal.status !== 'completed') return false;
+        if (f.status === 'cancelled' && deal.status !== 'cancelled' && deal.status !== 'disputed') return false;
+      }
+
+      const paymentStatus = getDealPaymentStatus(deal);
+      if (f.paymentStatus !== 'all' && paymentStatus !== f.paymentStatus) return false;
+
+      if (f.rateMin && (deal.agreedRate || 0) < Number(f.rateMin)) return false;
+      if (f.rateMax && (deal.agreedRate || 0) > Number(f.rateMax)) return false;
+
+      if (f.deadlineFrom && deal.deadline && new Date(deal.deadline) < new Date(f.deadlineFrom)) return false;
+      if (f.deadlineTo && deal.deadline && new Date(deal.deadline) > new Date(`${f.deadlineTo}T23:59:59`)) return false;
+
+      if (f.createdFrom && new Date(deal.createdAt) < new Date(f.createdFrom)) return false;
+      if (f.createdTo && new Date(deal.createdAt) > new Date(`${f.createdTo}T23:59:59`)) return false;
+
+      if (f.overdueOnly) {
+        const isOverdue = deal.deadline && new Date(deal.deadline) < new Date();
+        const completedOrCancelled = ['completed', 'cancelled'].includes(deal.status);
+        if (!isOverdue || completedOrCancelled) return false;
+      }
+
+      return true;
+    });
+
+    list.sort((a, b) => {
+      switch (f.sortBy) {
+        case 'oldest':
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        case 'rate_desc':
+          return (b.agreedRate || 0) - (a.agreedRate || 0);
+        case 'rate_asc':
+          return (a.agreedRate || 0) - (b.agreedRate || 0);
+        case 'deadline_asc':
+          return new Date(a.deadline || '2100-01-01') - new Date(b.deadline || '2100-01-01');
+        case 'deadline_desc':
+          return new Date(b.deadline || '1970-01-01') - new Date(a.deadline || '1970-01-01');
+        default:
+          return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+    });
+
+    return list;
+  }, [myDeals, brandDealFilters, dealSearchTerm]);
+
+  const groupedBrandDeals = useMemo(() => {
+    const groups = {};
+
+    filteredBrandDeals.forEach(deal => {
+      const campaignId = getCampaignIdFromDeal(deal);
+      const groupKey = campaignId || 'direct-outreach';
+      const campaignData = isCampaignObject(deal.campaign) ? deal.campaign : null;
+
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
+          groupKey,
+          campaignId: campaignId || null,
+          campaign: campaignData,
+          isDirect: !campaignId,
+          label: campaignData?.title || (!campaignId ? 'Direct Outreach Deals' : getDealCampaignTitle(deal)),
+          deals: [],
+        };
+      }
+
+      if (!groups[groupKey].campaign && campaignData) {
+        groups[groupKey].campaign = campaignData;
+        groups[groupKey].label = campaignData.title || groups[groupKey].label;
+      }
+
+      groups[groupKey].deals.push(deal);
+    });
+
+    return Object.values(groups).sort((a, b) => a.label.localeCompare(b.label));
+  }, [filteredBrandDeals]);
+
+  const activeDealFiltersCount = useMemo(() => {
+    let count = 0;
+    if (brandDealFilters.selectedCampaign !== 'all') count++;
+    if (brandDealFilters.status !== 'all') count++;
+    if (brandDealFilters.source !== 'all') count++;
+    if (brandDealFilters.paymentStatus !== 'all') count++;
+    if (brandDealFilters.rateMin) count++;
+    if (brandDealFilters.rateMax) count++;
+    if (brandDealFilters.deadlineFrom) count++;
+    if (brandDealFilters.deadlineTo) count++;
+    if (brandDealFilters.createdFrom) count++;
+    if (brandDealFilters.createdTo) count++;
+    if (brandDealFilters.overdueOnly) count++;
+    if (dealSearchTerm) count++;
+    return count;
+  }, [brandDealFilters, dealSearchTerm]);
+
   // ======== Brand-specific computed data ========
   const brandCampaignsList = useMemo(() => {
     const seen = new Set();
@@ -328,7 +525,7 @@ const Collaborations = () => {
     filteredBrandApps.forEach(app => {
       const cId = getCampaignIdFromApp(app) || 'unknown';
       const campaignData = isCampaignObject(app.campaign) ? app.campaign : null;
-      if (!groups[cId]) groups[cId] = { campaign: campaignData, apps: [] };
+      if (!groups[cId]) groups[cId] = { campaignId: cId, campaign: campaignData, apps: [] };
       if (!groups[cId].campaign && campaignData) {
         groups[cId].campaign = campaignData;
       }
@@ -932,7 +1129,7 @@ const Collaborations = () => {
         <div className="brand-campaign-groups">
           {groupedApps.length > 0 ? (
             groupedApps.map(group => {
-              const cId = group.campaign?._id || 'unknown';
+              const cId = group.campaignId || 'unknown';
               const isOpen = expandedCampaigns[cId] !== false;
               const pending = group.apps.filter(a => a.status === 'pending' || a.status === 'reviewed').length;
               const shortlisted = group.apps.filter(a => a.status === 'shortlisted').length;
@@ -994,6 +1191,521 @@ const Collaborations = () => {
           {filteredBrandApps.length > 0
             ? renderInfluencerTable(filteredBrandApps, true)
             : renderBrandEmptyState()}
+        </div>
+      )}
+    </>
+  );
+
+  const updateBrandDealFilter = (key, value) => {
+    setBrandDealFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearAllBrandDealFilters = () => {
+    setBrandDealFilters({
+      selectedCampaign: 'all',
+      status: 'all',
+      source: 'all',
+      paymentStatus: 'all',
+      rateMin: '',
+      rateMax: '',
+      deadlineFrom: '',
+      deadlineTo: '',
+      createdFrom: '',
+      createdTo: '',
+      overdueOnly: false,
+      sortBy: 'newest',
+    });
+    setDealSearchTerm('');
+  };
+
+  const toggleDealGroupExpanded = (groupKey) => {
+    setExpandedDealGroups(prev => ({
+      ...prev,
+      [groupKey]: prev[groupKey] === false ? true : false,
+    }));
+  };
+
+  const renderBrandDealEmptyState = () => (
+    <div className="collab-empty-state">
+      <Handshake size={48} />
+      <h3>No deals found</h3>
+      <p>
+        {activeDealFiltersCount > 0
+          ? 'No deals match your current filters. Try adjusting or clearing filters.'
+          : 'Deals will appear here once collaborations are confirmed.'}
+      </p>
+      {activeDealFiltersCount > 0 && (
+        <button className="btn btn-secondary" onClick={clearAllBrandDealFilters}>
+          <X size={16} /> Clear All Filters
+        </button>
+      )}
+    </div>
+  );
+
+  const renderBrandDealsTable = (dealList, showCampaignCol = false) => (
+    <div className="brand-inf-table-scroll">
+      <table className="brand-inf-table brand-deal-table">
+        <thead>
+          <tr>
+            <th>Influencer</th>
+            {showCampaignCol && <th>Campaign</th>}
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Rate</th>
+            <th>Deadline</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {dealList.map(deal => {
+            const paymentStatus = getDealPaymentStatus(deal);
+            const needsPayment = (deal.status === 'pending_payment' || deal.status === 'active') && (!deal.paymentId || paymentStatus === 'pending');
+            const canRelease = deal.status === 'completed' && paymentStatus === 'escrow';
+            const daysLeft = getDaysUntil(deal.deadline);
+            const isDirect = !getCampaignIdFromDeal(deal);
+
+            return (
+              <tr key={deal._id} className={`deal-row deal-row-${deal.status}`}>
+                <td>
+                  <div className="inf-name-cell">
+                    <div className="inf-avatar inf-avatar-default">
+                      <span>{(deal.influencer?.name || 'I').charAt(0).toUpperCase()}</span>
+                    </div>
+                    <div className="inf-name-info">
+                      <span className="inf-name">{deal.influencer?.name || 'Influencer'}</span>
+                      {deal.influencer?.email && <span className="inf-location">{deal.influencer.email}</span>}
+                    </div>
+                  </div>
+                </td>
+
+                {showCampaignCol && (
+                  <td>
+                    <span className={`inf-campaign-tag ${isDirect ? 'direct' : ''}`}>
+                      {isDirect ? 'Direct Outreach' : getDealCampaignTitle(deal)}
+                    </span>
+                  </td>
+                )}
+
+                <td>
+                  <span className={`collab-status-badge collab-deal-status-${deal.status}`}>
+                    {getDealStatusIcon(deal.status)}
+                    {deal.status.replace('_', ' ')}
+                  </span>
+                </td>
+
+                <td>
+                  <span className={`brand-payment-chip brand-payment-${paymentStatus}`}>
+                    {paymentStatus.replace('_', ' ')}
+                  </span>
+                </td>
+
+                <td>
+                  <span className="inf-rate">₹{(deal.agreedRate || 0).toLocaleString()}</span>
+                </td>
+
+                <td>
+                  <div className={`brand-deal-deadline ${daysLeft !== null && daysLeft < 0 ? 'overdue' : ''}`}>
+                    <span>{formatDate(deal.deadline)}</span>
+                    {daysLeft !== null && (
+                      <small>
+                        {daysLeft > 0 ? `${daysLeft}d left` : daysLeft === 0 ? 'Today' : 'Overdue'}
+                      </small>
+                    )}
+                  </div>
+                </td>
+
+                <td>
+                  <span className="inf-date">{formatDate(deal.createdAt)}</span>
+                </td>
+
+                <td>
+                  <div className="inf-action-btns brand-deal-actions">
+                    {needsPayment && (
+                      <button
+                        className="inf-act-btn inf-act-deal"
+                        onClick={() => handleInitiatePayment(deal)}
+                        disabled={paymentProcessing || !razorpayLoaded}
+                        title={!razorpayLoaded ? 'Payment gateway loading...' : 'Pay now'}
+                      >
+                        <CreditCard size={13} /> <span>Pay</span>
+                      </button>
+                    )}
+
+                    {deal.status === 'pending_review' && (
+                      <>
+                        <button
+                          className="inf-act-btn inf-act-accept"
+                          onClick={() => handleDealStatusChange(deal._id, 'completed')}
+                          disabled={submitting}
+                        >
+                          <CheckCircle size={13} /> <span>Approve</span>
+                        </button>
+                        <button
+                          className="inf-act-btn inf-act-shortlist"
+                          onClick={() => handleDealStatusChange(deal._id, 'in_progress')}
+                          disabled={submitting}
+                        >
+                          <Upload size={13} /> <span>Revision</span>
+                        </button>
+                      </>
+                    )}
+
+                    {canRelease && (
+                      <button
+                        className="inf-act-btn inf-act-accept"
+                        onClick={() => handleReleasePayment(deal._id)}
+                        disabled={submitting}
+                      >
+                        <IndianRupee size={13} /> <span>Release</span>
+                      </button>
+                    )}
+
+                    {deal.status === 'completed' && (
+                      <button
+                        className="inf-act-btn inf-act-view"
+                        onClick={() => {
+                          setShowReviewModal(deal);
+                          setReviewForm({ rating: 5, title: '', content: '' });
+                        }}
+                      >
+                        <Star size={13} /> <span>Review</span>
+                      </button>
+                    )}
+
+                    <button className="inf-act-btn inf-act-msg" onClick={handleGoToMessages}>
+                      <MessageSquare size={13} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const renderBrandDealsView = () => (
+    <>
+      <div className="brand-apps-topbar">
+        <div className="brand-stat-pills">
+          {[
+            { key: 'all', label: 'All', count: brandDealStatusCounts.all },
+            { key: 'payment', label: 'Payment', count: brandDealStatusCounts.payment },
+            { key: 'active', label: 'Active', count: brandDealStatusCounts.active },
+            { key: 'review', label: 'In Review', count: brandDealStatusCounts.review },
+            { key: 'completed', label: 'Completed', count: brandDealStatusCounts.completed },
+            { key: 'cancelled', label: 'Cancelled', count: brandDealStatusCounts.cancelled },
+          ].map(({ key, label, count }) => (
+            <button
+              key={key}
+              className={`brand-stat-pill brand-stat-${key} ${brandDealFilters.status === key ? 'active' : ''}`}
+              onClick={() => updateBrandDealFilter('status', key)}
+            >
+              {label}
+              <span className="brand-stat-cnt">{count}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="brand-view-toggle">
+          <button
+            className={`brand-view-btn ${dealViewMode === 'campaign' ? 'active' : ''}`}
+            onClick={() => setDealViewMode('campaign')}
+          >
+            <LayoutGrid size={15} /> Campaign
+          </button>
+          <button
+            className={`brand-view-btn ${dealViewMode === 'table' ? 'active' : ''}`}
+            onClick={() => setDealViewMode('table')}
+          >
+            <List size={15} /> Table
+          </button>
+        </div>
+      </div>
+
+      <div className="brand-filter-row">
+        <div className="collab-search-box brand-search">
+          <Search size={17} />
+          <input
+            type="text"
+            placeholder="Search influencer or campaign..."
+            value={dealSearchTerm}
+            onChange={(e) => setDealSearchTerm(e.target.value)}
+          />
+          {dealSearchTerm && (
+            <button className="brand-search-clear" onClick={() => setDealSearchTerm('')}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div className="brand-filter-controls">
+          <select
+            className="brand-select"
+            value={brandDealFilters.selectedCampaign}
+            onChange={(e) => updateBrandDealFilter('selectedCampaign', e.target.value)}
+          >
+            <option value="all">All Campaigns</option>
+            {brandDealCampaignOptions.campaigns.map(c => (
+              <option key={c.id} value={c.id}>{c.title}</option>
+            ))}
+            {brandDealCampaignOptions.hasDirect && <option value="direct">Direct Outreach</option>}
+          </select>
+
+          <select
+            className="brand-select"
+            value={brandDealFilters.source}
+            onChange={(e) => updateBrandDealFilter('source', e.target.value)}
+          >
+            <option value="all">All Sources</option>
+            <option value="campaign">Campaign Deals</option>
+            <option value="direct">Direct Outreach</option>
+          </select>
+
+          <select
+            className="brand-select"
+            value={brandDealFilters.paymentStatus}
+            onChange={(e) => updateBrandDealFilter('paymentStatus', e.target.value)}
+          >
+            <option value="all">All Payments</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="paid">Paid</option>
+            <option value="escrow">Escrow</option>
+            <option value="released">Released</option>
+            <option value="refunded">Refunded</option>
+          </select>
+
+          <select
+            className="brand-select"
+            value={brandDealFilters.sortBy}
+            onChange={(e) => updateBrandDealFilter('sortBy', e.target.value)}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="rate_desc">Rate: High → Low</option>
+            <option value="rate_asc">Rate: Low → High</option>
+            <option value="deadline_asc">Deadline: Nearest</option>
+            <option value="deadline_desc">Deadline: Farthest</option>
+          </select>
+
+          <button
+            className={`brand-adv-btn ${showDealAdvancedFilters ? 'open' : ''} ${activeDealFiltersCount > 0 ? 'has-active' : ''}`}
+            onClick={() => setShowDealAdvancedFilters(prev => !prev)}
+          >
+            <SlidersHorizontal size={15} />
+            <span>Filters</span>
+            {activeDealFiltersCount > 0 && <span className="brand-filter-badge">{activeDealFiltersCount}</span>}
+          </button>
+
+          {activeDealFiltersCount > 0 && (
+            <button className="brand-clear-btn" onClick={clearAllBrandDealFilters}>
+              <X size={14} /> Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showDealAdvancedFilters && (
+        <div className="brand-adv-panel">
+          <div className="brand-adv-section">
+            <label className="brand-adv-label"><IndianRupee size={14} /> Agreed Rate (₹)</label>
+            <div className="brand-range-row">
+              <input
+                type="number"
+                className="brand-range-input"
+                placeholder="Min"
+                value={brandDealFilters.rateMin}
+                onChange={(e) => updateBrandDealFilter('rateMin', e.target.value)}
+                min="0"
+              />
+              <span className="brand-range-sep">–</span>
+              <input
+                type="number"
+                className="brand-range-input"
+                placeholder="Max"
+                value={brandDealFilters.rateMax}
+                onChange={(e) => updateBrandDealFilter('rateMax', e.target.value)}
+                min="0"
+              />
+            </div>
+          </div>
+
+          <div className="brand-adv-section">
+            <label className="brand-adv-label"><Calendar size={14} /> Deadline Range</label>
+            <div className="brand-range-row">
+              <input
+                type="date"
+                className="brand-range-input"
+                value={brandDealFilters.deadlineFrom}
+                onChange={(e) => updateBrandDealFilter('deadlineFrom', e.target.value)}
+              />
+              <span className="brand-range-sep">–</span>
+              <input
+                type="date"
+                className="brand-range-input"
+                value={brandDealFilters.deadlineTo}
+                onChange={(e) => updateBrandDealFilter('deadlineTo', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="brand-adv-section">
+            <label className="brand-adv-label"><Clock size={14} /> Deal Created Date</label>
+            <div className="brand-range-row">
+              <input
+                type="date"
+                className="brand-range-input"
+                value={brandDealFilters.createdFrom}
+                onChange={(e) => updateBrandDealFilter('createdFrom', e.target.value)}
+              />
+              <span className="brand-range-sep">–</span>
+              <input
+                type="date"
+                className="brand-range-input"
+                value={brandDealFilters.createdTo}
+                onChange={(e) => updateBrandDealFilter('createdTo', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="brand-adv-section">
+            <label className="brand-adv-label"><AlertCircle size={14} /> Overdue</label>
+            <label className="brand-overdue-check">
+              <input
+                type="checkbox"
+                checked={brandDealFilters.overdueOnly}
+                onChange={(e) => updateBrandDealFilter('overdueOnly', e.target.checked)}
+              />
+              <span>Show only overdue active deals</span>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {activeDealFiltersCount > 0 && (
+        <div className="brand-active-chips">
+          {brandDealFilters.selectedCampaign !== 'all' && (
+            <span className="brand-chip">
+              {brandDealFilters.selectedCampaign === 'direct'
+                ? 'Direct Outreach'
+                : `Campaign: ${brandDealCampaignOptions.campaigns.find(c => c.id === brandDealFilters.selectedCampaign)?.title || '...'}`}
+              <button onClick={() => updateBrandDealFilter('selectedCampaign', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {brandDealFilters.status !== 'all' && (
+            <span className="brand-chip">
+              Status: {brandDealFilters.status}
+              <button onClick={() => updateBrandDealFilter('status', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {brandDealFilters.source !== 'all' && (
+            <span className="brand-chip">
+              Source: {brandDealFilters.source}
+              <button onClick={() => updateBrandDealFilter('source', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {brandDealFilters.paymentStatus !== 'all' && (
+            <span className="brand-chip">
+              Payment: {brandDealFilters.paymentStatus}
+              <button onClick={() => updateBrandDealFilter('paymentStatus', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {(brandDealFilters.rateMin || brandDealFilters.rateMax) && (
+            <span className="brand-chip">
+              ₹{brandDealFilters.rateMin || '0'} – ₹{brandDealFilters.rateMax || '∞'}
+              <button onClick={() => { updateBrandDealFilter('rateMin', ''); updateBrandDealFilter('rateMax', ''); }}><X size={11} /></button>
+            </span>
+          )}
+          {(brandDealFilters.deadlineFrom || brandDealFilters.deadlineTo) && (
+            <span className="brand-chip">
+              Deadline: {brandDealFilters.deadlineFrom || '…'} – {brandDealFilters.deadlineTo || '…'}
+              <button onClick={() => { updateBrandDealFilter('deadlineFrom', ''); updateBrandDealFilter('deadlineTo', ''); }}><X size={11} /></button>
+            </span>
+          )}
+          {(brandDealFilters.createdFrom || brandDealFilters.createdTo) && (
+            <span className="brand-chip">
+              Created: {brandDealFilters.createdFrom || '…'} – {brandDealFilters.createdTo || '…'}
+              <button onClick={() => { updateBrandDealFilter('createdFrom', ''); updateBrandDealFilter('createdTo', ''); }}><X size={11} /></button>
+            </span>
+          )}
+          {brandDealFilters.overdueOnly && (
+            <span className="brand-chip">
+              Overdue only
+              <button onClick={() => updateBrandDealFilter('overdueOnly', false)}><X size={11} /></button>
+            </span>
+          )}
+          {dealSearchTerm && (
+            <span className="brand-chip">
+              "{dealSearchTerm}"
+              <button onClick={() => setDealSearchTerm('')}><X size={11} /></button>
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="brand-results-bar">
+        <span>
+          Showing <strong>{filteredBrandDeals.length}</strong>
+          {filteredBrandDeals.length !== myDeals.length && ` of ${myDeals.length}`} deals
+        </span>
+      </div>
+
+      {dealViewMode === 'campaign' && (
+        <div className="brand-campaign-groups brand-deal-groups">
+          {groupedBrandDeals.length > 0 ? (
+            groupedBrandDeals.map(group => {
+              const isOpen = expandedDealGroups[group.groupKey] !== false;
+              const activeCount = group.deals.filter(d => d.status === 'active' || d.status === 'in_progress').length;
+              const reviewCount = group.deals.filter(d => d.status === 'pending_review').length;
+              const completedCount = group.deals.filter(d => d.status === 'completed').length;
+              return (
+                <div key={group.groupKey} className="brand-campaign-group brand-deal-group">
+                  <div className={`brand-cg-header brand-dg-header ${isOpen ? 'open' : ''}`} onClick={() => toggleDealGroupExpanded(group.groupKey)}>
+                    <div className="brand-cg-left">
+                      <div className={`brand-cg-icon ${group.isDirect ? 'direct' : ''}`}>
+                        {group.isDirect ? <MessageSquare size={17} /> : <Briefcase size={17} />}
+                      </div>
+                      <div className="brand-cg-info">
+                        <h3 className="brand-cg-title">{group.label}</h3>
+                        <div className="brand-cg-meta">
+                          <span className="brand-cg-tag">{group.isDirect ? 'Direct Outreach' : 'Campaign Deal'}</span>
+                          {group.campaign?.platformType && <span className="brand-cg-tag">{group.campaign.platformType}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="brand-cg-right">
+                      <div className="brand-cg-counts">
+                        <span className="brand-cg-count total">{group.deals.length} total</span>
+                        {activeCount > 0 && <span className="brand-cg-count shortlisted">{activeCount} active</span>}
+                        {reviewCount > 0 && <span className="brand-cg-count pending">{reviewCount} review</span>}
+                        {completedCount > 0 && <span className="brand-cg-count accepted">{completedCount} completed</span>}
+                      </div>
+                      <button className="brand-cg-toggle" onClick={(e) => { e.stopPropagation(); toggleDealGroupExpanded(group.groupKey); }}>
+                        {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {isOpen && (
+                    <div className="brand-cg-body">
+                      {renderBrandDealsTable(group.deals, false)}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          ) : renderBrandDealEmptyState()}
+        </div>
+      )}
+
+      {dealViewMode === 'table' && (
+        <div className="brand-flat-table-wrap brand-flat-deals-wrap">
+          {filteredBrandDeals.length > 0
+            ? renderBrandDealsTable(filteredBrandDeals, true)
+            : renderBrandDealEmptyState()}
         </div>
       )}
     </>
@@ -1469,229 +2181,176 @@ const Collaborations = () => {
         {/* Deals Tab */}
         {activeTab === 'deals' && (
           <>
-            {/* Deal Filters */}
-            <div className="collab-filters-bar">
-              <div className="collab-search-box">
-                <Search size={20} />
-                <input
-                  type="text"
-                  placeholder="Search deals..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+            {isBrand && renderBrandDealsView()}
 
-              <div className="collab-filter-tabs">
-                {['all', 'active', 'pending_review', 'completed'].map(status => (
-                  <button
-                    key={status}
-                    className={`collab-filter-tab ${dealFilter === status ? 'collab-active' : ''}`}
-                    onClick={() => setDealFilter(status)}
-                  >
-                    {status === 'pending_review' ? 'In Review' : status.charAt(0).toUpperCase() + status.slice(1)}
-                    <span className="collab-count">{dealStatusCounts[status]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {isInfluencer && (
+              <>
+                {/* Deal Filters */}
+                <div className="collab-filters-bar">
+                  <div className="collab-search-box">
+                    <Search size={20} />
+                    <input
+                      type="text"
+                      placeholder="Search deals..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
 
-            {/* Deals List */}
-            <div className="collab-list">
-              {filteredDeals.length > 0 ? (
-                filteredDeals.map((deal) => {
-                  const daysLeft = getDaysUntil(deal.deadline);
-                  return (
-                    <div key={deal._id} className="collab-card collab-deal-card">
-                      <div className="collab-header">
-                        <div className="collab-title">
-                          <h3>
-                            {isBrand 
-                              ? (deal.influencer?.name || 'Influencer')
-                              : (deal.brand?.name || 'Brand')}
-                          </h3>
-                          <span className={`collab-status-badge collab-deal-status-${deal.status}`}>
-                            {getDealStatusIcon(deal.status)}
-                            {deal.status.replace('_', ' ')}
-                          </span>
-                        </div>
-                        <div className="collab-service">
-                          <Briefcase size={16} />
-                          {deal.campaign?.title || 'Campaign'}
-                        </div>
-                      </div>
+                  <div className="collab-filter-tabs">
+                    {['all', 'active', 'pending_review', 'completed'].map(status => (
+                      <button
+                        key={status}
+                        className={`collab-filter-tab ${dealFilter === status ? 'collab-active' : ''}`}
+                        onClick={() => setDealFilter(status)}
+                      >
+                        {status === 'pending_review' ? 'In Review' : status.charAt(0).toUpperCase() + status.slice(1)}
+                        <span className="collab-count">{dealStatusCounts[status]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                      <div className="collab-body">
-                        <div className="collab-deal-stats">
-                          <div className="collab-deal-stat">
-                            <IndianRupee size={20} />
-                            <div>
-                              <span className="stat-label">Agreed Rate</span>
-                              <span className="stat-value">₹{deal.agreedRate?.toLocaleString() || 'N/A'}</span>
+                {/* Deals List */}
+                <div className="collab-list">
+                  {filteredDeals.length > 0 ? (
+                    filteredDeals.map((deal) => {
+                      const daysLeft = getDaysUntil(deal.deadline);
+                      return (
+                        <div key={deal._id} className="collab-card collab-deal-card">
+                          <div className="collab-header">
+                            <div className="collab-title">
+                              <h3>{deal.brand?.name || 'Brand'}</h3>
+                              <span className={`collab-status-badge collab-deal-status-${deal.status}`}>
+                                {getDealStatusIcon(deal.status)}
+                                {deal.status.replace('_', ' ')}
+                              </span>
+                            </div>
+                            <div className="collab-service">
+                              <Briefcase size={16} />
+                              {getDealCampaignTitle(deal)}
                             </div>
                           </div>
-                          <div className="collab-deal-stat">
-                            <Calendar size={20} />
-                            <div>
-                              <span className="stat-label">Deadline</span>
-                              <span className="stat-value">{formatDate(deal.deadline)}</span>
+
+                          <div className="collab-body">
+                            <div className="collab-deal-stats">
+                              <div className="collab-deal-stat">
+                                <IndianRupee size={20} />
+                                <div>
+                                  <span className="stat-label">Agreed Rate</span>
+                                  <span className="stat-value">₹{deal.agreedRate?.toLocaleString() || 'N/A'}</span>
+                                </div>
+                              </div>
+                              <div className="collab-deal-stat">
+                                <Calendar size={20} />
+                                <div>
+                                  <span className="stat-label">Deadline</span>
+                                  <span className="stat-value">{formatDate(deal.deadline)}</span>
+                                </div>
+                              </div>
+                              {daysLeft !== null && (
+                                <div className={`collab-deal-stat ${daysLeft < 3 ? 'urgent' : ''}`}>
+                                  <Clock size={20} />
+                                  <div>
+                                    <span className="stat-label">Time Left</span>
+                                    <span className="stat-value">
+                                      {daysLeft > 0 ? `${daysLeft} days` : daysLeft === 0 ? 'Today' : 'Overdue'}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
+
+                            {deal.deliverables && deal.deliverables.length > 0 && (
+                              <div className="collab-deliverables">
+                                <h4>Deliverables</h4>
+                                <div className="collab-deliverables-list">
+                                  {deal.deliverables.map((d, idx) => (
+                                    <div key={idx} className={`collab-deliverable collab-deliverable-${d.status}`}>
+                                      {d.status === 'approved' ? <CheckCircle size={14} /> : d.status === 'submitted' ? <Upload size={14} /> : <Clock size={14} />}
+                                      <span>{d.description || d.type}</span>
+                                      <span className="deliverable-status">{d.status}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          {daysLeft !== null && (
-                            <div className={`collab-deal-stat ${daysLeft < 3 ? 'urgent' : ''}`}>
-                              <Clock size={20} />
-                              <div>
-                                <span className="stat-label">Time Left</span>
-                                <span className="stat-value">
-                                  {daysLeft > 0 ? `${daysLeft} days` : daysLeft === 0 ? 'Today' : 'Overdue'}
+
+                          <div className="collab-footer">
+                            {deal.paymentStatus && (
+                              <div className={`collab-payment-info ${deal.paymentStatus === 'paid' ? 'success' : deal.paymentStatus === 'pending' ? 'warning' : ''}`}>
+                                <Lock size={16} />
+                                <span>
+                                  Payment: {deal.paymentStatus === 'paid'
+                                    ? 'Secured in Escrow'
+                                    : deal.paymentStatus === 'processing'
+                                      ? 'Processing...'
+                                      : deal.paymentStatus === 'pending'
+                                        ? 'Payment Required'
+                                        : deal.paymentStatus}
                                 </span>
                               </div>
-                            </div>
-                          )}
-                        </div>
+                            )}
 
-                        {/* Deliverables Progress */}
-                        {deal.deliverables && deal.deliverables.length > 0 && (
-                          <div className="collab-deliverables">
-                            <h4>Deliverables</h4>
-                            <div className="collab-deliverables-list">
-                              {deal.deliverables.map((d, idx) => (
-                                <div key={idx} className={`collab-deliverable collab-deliverable-${d.status}`}>
-                                  {d.status === 'approved' ? <CheckCircle size={14} /> : 
-                                   d.status === 'submitted' ? <Upload size={14} /> : 
-                                   <Clock size={14} />}
-                                  <span>{d.description || d.type}</span>
-                                  <span className="deliverable-status">{d.status}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="collab-footer">
-                        {/* Payment status display */}
-                        {deal.paymentStatus && (
-                          <div className={`collab-payment-info ${deal.paymentStatus === 'paid' ? 'success' : deal.paymentStatus === 'pending' ? 'warning' : ''}`}>
-                            <Lock size={16} />
-                            <span>
-                              Payment: {deal.paymentStatus === 'paid' ? 'Secured in Escrow' : 
-                                       deal.paymentStatus === 'processing' ? 'Processing...' :
-                                       deal.paymentStatus === 'pending' ? 'Payment Required' :
-                                       deal.paymentStatus}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Brand: Pay for deal */}
-                        {isBrand && (deal.status === 'pending_payment' || deal.status === 'active') && (!deal.paymentId || deal.paymentStatus === 'pending') && (
-                          <div className="collab-action-buttons">
-                            <button 
-                              className="btn btn-primary btn-sm btn-payment"
-                              onClick={() => handleInitiatePayment(deal)}
-                              disabled={paymentProcessing || !razorpayLoaded}
-                              title={!razorpayLoaded ? 'Payment gateway loading...' : ''}
-                            >
-                              {paymentProcessing ? (
-                                <><Loader size={16} className="spin-animation" /> Processing...</>
-                              ) : (
-                                <><CreditCard size={16} /> Pay Now (₹{deal.agreedRate})</>
-                              )}
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Influencer actions */}
-                        {isInfluencer && (deal.status === 'active' || deal.status === 'in_progress') && (
-                          <div className="collab-action-buttons">
-                            <button 
-                              className="btn btn-primary btn-sm"
-                              onClick={() => handleDealStatusChange(deal._id, 'pending_review')}
-                              disabled={submitting}
-                            >
-                              <Upload size={16} />
-                              Submit for Review
-                            </button>
-                          </div>
-                        )}
-                        {/* Brand actions */}
-                        {isBrand && deal.status === 'pending_review' && (
-                          <div className="collab-action-buttons">
-                            <button 
-                              className="btn btn-primary btn-sm"
-                              onClick={() => handleDealStatusChange(deal._id, 'completed')}
-                              disabled={submitting}
-                            >
-                              <CheckCircle size={16} />
-                              Approve & Complete
-                            </button>
-                            <button 
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => handleDealStatusChange(deal._id, 'in_progress')}
-                              disabled={submitting}
-                            >
-                              Request Revision
-                            </button>
-                          </div>
-                        )}
-                        {deal.status === 'completed' && (
-                          <div className="collab-deal-completed-section">
-                            <div className="collab-completed-info collab-success">
-                              <CheckCircle size={18} />
-                              <span>Deal completed{deal.completedAt ? ` on ${formatDate(deal.completedAt)}` : ''}</span>
-                            </div>
-                            <div className="collab-action-buttons">
-                              {/* Brand: Release payment to influencer */}
-                              {isBrand && deal.paymentStatus === 'escrow' && (
-                                <button 
-                                  className="btn btn-success btn-sm"
-                                  onClick={() => handleReleasePayment(deal._id)}
+                            {(deal.status === 'active' || deal.status === 'in_progress') && (
+                              <div className="collab-action-buttons">
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  onClick={() => handleDealStatusChange(deal._id, 'pending_review')}
                                   disabled={submitting}
                                 >
-                                  {submitting ? <Loader size={16} className="spin-animation" /> : <IndianRupee size={16} />}
-                                  Release Payment
+                                  <Upload size={16} />
+                                  Submit for Review
                                 </button>
-                              )}
-                              {isBrand && deal.paymentStatus === 'released' && (
+                              </div>
+                            )}
+
+                            {deal.status === 'completed' && (
+                              <div className="collab-deal-completed-section">
                                 <div className="collab-completed-info collab-success">
-                                  <CheckCircle size={16} />
-                                  <span>Payment released to influencer</span>
+                                  <CheckCircle size={18} />
+                                  <span>Deal completed{deal.completedAt ? ` on ${formatDate(deal.completedAt)}` : ''}</span>
                                 </div>
-                              )}
-                              <button 
-                                className="btn btn-primary btn-sm"
-                                onClick={() => {
-                                  setShowReviewModal(deal);
-                                  setReviewForm({ rating: 5, title: '', content: '' });
-                                }}
-                              >
-                                <Star size={16} />
-                                Leave Review
-                              </button>
-                            </div>
+                                <div className="collab-action-buttons">
+                                  <button
+                                    className="btn btn-primary btn-sm"
+                                    onClick={() => {
+                                      setShowReviewModal(deal);
+                                      setReviewForm({ rating: 5, title: '', content: '' });
+                                    }}
+                                  >
+                                    <Star size={16} />
+                                    Leave Review
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {deal.status === 'cancelled' && (
+                              <div className="collab-completed-info">
+                                <XCircle size={18} />
+                                <span>Deal cancelled</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {deal.status === 'cancelled' && (
-                          <div className="collab-completed-info">
-                            <XCircle size={18} />
-                            <span>Deal cancelled</span>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="collab-empty-state">
+                      <Handshake size={48} />
+                      <h3>No deals found</h3>
+                      <p>
+                        {dealFilter !== 'all'
+                          ? `You don't have any ${dealFilter.replace('_', ' ')} deals.`
+                          : 'Deals will appear here once applications are accepted and confirmed.'}
+                      </p>
                     </div>
-                  );
-                })
-              ) : (
-                <div className="collab-empty-state">
-                  <Handshake size={48} />
-                  <h3>No deals found</h3>
-                  <p>
-                    {dealFilter !== 'all' 
-                      ? `You don't have any ${dealFilter.replace('_', ' ')} deals.` 
-                      : 'Deals will appear here once applications are accepted and confirmed.'}
-                  </p>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </>
         )}
 
