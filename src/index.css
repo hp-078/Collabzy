@@ -146,6 +146,10 @@ html {
   --font-size-4xl: 2.25rem;
   --font-size-5xl: 3rem;
   --font-size-6xl: 3.75rem;
+
+  /* App layout */
+  --layout-max-width: 1520px;
+  --layout-gutter: clamp(1rem, 2vw, 2rem);
 }
 
 /* ========================================

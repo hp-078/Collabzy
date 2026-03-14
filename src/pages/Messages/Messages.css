@@ -18,7 +18,7 @@
   display: grid;
   grid-template-columns: 360px 1fr;
   height: calc(100vh - 90px);
-  max-width: 1400px;
+  width: min(100%, var(--layout-max-width));
   margin: 0 auto;
   background: white;
   box-shadow: var(--clay-shadow-lg);

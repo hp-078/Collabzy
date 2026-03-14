@@ -14,9 +14,9 @@
 }
 
 .collab-container {
-  max-width: 1000px;
+  width: min(100%, var(--layout-max-width));
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 var(--layout-gutter);
 }
 
 .collab-page-header {
