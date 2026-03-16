@@ -19,6 +19,23 @@ const CATEGORY_OPTIONS = [
 
 const PLATFORM_OPTIONS = ['YouTube', 'Instagram', 'TikTok', 'Multiple', 'Any'];
 
+const formatApplicationError = (result) => {
+  if (!result) {
+    return 'Failed to submit application.';
+  }
+
+  if (Array.isArray(result.reasons) && result.reasons.length > 0) {
+    return [
+      result.message || 'You are not eligible for this campaign yet.',
+      '',
+      'Why this failed:',
+      ...result.reasons.map(reason => `- ${reason}`)
+    ].join('\n');
+  }
+
+  return result.error || result.message || 'Failed to submit application.';
+};
+
 const CampaignDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -163,8 +180,9 @@ const CampaignDetail = () => {
         setShowApplyForm(false);
         setApplyForm({ message: '', proposedRate: '', proposedDeliverables: '', portfolioLinks: '' });
       } else {
-        toast.error(result.error || 'Failed to apply');
-        alert(`❌ Failed to submit application!\n\n${result.error}\n\n✅ Solution:\n1. Open a new terminal\n2. cd backend\n3. npm run dev\n\nSee START_HERE.md for details`);
+        const formattedError = formatApplicationError(result);
+        toast.error(result.message || 'Failed to apply');
+        alert(formattedError);
       }
     } catch (err) {
       toast.error('Failed to submit application');

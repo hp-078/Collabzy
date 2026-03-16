@@ -76,8 +76,9 @@ exports.submitApplication = async (req, res) => {
     if (!eligibilityCheck.eligible) {
       return res.status(400).json({
         success: false,
-        message: 'You are not eligible for this campaign',
-        reasons: eligibilityCheck.reasons
+        message: 'You are not eligible for this campaign yet.',
+        reasons: eligibilityCheck.reasons,
+        criteria: eligibilityCheck.criteria.filter(criterion => !criterion.met)
       });
     }
 

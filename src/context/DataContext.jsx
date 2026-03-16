@@ -265,9 +265,22 @@ export const DataProvider = ({ children }) => {
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Failed to submit application:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to submit application';
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
+      const responseData = error.response?.data || {};
+      const errorMsg = responseData.message || 'Failed to submit application';
+      const reasons = Array.isArray(responseData.reasons) ? responseData.reasons : [];
+      const criteria = Array.isArray(responseData.criteria) ? responseData.criteria : [];
+      const detailedError = reasons.length > 0
+        ? `${errorMsg} ${reasons.join(' ')}`
+        : errorMsg;
+
+      setError(detailedError);
+      return {
+        success: false,
+        error: detailedError,
+        message: errorMsg,
+        reasons,
+        criteria
+      };
     } finally {
       setLoading(false);
     }

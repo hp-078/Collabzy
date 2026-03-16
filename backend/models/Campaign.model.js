@@ -246,79 +246,218 @@ campaignSchema.methods.updateStats = async function() {
   await this.save();
 };
 
+const formatNumber = (value) => Number(value || 0).toLocaleString();
+
+const getInfluencerFollowers = (influencerProfile) => {
+  if (typeof influencerProfile.totalFollowers === 'number') {
+    return influencerProfile.totalFollowers;
+  }
+
+  const youtubeSubscribers = influencerProfile.youtubeStats?.subscribers || 0;
+  const instagramFollowers = influencerProfile.instagramStats?.followers || 0;
+
+  return youtubeSubscribers + instagramFollowers;
+};
+
+const getInfluencerEngagementRate = (influencerProfile) => {
+  if (typeof influencerProfile.averageEngagementRate === 'number' && influencerProfile.averageEngagementRate > 0) {
+    return influencerProfile.averageEngagementRate;
+  }
+
+  const rates = [
+    influencerProfile.youtubeStats?.engagementRate,
+    influencerProfile.instagramStats?.engagementRate
+  ].filter(rate => typeof rate === 'number' && rate > 0);
+
+  if (rates.length === 0) {
+    return 0;
+  }
+
+  return rates.reduce((sum, rate) => sum + rate, 0) / rates.length;
+};
+
+const getInfluencerNiches = (influencerProfile) => {
+  if (!influencerProfile.niche) {
+    return [];
+  }
+
+  return Array.isArray(influencerProfile.niche)
+    ? influencerProfile.niche.filter(Boolean)
+    : [influencerProfile.niche].filter(Boolean);
+};
+
+const getInfluencerPlatforms = (influencerProfile) => {
+  const platforms = new Set();
+
+  const hasYouTube = Boolean(
+    influencerProfile.youtubeUrl ||
+    influencerProfile.youtubeChannelId ||
+    (influencerProfile.youtubeStats?.subscribers || 0) > 0 ||
+    influencerProfile.platformType === 'YouTube' ||
+    influencerProfile.platformType === 'Multiple' ||
+    influencerProfile.platforms?.some(platform => platform?.type === 'YouTube')
+  );
+
+  const hasInstagram = Boolean(
+    influencerProfile.instagramUrl ||
+    influencerProfile.instagramUsername ||
+    (influencerProfile.instagramStats?.followers || 0) > 0 ||
+    influencerProfile.platformType === 'Instagram' ||
+    influencerProfile.platformType === 'Multiple' ||
+    influencerProfile.platforms?.some(platform => platform?.type === 'Instagram')
+  );
+
+  if (hasYouTube) platforms.add('youtube');
+  if (hasInstagram) platforms.add('instagram');
+
+  return Array.from(platforms);
+};
+
 /**
  * Check if an influencer is eligible for this campaign
  * @param {Object} influencerProfile - The influencer profile to check
- * @returns {Object} { eligible: boolean, reasons: string[] }
+ * @returns {Object} { eligible: boolean, reasons: string[], criteria: Object[] }
  */
 campaignSchema.methods.isEligible = function(influencerProfile) {
+  const criteria = [];
   const reasons = [];
+  const totalFollowers = getInfluencerFollowers(influencerProfile);
+  const engagementRate = getInfluencerEngagementRate(influencerProfile);
+  const trustScore = influencerProfile.trustScore || 0;
+  const influencerNiches = getInfluencerNiches(influencerProfile);
+  const influencerPlatforms = getInfluencerPlatforms(influencerProfile);
 
   // Check follower count (only minimum, no maximum)
-  const totalFollowers = (influencerProfile.youtubeStats?.subscriberCount || 0) + 
-                        (influencerProfile.instagramStats?.followerCount || 0);
-  
   if (this.eligibility.minFollowers && this.eligibility.minFollowers > 0) {
-    if (totalFollowers < this.eligibility.minFollowers) {
-      reasons.push(`Minimum ${this.eligibility.minFollowers.toLocaleString()} followers required`);
+    const meetsFollowers = totalFollowers >= this.eligibility.minFollowers;
+    const criterion = {
+      key: 'minFollowers',
+      label: 'Followers',
+      met: meetsFollowers,
+      required: this.eligibility.minFollowers,
+      actual: totalFollowers,
+      requiredDisplay: `${formatNumber(this.eligibility.minFollowers)}+ followers`,
+      actualDisplay: `${formatNumber(totalFollowers)} followers`,
+      message: meetsFollowers
+        ? `Follower requirement met: ${formatNumber(totalFollowers)} followers available.`
+        : `Followers mismatch: requires at least ${formatNumber(this.eligibility.minFollowers)} total followers, but your profile has ${formatNumber(totalFollowers)}.`
+    };
+
+    criteria.push(criterion);
+
+    if (!criterion.met) {
+      reasons.push(criterion.message);
     }
   }
 
   // Check engagement rate
   if (this.eligibility.minEngagementRate && this.eligibility.minEngagementRate > 0) {
-    const engagementRate = influencerProfile.youtubeStats?.engagementRate || 
-                           influencerProfile.instagramStats?.engagementRate || 0;
-    
-    if (engagementRate < this.eligibility.minEngagementRate) {
-      reasons.push(`Minimum ${this.eligibility.minEngagementRate}% engagement rate required`);
+    const meetsEngagement = engagementRate >= this.eligibility.minEngagementRate;
+    const criterion = {
+      key: 'minEngagementRate',
+      label: 'Engagement Rate',
+      met: meetsEngagement,
+      required: this.eligibility.minEngagementRate,
+      actual: Number(engagementRate.toFixed(2)),
+      requiredDisplay: `${this.eligibility.minEngagementRate}%+ engagement rate`,
+      actualDisplay: `${Number(engagementRate.toFixed(2))}% engagement rate`,
+      message: meetsEngagement
+        ? `Engagement requirement met: ${Number(engagementRate.toFixed(2))}% engagement rate.`
+        : `Engagement mismatch: requires at least ${this.eligibility.minEngagementRate}% engagement rate, but your profile is at ${Number(engagementRate.toFixed(2))}%.`
+    };
+
+    criteria.push(criterion);
+
+    if (!criterion.met) {
+      reasons.push(criterion.message);
     }
   }
 
   // Check trust score
   if (this.eligibility.minTrustScore && this.eligibility.minTrustScore > 0) {
-    if (influencerProfile.trustScore < this.eligibility.minTrustScore) {
-      reasons.push(`Minimum trust score of ${this.eligibility.minTrustScore} required`);
+    const meetsTrustScore = trustScore >= this.eligibility.minTrustScore;
+    const criterion = {
+      key: 'minTrustScore',
+      label: 'Trust Score',
+      met: meetsTrustScore,
+      required: this.eligibility.minTrustScore,
+      actual: trustScore,
+      requiredDisplay: `${this.eligibility.minTrustScore}+ trust score`,
+      actualDisplay: `${trustScore} trust score`,
+      message: meetsTrustScore
+        ? `Trust score requirement met: trust score is ${trustScore}.`
+        : `Trust score mismatch: requires at least ${this.eligibility.minTrustScore}, but your profile has ${trustScore}.`
+    };
+
+    criteria.push(criterion);
+
+    if (!criterion.met) {
+      reasons.push(criterion.message);
     }
   }
 
   // Check required niches (more flexible matching)
   if (this.eligibility.requiredNiches && this.eligibility.requiredNiches.length > 0) {
-    const influencerNiches = influencerProfile.niche ? 
-      (Array.isArray(influencerProfile.niche) ? influencerProfile.niche : [influencerProfile.niche]) : [];
-    
     const hasRequiredNiche = this.eligibility.requiredNiches.some(requiredNiche => 
       influencerNiches.some(influencerNiche => 
         influencerNiche.toLowerCase().includes(requiredNiche.toLowerCase()) ||
         requiredNiche.toLowerCase().includes(influencerNiche.toLowerCase())
       )
     );
-    
-    if (!hasRequiredNiche) {
-      reasons.push(`Must be in one of these niches: ${this.eligibility.requiredNiches.join(', ')}`);
+
+    const criterion = {
+      key: 'requiredNiches',
+      label: 'Niche',
+      met: hasRequiredNiche,
+      required: this.eligibility.requiredNiches,
+      actual: influencerNiches,
+      requiredDisplay: this.eligibility.requiredNiches.join(', '),
+      actualDisplay: influencerNiches.length > 0 ? influencerNiches.join(', ') : 'No niche set on profile',
+      message: hasRequiredNiche
+        ? `Niche requirement met: your profile overlaps with the required niches.`
+        : `Niche mismatch: campaign requires one of ${this.eligibility.requiredNiches.join(', ')}, but your profile lists ${influencerNiches.length > 0 ? influencerNiches.join(', ') : 'no niches'}.`
+    };
+
+    criteria.push(criterion);
+
+    if (!criterion.met) {
+      reasons.push(criterion.message);
     }
   }
 
   // Check required platforms
   if (this.eligibility.requiredPlatforms && this.eligibility.requiredPlatforms.length > 0) {
-    const platforms = [];
-    if (influencerProfile.youtubeChannel) platforms.push('youtube');
-    if (influencerProfile.instagramProfile) platforms.push('instagram');
-    
     const hasRequiredPlatform = this.eligibility.requiredPlatforms.some(platform => {
       if (platform === 'both') {
-        return platforms.includes('youtube') && platforms.includes('instagram');
+        return influencerPlatforms.includes('youtube') && influencerPlatforms.includes('instagram');
       }
-      return platforms.includes(platform);
+      return influencerPlatforms.includes(platform);
     });
-    
-    if (!hasRequiredPlatform) {
-      reasons.push(`Required platform(s): ${this.eligibility.requiredPlatforms.join(', ')}`);
+
+    const criterion = {
+      key: 'requiredPlatforms',
+      label: 'Platform',
+      met: hasRequiredPlatform,
+      required: this.eligibility.requiredPlatforms,
+      actual: influencerPlatforms,
+      requiredDisplay: this.eligibility.requiredPlatforms.join(', '),
+      actualDisplay: influencerPlatforms.length > 0 ? influencerPlatforms.join(', ') : 'No connected platform detected',
+      message: hasRequiredPlatform
+        ? `Platform requirement met: required platform is connected.`
+        : `Platform mismatch: campaign requires ${this.eligibility.requiredPlatforms.join(', ')}, but your profile currently has ${influencerPlatforms.length > 0 ? influencerPlatforms.join(', ') : 'no eligible platforms connected'}.`
+    };
+
+    criteria.push(criterion);
+
+    if (!criterion.met) {
+      reasons.push(criterion.message);
     }
   }
 
   return {
     eligible: reasons.length === 0,
-    reasons: reasons
+    reasons,
+    criteria
   };
 };
 
