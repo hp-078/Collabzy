@@ -305,7 +305,7 @@ const Campaigns = () => {
               placeholder="Search campaigns..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              style={{ background: 'none', border: 'none', color: '#fff', outline: 'none', width: '100%', fontSize: '0.9rem' }}
+              style={{ background: 'none', border: 'none', color: 'var(--dark-text)', outline: 'none', width: '100%', fontSize: '1rem' }}
             />
           </div>
           <select className="camp-filter-select" value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
@@ -327,7 +327,7 @@ const Campaigns = () => {
         {/* Recommended Section (Influencer) */}
         {isInfluencer && activeTab === 'browse' && recommended.length > 0 && (
           <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ color: 'var(--dark-text)', fontSize: '1.35rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Star size={18} style={{ color: '#f59e0b' }} /> Recommended For You
             </h3>
             <div className="camp-grid">
@@ -360,7 +360,7 @@ const Campaigns = () => {
           </div>
         ) : (
           <>
-            <p style={{ color: '#94a3b8', marginBottom: '1rem', fontSize: '0.9rem' }}>
+            <p style={{ color: 'var(--light-text)', marginBottom: '1rem', fontSize: '1rem' }}>
               Showing {displayCampaigns.length} campaign{displayCampaigns.length !== 1 ? 's' : ''}
             </p>
             <div className="camp-grid">
@@ -474,7 +474,7 @@ const Campaigns = () => {
                   </div>
                 ))}
                 <button type="button" onClick={addDeliverable}
-                  style={{ background: 'none', border: '1px dashed rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                  style={{ background: 'none', border: '1px dashed rgba(0,0,0,0.2)', color: 'var(--light-text)', padding: '0.68rem 1.1rem', borderRadius: '10px', cursor: 'pointer', fontSize: '0.95rem', marginTop: '0.25rem' }}>
                   + Add Deliverable
                 </button>
               </div>
