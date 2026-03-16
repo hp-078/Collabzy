@@ -1,5 +1,6 @@
 const InfluencerProfile = require('../models/InfluencerProfile.model');
 const User = require('../models/User.model');
+const { normalizeCategory, normalizeCategoryList } = require('../constants/categories');
 
 /**
  * Create influencer profile
@@ -35,8 +36,8 @@ exports.createProfile = async (req, res) => {
     // Handle niche (can be string or array)
     if (req.body.niche) {
       profileData.niche = Array.isArray(req.body.niche)
-        ? req.body.niche
-        : [req.body.niche];
+        ? normalizeCategoryList(req.body.niche)
+        : [normalizeCategory(req.body.niche)].filter(Boolean);
     }
 
     const profile = await InfluencerProfile.create(profileData);
@@ -95,9 +96,9 @@ exports.updateProfile = async (req, res) => {
     // Handle niche (can be string or array from frontend)
     if (req.body.niche !== undefined) {
       if (Array.isArray(req.body.niche)) {
-        profile.niche = req.body.niche;
+        profile.niche = normalizeCategoryList(req.body.niche);
       } else if (typeof req.body.niche === 'string' && req.body.niche) {
-        profile.niche = [req.body.niche];
+        profile.niche = [normalizeCategory(req.body.niche)].filter(Boolean);
       }
     }
 

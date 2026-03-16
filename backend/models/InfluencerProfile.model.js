@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { CATEGORY_OPTIONS } = require('../constants/categories');
 
 const influencerProfileSchema = new mongoose.Schema({
   user: {
@@ -35,14 +36,7 @@ const influencerProfileSchema = new mongoose.Schema({
   // Niche & Platform
   niche: {
     type: [String],
-    enum: [
-      // Single-word niches
-      'Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel',
-      'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports', 'Other',
-      // Composite niches (from frontend)
-      'Fashion & Lifestyle', 'Tech & Gadgets', 'Fitness & Health',
-      'Food & Cooking', 'Beauty & Skincare', 'Travel & Adventure'
-    ],
+    enum: CATEGORY_OPTIONS,
     default: []
   },
   platformType: {

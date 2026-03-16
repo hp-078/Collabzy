@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import influencerService from '../../services/influencer.service';
@@ -6,6 +6,7 @@ import brandService from '../../services/brand.service';
 import authService from '../../services/auth.service';
 import youtubeService from '../../services/youtube.service';
 import instagramService from '../../services/instagram.service';
+import { CATEGORY_OPTIONS, normalizeCategoryList } from '../../constants/categories';
 import toast from 'react-hot-toast';
 import {
   User,
@@ -27,17 +28,33 @@ import {
 } from 'lucide-react';
 import './Profile.css';
 
+const toCategoryArray = (value) => {
+  if (Array.isArray(value)) {
+    return normalizeCategoryList(value);
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    return normalizeCategoryList([value]);
+  }
+
+  return [];
+};
+
 const Profile = () => {
   const { user, updateUser, isInfluencer, isBrand } = useAuth();
   const { clearCache } = useData();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [activeCategoryIndex, setActiveCategoryIndex] = useState(-1);
+  const categorySearchRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     bio: user?.description || user?.bio || '',
-    category: user?.niche || user?.category || '',
+    categories: toCategoryArray(user?.niche || user?.category),
     platformType: user?.platform || user?.platformType || 'Instagram',
     youtubeUrl: user?.youtubeUrl || '',
     instagramUrl: user?.instagramUrl || '',
@@ -77,7 +94,9 @@ const Profile = () => {
         name: user.name || prev.name,
         email: user.email || prev.email,
         bio: user.description || user.bio || prev.bio,
-        category: user.niche || user.category || prev.category,
+        categories: toCategoryArray(user.niche || user.category).length > 0
+          ? toCategoryArray(user.niche || user.category)
+          : prev.categories,
         platformType: user.platform || user.platformType || prev.platformType,
         youtubeUrl: user.youtubeUrl || prev.youtubeUrl,
         instagramUrl: user.instagramUrl || prev.instagramUrl,
@@ -105,14 +124,11 @@ const Profile = () => {
 
           if (profileData) {
             setFormData(prev => {
-              const nicheValue = Array.isArray(profileData.niche)
-                ? (profileData.niche[0] || '')
-                : (profileData.niche || '');
               const newData = {
                 ...prev,
                 name: profileData.name || prev.name,
                 bio: profileData.bio || prev.bio,
-                category: nicheValue,
+                categories: toCategoryArray(profileData.niche),
                 platformType: profileData.platformType || profileData.platform || prev.platformType,
                 youtubeUrl: profileData.youtubeUrl || prev.youtubeUrl,
                 instagramUrl: profileData.instagramUrl || prev.instagramUrl,
@@ -278,6 +294,77 @@ const Profile = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const filteredCategoryOptions = useMemo(() => {
+    const query = categorySearch.trim().toLowerCase();
+
+    if (query.length < 2) {
+      return [];
+    }
+
+    return CATEGORY_OPTIONS
+      .filter((category) => !formData.categories.includes(category))
+      .filter((category) => category.toLowerCase().includes(query));
+  }, [categorySearch, formData.categories]);
+
+  const addCategory = (category) => {
+    if (!category) {
+      return;
+    }
+
+    setFormData((prev) => {
+      if (prev.categories.includes(category)) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        categories: [...prev.categories, category]
+      };
+    });
+
+    setCategorySearch('');
+    setActiveCategoryIndex(-1);
+    setIsCategoryDropdownOpen(false);
+    categorySearchRef.current?.focus();
+  };
+
+  const removeCategory = (category) => {
+    setFormData((prev) => ({
+      ...prev,
+      categories: prev.categories.filter((item) => item !== category)
+    }));
+  };
+
+  const handleCategorySearchKeyDown = (event) => {
+    if (!isCategoryDropdownOpen || filteredCategoryOptions.length === 0) {
+      if (event.key === 'Backspace' && !categorySearch && formData.categories.length > 0) {
+        removeCategory(formData.categories[formData.categories.length - 1]);
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveCategoryIndex((prev) => (prev + 1) % filteredCategoryOptions.length);
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveCategoryIndex((prev) => (prev <= 0 ? filteredCategoryOptions.length - 1 : prev - 1));
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const selectedCategory = filteredCategoryOptions[activeCategoryIndex] || filteredCategoryOptions[0];
+      addCategory(selectedCategory);
+    }
+
+    if (event.key === 'Escape') {
+      setIsCategoryDropdownOpen(false);
+      setActiveCategoryIndex(-1);
+    }
   };
 
   const handleAddService = () => {
@@ -784,7 +871,7 @@ const Profile = () => {
         const updatedData = {
           name: formData.name,
           bio: formData.bio,
-          niche: formData.category, // backend handles string-to-array conversion
+          niche: formData.categories,
           platformType: formData.platformType,
           location: formData.location,
           avatar: previewImage,
@@ -1000,25 +1087,92 @@ const Profile = () => {
                   <div className="prof-form-grid">
                     <div className="input-group">
                       <label htmlFor="category">Niche / Category</label>
-                      <select
-                        id="category"
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        className="input"
-                      >
-                        <option value="">Select a niche</option>
-                        <option value="Fashion & Lifestyle">Fashion & Lifestyle</option>
-                        <option value="Tech & Gadgets">Tech & Gadgets</option>
-                        <option value="Fitness & Health">Fitness & Health</option>
-                        <option value="Food & Cooking">Food & Cooking</option>
-                        <option value="Beauty & Skincare">Beauty & Skincare</option>
-                        <option value="Travel & Adventure">Travel & Adventure</option>
-                        <option value="Gaming">Gaming</option>
-                        <option value="Education">Education</option>
-                        <option value="Entertainment">Entertainment</option>
-                        <option value="Other">Other</option>
-                      </select>
+                      <div className="prof-category-picker">
+                        <div
+                          className="prof-category-input-wrapper"
+                          onClick={() => categorySearchRef.current?.focus()}
+                        >
+                          <input
+                            ref={categorySearchRef}
+                            id="category"
+                            type="text"
+                            value={categorySearch}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setCategorySearch(value);
+                              setIsCategoryDropdownOpen(value.trim().length >= 2);
+                              setActiveCategoryIndex(-1);
+                            }}
+                            onFocus={() => setIsCategoryDropdownOpen(categorySearch.trim().length >= 2)}
+                            onBlur={() => {
+                              setTimeout(() => {
+                                setIsCategoryDropdownOpen(false);
+                                setActiveCategoryIndex(-1);
+                              }, 120);
+                            }}
+                            onKeyDown={handleCategorySearchKeyDown}
+                            className="prof-category-search-input"
+                            placeholder="Enter 2 letters to search categories"
+                          />
+                          {categorySearch && (
+                            <button
+                              type="button"
+                              className="prof-category-clear-btn"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setCategorySearch('');
+                                setIsCategoryDropdownOpen(false);
+                                setActiveCategoryIndex(-1);
+                                categorySearchRef.current?.focus();
+                              }}
+                              aria-label="Clear category search"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+
+                        {formData.categories.length > 0 && (
+                          <div className="prof-category-chips">
+                            {formData.categories.map((category) => (
+                              <span key={category} className="prof-category-chip">
+                                {category}
+                                <button
+                                  type="button"
+                                  className="prof-category-chip-remove"
+                                  onClick={() => removeCategory(category)}
+                                  aria-label={`Remove ${category}`}
+                                >
+                                  <X size={12} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {isCategoryDropdownOpen && (
+                          <div className="prof-category-dropdown">
+                            {filteredCategoryOptions.length > 0 ? (
+                              filteredCategoryOptions.map((category, index) => (
+                                <button
+                                  key={category}
+                                  type="button"
+                                  className={`prof-category-option ${index === activeCategoryIndex ? 'active' : ''}`}
+                                  onMouseDown={() => addCategory(category)}
+                                >
+                                  {category}
+                                </button>
+                              ))
+                            ) : (
+                              <p className="prof-category-empty">No matching category found</p>
+                            )}
+                          </div>
+                        )}
+
+                        <small className="prof-category-hint">
+                          Select multiple categories. Type at least 2 letters to search.
+                        </small>
+                      </div>
                     </div>
 
                     <div className="input-group">

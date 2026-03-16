@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { CATEGORY_OPTIONS } = require('../constants/categories');
 
 const campaignSchema = new mongoose.Schema({
   // Brand who created the campaign
@@ -27,34 +28,7 @@ const campaignSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: [
-      'Fashion',
-      'Fashion & Lifestyle',
-      'Beauty',
-      'Food',
-      'Food & Beverage',
-      'Travel',
-      'Technology',
-      'Tech & Gadgets',
-      'Gaming',
-      'Fitness',
-      'Fitness & Health',
-      'Lifestyle',
-      'Education',
-      'Entertainment',
-      'Business',
-      'Health',
-      'Sports',
-      'Music',
-      'Art',
-      'Photography',
-      'Finance',
-      'Parenting',
-      'Home & Garden',
-      'Automotive',
-      'Pet & Animals',
-      'Other'
-    ]
+    enum: CATEGORY_OPTIONS
   },
   platformType: {
     type: String,

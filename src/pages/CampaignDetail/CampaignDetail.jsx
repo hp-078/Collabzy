@@ -8,14 +8,8 @@ import {
   Briefcase, Tag, X, Send, UserCheck, AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { CATEGORY_OPTIONS } from '../../constants/categories';
 import './CampaignDetail.css';
-
-const CATEGORY_OPTIONS = [
-  'Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel',
-  'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports', 'Other',
-  'Fashion & Lifestyle', 'Tech & Gadgets', 'Fitness & Health',
-  'Food & Cooking', 'Beauty & Skincare', 'Travel & Adventure'
-];
 
 const PLATFORM_OPTIONS = ['YouTube', 'Instagram', 'TikTok', 'Multiple', 'Any'];
 

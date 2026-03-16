@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
@@ -8,14 +8,8 @@ import {
   TrendingUp, Star, Megaphone, Target
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { CATEGORY_OPTIONS } from '../../constants/categories';
 import './Campaigns.css';
-
-const CATEGORY_OPTIONS = [
-  'Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel',
-  'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports', 'Other',
-  'Fashion & Lifestyle', 'Tech & Gadgets', 'Fitness & Health',
-  'Food & Cooking', 'Beauty & Skincare', 'Travel & Adventure'
-];
 
 const PLATFORM_OPTIONS = ['YouTube', 'Instagram', 'TikTok', 'Multiple', 'Any'];
 
@@ -62,6 +56,14 @@ const Campaigns = () => {
   const [showDetailModal, setShowDetailModal] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+  const [campaignCategorySearch, setCampaignCategorySearch] = useState('');
+  const [isCampaignCategoryDropdownOpen, setIsCampaignCategoryDropdownOpen] = useState(false);
+  const [activeCampaignCategoryIndex, setActiveCampaignCategoryIndex] = useState(-1);
+  const [requiredNicheSearch, setRequiredNicheSearch] = useState('');
+  const [isRequiredNicheDropdownOpen, setIsRequiredNicheDropdownOpen] = useState(false);
+  const [activeRequiredNicheIndex, setActiveRequiredNicheIndex] = useState(-1);
+  const campaignCategorySearchRef = useRef(null);
+  const requiredNicheSearchRef = useRef(null);
 
   // Create form state
   const [form, setForm] = useState({
@@ -240,6 +242,125 @@ const Campaigns = () => {
       eligibility: { minFollowers: 0, minEngagementRate: 0, requiredNiches: [], minTrustScore: 0 },
       tags: '', maxInfluencers: 10, status: 'active',
     });
+    setCampaignCategorySearch('');
+    setIsCampaignCategoryDropdownOpen(false);
+    setActiveCampaignCategoryIndex(-1);
+    setRequiredNicheSearch('');
+    setIsRequiredNicheDropdownOpen(false);
+    setActiveRequiredNicheIndex(-1);
+  };
+
+  const filteredCampaignCategories = useMemo(() => {
+    const query = campaignCategorySearch.trim().toLowerCase();
+    if (query.length < 2) return [];
+
+    return CATEGORY_OPTIONS.filter((category) => category.toLowerCase().includes(query));
+  }, [campaignCategorySearch]);
+
+  const filteredRequiredNiches = useMemo(() => {
+    const query = requiredNicheSearch.trim().toLowerCase();
+    if (query.length < 2) return [];
+
+    return CATEGORY_OPTIONS
+      .filter((category) => !form.eligibility.requiredNiches.includes(category))
+      .filter((category) => category.toLowerCase().includes(query));
+  }, [requiredNicheSearch, form.eligibility.requiredNiches]);
+
+  const selectCampaignCategory = (category) => {
+    setForm((prev) => ({ ...prev, category }));
+    setCampaignCategorySearch('');
+    setIsCampaignCategoryDropdownOpen(false);
+    setActiveCampaignCategoryIndex(-1);
+    campaignCategorySearchRef.current?.focus();
+  };
+
+  const clearCampaignCategory = () => {
+    setForm((prev) => ({ ...prev, category: '' }));
+    setCampaignCategorySearch('');
+    setIsCampaignCategoryDropdownOpen(false);
+    setActiveCampaignCategoryIndex(-1);
+    campaignCategorySearchRef.current?.focus();
+  };
+
+  const addRequiredNiche = (category) => {
+    setForm((prev) => ({
+      ...prev,
+      eligibility: {
+        ...prev.eligibility,
+        requiredNiches: [...prev.eligibility.requiredNiches, category]
+      }
+    }));
+    setRequiredNicheSearch('');
+    setIsRequiredNicheDropdownOpen(false);
+    setActiveRequiredNicheIndex(-1);
+    requiredNicheSearchRef.current?.focus();
+  };
+
+  const removeRequiredNiche = (category) => {
+    setForm((prev) => ({
+      ...prev,
+      eligibility: {
+        ...prev.eligibility,
+        requiredNiches: prev.eligibility.requiredNiches.filter((item) => item !== category)
+      }
+    }));
+  };
+
+  const handleCampaignCategoryKeyDown = (event) => {
+    if (!isCampaignCategoryDropdownOpen || filteredCampaignCategories.length === 0) {
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveCampaignCategoryIndex((prev) => (prev + 1) % filteredCampaignCategories.length);
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveCampaignCategoryIndex((prev) => (prev <= 0 ? filteredCampaignCategories.length - 1 : prev - 1));
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const selectedCategory = filteredCampaignCategories[activeCampaignCategoryIndex] || filteredCampaignCategories[0];
+      selectCampaignCategory(selectedCategory);
+    }
+
+    if (event.key === 'Escape') {
+      setIsCampaignCategoryDropdownOpen(false);
+      setActiveCampaignCategoryIndex(-1);
+    }
+  };
+
+  const handleRequiredNicheKeyDown = (event) => {
+    if (!isRequiredNicheDropdownOpen || filteredRequiredNiches.length === 0) {
+      if (event.key === 'Backspace' && !requiredNicheSearch && form.eligibility.requiredNiches.length > 0) {
+        removeRequiredNiche(form.eligibility.requiredNiches[form.eligibility.requiredNiches.length - 1]);
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveRequiredNicheIndex((prev) => (prev + 1) % filteredRequiredNiches.length);
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveRequiredNicheIndex((prev) => (prev <= 0 ? filteredRequiredNiches.length - 1 : prev - 1));
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const selectedCategory = filteredRequiredNiches[activeRequiredNicheIndex] || filteredRequiredNiches[0];
+      addRequiredNiche(selectedCategory);
+    }
+
+    if (event.key === 'Escape') {
+      setIsRequiredNicheDropdownOpen(false);
+      setActiveRequiredNicheIndex(-1);
+    }
   };
 
   const addDeliverable = () => {
@@ -420,11 +541,79 @@ const Campaigns = () => {
               <div className="camp-form-row">
                 <div className="camp-form-group">
                   <label>Category *</label>
-                  <select className="camp-form-select" value={form.category}
-                    onChange={e => setForm({ ...form, category: e.target.value })} required>
-                    <option value="">Select Category</option>
-                    {CATEGORY_OPTIONS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                  </select>
+                  <div className="camp-category-picker">
+                    <div
+                      className="camp-category-input-wrapper"
+                      onClick={() => campaignCategorySearchRef.current?.focus()}
+                    >
+                      <input
+                        ref={campaignCategorySearchRef}
+                        type="text"
+                        value={campaignCategorySearch}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setCampaignCategorySearch(value);
+                          setIsCampaignCategoryDropdownOpen(value.trim().length >= 2);
+                          setActiveCampaignCategoryIndex(-1);
+                        }}
+                        onFocus={() => setIsCampaignCategoryDropdownOpen(campaignCategorySearch.trim().length >= 2)}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            setIsCampaignCategoryDropdownOpen(false);
+                            setActiveCampaignCategoryIndex(-1);
+                          }, 120);
+                        }}
+                        onKeyDown={handleCampaignCategoryKeyDown}
+                        className="camp-category-search-input"
+                        placeholder="Enter 2 letters to search category"
+                      />
+                      {(campaignCategorySearch || form.category) && (
+                        <button
+                          type="button"
+                          className="camp-category-clear-btn"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            clearCampaignCategory();
+                          }}
+                          aria-label="Clear category"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                    {form.category && (
+                      <div className="camp-category-chips">
+                        <span className="camp-category-chip">
+                          {form.category}
+                          <button type="button" className="camp-category-chip-remove" onClick={clearCampaignCategory} aria-label={`Remove ${form.category}`}>
+                            <X size={12} />
+                          </button>
+                        </span>
+                      </div>
+                    )}
+
+                    {isCampaignCategoryDropdownOpen && (
+                      <div className="camp-category-dropdown">
+                        {filteredCampaignCategories.length > 0 ? (
+                          filteredCampaignCategories.map((category, index) => (
+                            <button
+                              key={category}
+                              type="button"
+                              className={`camp-category-option ${index === activeCampaignCategoryIndex ? 'active' : ''}`}
+                              onMouseDown={() => selectCampaignCategory(category)}
+                            >
+                              {category}
+                            </button>
+                          ))
+                        ) : (
+                          <p className="camp-category-empty">No matching category found</p>
+                        )}
+                      </div>
+                    )}
+
+                    <small className="camp-category-hint">Select one category. Type at least 2 letters to search.</small>
+                  </div>
                 </div>
                 <div className="camp-form-group">
                   <label>Platform</label>
@@ -524,6 +713,88 @@ const Campaigns = () => {
                   <input type="number" className="camp-form-input" value={form.eligibility.minEngagementRate}
                     onChange={e => setForm({ ...form, eligibility: { ...form.eligibility, minEngagementRate: Number(e.target.value) } })}
                     min="0" step="0.1" />
+                </div>
+              </div>
+
+              <div className="camp-form-group">
+                <label>Required Niches</label>
+                <div className="camp-category-picker">
+                  <div
+                    className="camp-category-input-wrapper"
+                    onClick={() => requiredNicheSearchRef.current?.focus()}
+                  >
+                    <input
+                      ref={requiredNicheSearchRef}
+                      type="text"
+                      value={requiredNicheSearch}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setRequiredNicheSearch(value);
+                        setIsRequiredNicheDropdownOpen(value.trim().length >= 2);
+                        setActiveRequiredNicheIndex(-1);
+                      }}
+                      onFocus={() => setIsRequiredNicheDropdownOpen(requiredNicheSearch.trim().length >= 2)}
+                      onBlur={() => {
+                        setTimeout(() => {
+                          setIsRequiredNicheDropdownOpen(false);
+                          setActiveRequiredNicheIndex(-1);
+                        }, 120);
+                      }}
+                      onKeyDown={handleRequiredNicheKeyDown}
+                      className="camp-category-search-input"
+                      placeholder="Enter 2 letters to search niches"
+                    />
+                    {requiredNicheSearch && (
+                      <button
+                        type="button"
+                        className="camp-category-clear-btn"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setRequiredNicheSearch('');
+                          setIsRequiredNicheDropdownOpen(false);
+                          setActiveRequiredNicheIndex(-1);
+                          requiredNicheSearchRef.current?.focus();
+                        }}
+                        aria-label="Clear niche search"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {form.eligibility.requiredNiches.length > 0 && (
+                    <div className="camp-category-chips">
+                      {form.eligibility.requiredNiches.map((category) => (
+                        <span key={category} className="camp-category-chip">
+                          {category}
+                          <button type="button" className="camp-category-chip-remove" onClick={() => removeRequiredNiche(category)} aria-label={`Remove ${category}`}>
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {isRequiredNicheDropdownOpen && (
+                    <div className="camp-category-dropdown">
+                      {filteredRequiredNiches.length > 0 ? (
+                        filteredRequiredNiches.map((category, index) => (
+                          <button
+                            key={category}
+                            type="button"
+                            className={`camp-category-option ${index === activeRequiredNicheIndex ? 'active' : ''}`}
+                            onMouseDown={() => addRequiredNiche(category)}
+                          >
+                            {category}
+                          </button>
+                        ))
+                      ) : (
+                        <p className="camp-category-empty">No matching niche found</p>
+                      )}
+                    </div>
+                  )}
+
+                  <small className="camp-category-hint">Select multiple niches. Type at least 2 letters to search.</small>
                 </div>
               </div>
 

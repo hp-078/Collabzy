@@ -1,6 +1,7 @@
 const Campaign = require('../models/Campaign.model');
 const BrandProfile = require('../models/BrandProfile.model');
 const InfluencerProfile = require('../models/InfluencerProfile.model');
+const { normalizeCategory, normalizeCategoryList } = require('../constants/categories');
 
 /**
  * Create a new campaign (Brand only)
@@ -9,6 +10,14 @@ const InfluencerProfile = require('../models/InfluencerProfile.model');
 exports.createCampaign = async (req, res) => {
   try {
     const brandId = req.user._id;
+    const normalizedCategory = normalizeCategory(req.body.category);
+
+    if (!normalizedCategory) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select a valid category'
+      });
+    }
 
     // Get brand profile
     const brandProfile = await BrandProfile.findOne({ user: brandId });
@@ -56,7 +65,7 @@ exports.createCampaign = async (req, res) => {
       brandProfile: brandProfile?._id,
       title: req.body.title,
       description: req.body.description,
-      category: req.body.category,
+      category: normalizedCategory,
       platformType: req.body.platformType || 'Any',
       budget: {
         min: budgetMin,
@@ -68,7 +77,7 @@ exports.createCampaign = async (req, res) => {
       eligibility: {
         minFollowers: req.body.eligibility?.minFollowers || req.body.minFollowers || 0,
         minEngagementRate: req.body.eligibility?.minEngagementRate || 0,
-        requiredNiches: req.body.eligibility?.requiredNiches || [],
+        requiredNiches: normalizeCategoryList(req.body.eligibility?.requiredNiches || []),
         minTrustScore: req.body.eligibility?.minTrustScore || 0,
         requiredPlatforms: req.body.eligibility?.requiredPlatforms || []
       },
@@ -257,6 +266,14 @@ exports.updateCampaign = async (req, res) => {
 
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
+        if (field === 'category') {
+          const normalizedCategory = normalizeCategory(req.body.category);
+          if (!normalizedCategory) {
+            throw new Error('INVALID_CATEGORY');
+          }
+          campaign[field] = normalizedCategory;
+          return;
+        }
         campaign[field] = req.body[field];
       }
     });
@@ -309,7 +326,12 @@ exports.updateCampaign = async (req, res) => {
 
     // Update eligibility
     if (req.body.eligibility) {
+      const normalizedRequiredNiches = req.body.eligibility.requiredNiches !== undefined
+        ? normalizeCategoryList(req.body.eligibility.requiredNiches)
+        : campaign.eligibility.requiredNiches;
+
       campaign.eligibility = { ...campaign.eligibility, ...req.body.eligibility };
+      campaign.eligibility.requiredNiches = normalizedRequiredNiches;
     }
 
     await campaign.save();
@@ -321,6 +343,13 @@ exports.updateCampaign = async (req, res) => {
       data: campaign
     });
   } catch (error) {
+    if (error.message === 'INVALID_CATEGORY') {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select a valid category'
+      });
+    }
+
     console.error('Update campaign error:', error);
     res.status(500).json({
       success: false,
