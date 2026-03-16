@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
@@ -21,7 +21,18 @@ import {
   Handshake,
   Star,
   CreditCard,
-  Lock
+  Lock,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal,
+  X,
+  ArrowUpDown,
+  Users,
+  TrendingUp,
+  LayoutGrid,
+  List,
+  Award,
+  ExternalLink
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import paymentService from '../../services/payment.service';
@@ -66,6 +77,91 @@ const Collaborations = () => {
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [dealPayments, setDealPayments] = useState({}); // Cache payment status by deal ID
 
+  // === Brand-specific state ===
+  const [viewMode, setViewMode] = useState('campaign'); // 'campaign' | 'table'
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [brandFilters, setBrandFilters] = useState({
+    selectedCampaign: 'all',
+    status: 'all',
+    platform: 'all',
+    niches: [],
+    rateMin: '',
+    rateMax: '',
+    dateFrom: '',
+    dateTo: '',
+    minTrustScore: '',
+    minFollowers: '',
+    sortBy: 'newest',
+  });
+  const [expandedCampaigns, setExpandedCampaigns] = useState({});
+  const [selectedApp, setSelectedApp] = useState(null);
+
+  // === Brand deals state ===
+  const [dealViewMode, setDealViewMode] = useState('campaign'); // 'campaign' | 'table'
+  const [dealSearchTerm, setDealSearchTerm] = useState('');
+  const [showDealAdvancedFilters, setShowDealAdvancedFilters] = useState(false);
+  const [expandedDealGroups, setExpandedDealGroups] = useState({});
+  const [brandDealFilters, setBrandDealFilters] = useState({
+    selectedCampaign: 'all',
+    status: 'all',
+    source: 'all',
+    paymentStatus: 'all',
+    rateMin: '',
+    rateMax: '',
+    deadlineFrom: '',
+    deadlineTo: '',
+    createdFrom: '',
+    createdTo: '',
+    overdueOnly: false,
+    sortBy: 'newest',
+  });
+
+  const NICHES = ['Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel', 'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports'];
+
+  const isCampaignObject = (campaignValue) => (
+    !!campaignValue && typeof campaignValue === 'object' && !Array.isArray(campaignValue)
+  );
+
+  const getCampaignIdFromApp = (app) => (
+    app?.campaign?._id ||
+    app?.campaignId ||
+    (typeof app?.campaign === 'string' ? app.campaign : null)
+  );
+
+  const normalizeCampaignApplication = (app, fallbackCampaign = null) => {
+    const normalizedCampaign = isCampaignObject(app?.campaign) ? app.campaign : fallbackCampaign;
+    const normalizedCampaignId = (
+      normalizedCampaign?._id ||
+      normalizedCampaign?.id ||
+      (typeof app?.campaign === 'string' ? app.campaign : null) ||
+      fallbackCampaign?._id ||
+      null
+    );
+
+    return {
+      ...app,
+      campaign: normalizedCampaign,
+      campaignId: normalizedCampaignId,
+    };
+  };
+
+  const getCampaignIdFromDeal = (deal) => (
+    deal?.campaign?._id ||
+    deal?.campaignId ||
+    (typeof deal?.campaign === 'string' ? deal.campaign : null)
+  );
+
+  const getDealCampaignTitle = (deal) => {
+    if (deal?.campaign?.title) return deal.campaign.title;
+    const campaignId = getCampaignIdFromDeal(deal);
+    if (!campaignId) return 'Direct Outreach';
+    return `Campaign ${String(campaignId).slice(-6)}`;
+  };
+
+  const getDealPaymentStatus = (deal) => (
+    deal?.paymentStatus || deal?.paymentId?.paymentStatus || (deal?.paymentId ? 'paid' : 'pending')
+  );
+
   // Fetch data on mount
   useEffect(() => {
     const loadData = async () => {
@@ -80,7 +176,7 @@ const Collaborations = () => {
             const allApps = [];
             for (const campaign of campaigns) {
               const apps = await fetchCampaignApplications(campaign._id);
-              allApps.push(...apps.map(app => ({ ...app, campaign: app.campaign || campaign })));
+              allApps.push(...apps.map(app => normalizeCampaignApplication(app, campaign)));
             }
             setBrandApplications(allApps);
           }
@@ -146,7 +242,7 @@ const Collaborations = () => {
           const allApps = [];
           for (const campaign of campaigns) {
             const apps = await fetchCampaignApplications(campaign._id);
-            allApps.push(...apps.map(a => ({ ...a, campaign: a.campaign || campaign })));
+            allApps.push(...apps.map(a => normalizeCampaignApplication(a, campaign)));
           }
           setBrandApplications(allApps);
         }
@@ -199,6 +295,1421 @@ const Collaborations = () => {
     pending_review: myDeals.filter(d => d.status === 'pending_review').length,
     completed: myDeals.filter(d => d.status === 'completed').length,
   };
+
+  const brandDealCampaignOptions = useMemo(() => {
+    const seen = new Set();
+    const options = [];
+    let hasDirect = false;
+
+    myDeals.forEach(deal => {
+      const campaignId = getCampaignIdFromDeal(deal);
+      if (!campaignId) {
+        hasDirect = true;
+        return;
+      }
+
+      if (!seen.has(campaignId)) {
+        seen.add(campaignId);
+        options.push({
+          id: campaignId,
+          title: getDealCampaignTitle(deal),
+        });
+      }
+    });
+
+    options.sort((a, b) => a.title.localeCompare(b.title));
+
+    return {
+      campaigns: options,
+      hasDirect,
+    };
+  }, [myDeals]);
+
+  const brandDealStatusCounts = useMemo(() => ({
+    all: myDeals.length,
+    payment: myDeals.filter(d => d.status === 'pending_payment').length,
+    active: myDeals.filter(d => d.status === 'active' || d.status === 'in_progress').length,
+    review: myDeals.filter(d => d.status === 'pending_review').length,
+    completed: myDeals.filter(d => d.status === 'completed').length,
+    cancelled: myDeals.filter(d => d.status === 'cancelled' || d.status === 'disputed').length,
+  }), [myDeals]);
+
+  const filteredBrandDeals = useMemo(() => {
+    const f = brandDealFilters;
+    let list = myDeals.filter(deal => {
+      const campaignId = getCampaignIdFromDeal(deal);
+      const isDirect = !campaignId;
+      const influencerName = deal.influencer?.name || '';
+      const campaignTitle = getDealCampaignTitle(deal);
+
+      if (dealSearchTerm) {
+        const q = dealSearchTerm.toLowerCase();
+        if (!influencerName.toLowerCase().includes(q) && !campaignTitle.toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+
+      if (f.selectedCampaign !== 'all') {
+        if (f.selectedCampaign === 'direct') {
+          if (!isDirect) return false;
+        } else if (campaignId !== f.selectedCampaign) {
+          return false;
+        }
+      }
+
+      if (f.source === 'direct' && !isDirect) return false;
+      if (f.source === 'campaign' && isDirect) return false;
+
+      if (f.status !== 'all') {
+        if (f.status === 'active' && deal.status !== 'active' && deal.status !== 'in_progress') return false;
+        if (f.status === 'review' && deal.status !== 'pending_review') return false;
+        if (f.status === 'payment' && deal.status !== 'pending_payment') return false;
+        if (f.status === 'completed' && deal.status !== 'completed') return false;
+        if (f.status === 'cancelled' && deal.status !== 'cancelled' && deal.status !== 'disputed') return false;
+      }
+
+      const paymentStatus = getDealPaymentStatus(deal);
+      if (f.paymentStatus !== 'all' && paymentStatus !== f.paymentStatus) return false;
+
+      if (f.rateMin && (deal.agreedRate || 0) < Number(f.rateMin)) return false;
+      if (f.rateMax && (deal.agreedRate || 0) > Number(f.rateMax)) return false;
+
+      if (f.deadlineFrom && deal.deadline && new Date(deal.deadline) < new Date(f.deadlineFrom)) return false;
+      if (f.deadlineTo && deal.deadline && new Date(deal.deadline) > new Date(`${f.deadlineTo}T23:59:59`)) return false;
+
+      if (f.createdFrom && new Date(deal.createdAt) < new Date(f.createdFrom)) return false;
+      if (f.createdTo && new Date(deal.createdAt) > new Date(`${f.createdTo}T23:59:59`)) return false;
+
+      if (f.overdueOnly) {
+        const isOverdue = deal.deadline && new Date(deal.deadline) < new Date();
+        const completedOrCancelled = ['completed', 'cancelled'].includes(deal.status);
+        if (!isOverdue || completedOrCancelled) return false;
+      }
+
+      return true;
+    });
+
+    list.sort((a, b) => {
+      switch (f.sortBy) {
+        case 'oldest':
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        case 'rate_desc':
+          return (b.agreedRate || 0) - (a.agreedRate || 0);
+        case 'rate_asc':
+          return (a.agreedRate || 0) - (b.agreedRate || 0);
+        case 'deadline_asc':
+          return new Date(a.deadline || '2100-01-01') - new Date(b.deadline || '2100-01-01');
+        case 'deadline_desc':
+          return new Date(b.deadline || '1970-01-01') - new Date(a.deadline || '1970-01-01');
+        default:
+          return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+    });
+
+    return list;
+  }, [myDeals, brandDealFilters, dealSearchTerm]);
+
+  const groupedBrandDeals = useMemo(() => {
+    const groups = {};
+
+    filteredBrandDeals.forEach(deal => {
+      const campaignId = getCampaignIdFromDeal(deal);
+      const groupKey = campaignId || 'direct-outreach';
+      const campaignData = isCampaignObject(deal.campaign) ? deal.campaign : null;
+
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
+          groupKey,
+          campaignId: campaignId || null,
+          campaign: campaignData,
+          isDirect: !campaignId,
+          label: campaignData?.title || (!campaignId ? 'Direct Outreach Deals' : getDealCampaignTitle(deal)),
+          deals: [],
+        };
+      }
+
+      if (!groups[groupKey].campaign && campaignData) {
+        groups[groupKey].campaign = campaignData;
+        groups[groupKey].label = campaignData.title || groups[groupKey].label;
+      }
+
+      groups[groupKey].deals.push(deal);
+    });
+
+    return Object.values(groups).sort((a, b) => a.label.localeCompare(b.label));
+  }, [filteredBrandDeals]);
+
+  const activeDealFiltersCount = useMemo(() => {
+    let count = 0;
+    if (brandDealFilters.selectedCampaign !== 'all') count++;
+    if (brandDealFilters.status !== 'all') count++;
+    if (brandDealFilters.source !== 'all') count++;
+    if (brandDealFilters.paymentStatus !== 'all') count++;
+    if (brandDealFilters.rateMin) count++;
+    if (brandDealFilters.rateMax) count++;
+    if (brandDealFilters.deadlineFrom) count++;
+    if (brandDealFilters.deadlineTo) count++;
+    if (brandDealFilters.createdFrom) count++;
+    if (brandDealFilters.createdTo) count++;
+    if (brandDealFilters.overdueOnly) count++;
+    if (dealSearchTerm) count++;
+    return count;
+  }, [brandDealFilters, dealSearchTerm]);
+
+  // ======== Brand-specific computed data ========
+  const brandCampaignsList = useMemo(() => {
+    const seen = new Set();
+    const list = [];
+    brandApplications.forEach(app => {
+      const cId = getCampaignIdFromApp(app);
+      if (cId && !seen.has(cId)) {
+        seen.add(cId);
+        if (isCampaignObject(app.campaign)) {
+          list.push(app.campaign);
+        }
+      }
+    });
+    return list;
+  }, [brandApplications]);
+
+  const brandStatusCounts = useMemo(() => ({
+    all: brandApplications.length,
+    pending: brandApplications.filter(a => a.status === 'pending' || a.status === 'reviewed').length,
+    shortlisted: brandApplications.filter(a => a.status === 'shortlisted').length,
+    accepted: brandApplications.filter(a => a.status === 'accepted').length,
+    rejected: brandApplications.filter(a => a.status === 'rejected').length,
+  }), [brandApplications]);
+
+  const filteredBrandApps = useMemo(() => {
+    const f = brandFilters;
+    let apps = brandApplications.filter(app => {
+      if (searchTerm) {
+        const name = app.influencerProfile?.name || app.influencer?.name || '';
+        const title = app.campaign?.title || '';
+        if (!name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            !title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      }
+      if (f.selectedCampaign !== 'all' && getCampaignIdFromApp(app) !== f.selectedCampaign) return false;
+      if (f.status !== 'all') {
+        if (f.status === 'pending' && app.status !== 'pending' && app.status !== 'reviewed') return false;
+        if (f.status !== 'pending' && app.status !== f.status) return false;
+      }
+      if (f.platform !== 'all' && (app.influencerProfile?.platformType || '') !== f.platform) return false;
+      if (f.niches.length > 0) {
+        const iNiches = app.influencerProfile?.niche || [];
+        if (!f.niches.some(n => iNiches.includes(n))) return false;
+      }
+      if (f.rateMin && (app.proposedRate || 0) < Number(f.rateMin)) return false;
+      if (f.rateMax && (app.proposedRate || 0) > Number(f.rateMax)) return false;
+      if (f.dateFrom && new Date(app.createdAt) < new Date(f.dateFrom)) return false;
+      if (f.dateTo && new Date(app.createdAt) > new Date(f.dateTo + 'T23:59:59')) return false;
+      if (f.minTrustScore && (app.influencerProfile?.trustScore || 0) < Number(f.minTrustScore)) return false;
+      if (f.minFollowers && (app.influencerProfile?.totalFollowers || 0) < Number(f.minFollowers)) return false;
+      return true;
+    });
+    apps.sort((a, b) => {
+      switch (f.sortBy) {
+        case 'oldest': return new Date(a.createdAt) - new Date(b.createdAt);
+        case 'rate_asc': return (a.proposedRate || 0) - (b.proposedRate || 0);
+        case 'rate_desc': return (b.proposedRate || 0) - (a.proposedRate || 0);
+        case 'followers_desc': return (b.influencerProfile?.totalFollowers || 0) - (a.influencerProfile?.totalFollowers || 0);
+        case 'trust_desc': return (b.influencerProfile?.trustScore || 0) - (a.influencerProfile?.trustScore || 0);
+        default: return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+    });
+    return apps;
+  }, [brandApplications, brandFilters, searchTerm]);
+
+  const groupedApps = useMemo(() => {
+    const groups = {};
+    filteredBrandApps.forEach(app => {
+      const cId = getCampaignIdFromApp(app) || 'unknown';
+      const campaignData = isCampaignObject(app.campaign) ? app.campaign : null;
+      if (!groups[cId]) groups[cId] = { campaignId: cId, campaign: campaignData, apps: [] };
+      if (!groups[cId].campaign && campaignData) {
+        groups[cId].campaign = campaignData;
+      }
+      groups[cId].apps.push(app);
+    });
+    return Object.values(groups);
+  }, [filteredBrandApps]);
+
+  const activeFiltersCount = useMemo(() => {
+    let c = 0;
+    if (brandFilters.selectedCampaign !== 'all') c++;
+    if (brandFilters.status !== 'all') c++;
+    if (brandFilters.platform !== 'all') c++;
+    if (brandFilters.niches.length > 0) c++;
+    if (brandFilters.rateMin) c++;
+    if (brandFilters.rateMax) c++;
+    if (brandFilters.dateFrom) c++;
+    if (brandFilters.dateTo) c++;
+    if (brandFilters.minTrustScore) c++;
+    if (brandFilters.minFollowers) c++;
+    if (searchTerm) c++;
+    return c;
+  }, [brandFilters, searchTerm]);
+
+  // ======== Brand helper functions ========
+  const updateBrandFilter = (key, value) => {
+    setBrandFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const toggleNiche = (niche) => {
+    setBrandFilters(prev => ({
+      ...prev,
+      niches: prev.niches.includes(niche)
+        ? prev.niches.filter(n => n !== niche)
+        : [...prev.niches, niche]
+    }));
+  };
+
+  const clearAllBrandFilters = () => {
+    setBrandFilters({
+      selectedCampaign: 'all',
+      status: 'all',
+      platform: 'all',
+      niches: [],
+      rateMin: '',
+      rateMax: '',
+      dateFrom: '',
+      dateTo: '',
+      minTrustScore: '',
+      minFollowers: '',
+      sortBy: 'newest',
+    });
+    setSearchTerm('');
+  };
+
+  const toggleCampaignExpanded = (campaignId) => {
+    setExpandedCampaigns(prev => ({
+      ...prev,
+      [campaignId]: prev[campaignId] === false ? true : false,
+    }));
+  };
+
+  const formatFollowers = (n) => {
+    if (!n) return '—';
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(0)}K`;
+    return String(n);
+  };
+
+  const getTrustClass = (score) => {
+    if (!score) return 'trust-na';
+    if (score >= 80) return 'trust-high';
+    if (score >= 60) return 'trust-med';
+    return 'trust-low';
+  };
+
+  const handleTableSort = (col) => {
+    setBrandFilters(prev => {
+      if (col === 'rate') return { ...prev, sortBy: prev.sortBy === 'rate_desc' ? 'rate_asc' : 'rate_desc' };
+      if (col === 'followers') return { ...prev, sortBy: 'followers_desc' };
+      if (col === 'trust') return { ...prev, sortBy: 'trust_desc' };
+      if (col === 'date') return { ...prev, sortBy: prev.sortBy === 'newest' ? 'oldest' : 'newest' };
+      return prev;
+    });
+  };
+
+  // Render influencer table (used in both campaign view and table view)
+  const renderInfluencerTable = (apps, showCampaignCol = false) => (
+    <div className="brand-inf-table-scroll">
+      <table className="brand-inf-table">
+        <thead>
+          <tr>
+            <th className="th-influencer">Influencer</th>
+            {showCampaignCol && <th className="th-campaign">Campaign</th>}
+            <th className="th-platform">Platform</th>
+            <th
+              className="th-followers th-sortable"
+              onClick={() => handleTableSort('followers')}
+              title="Sort by followers"
+            >
+              <span>Followers</span> <ArrowUpDown size={12} />
+            </th>
+            <th className="th-engagement">Engagement</th>
+            <th className="th-niche">Niche</th>
+            <th
+              className="th-rate th-sortable"
+              onClick={() => handleTableSort('rate')}
+              title="Sort by rate"
+            >
+              <span>Rate</span> <ArrowUpDown size={12} />
+            </th>
+            <th
+              className="th-date th-sortable"
+              onClick={() => handleTableSort('date')}
+              title="Sort by date"
+            >
+              <span>Applied</span> <ArrowUpDown size={12} />
+            </th>
+            <th
+              className="th-trust th-sortable"
+              onClick={() => handleTableSort('trust')}
+              title="Sort by trust score"
+            >
+              <span>Trust</span> <ArrowUpDown size={12} />
+            </th>
+            <th className="th-status">Status</th>
+            <th className="th-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {apps.map(app => {
+            const profile = app.influencerProfile || {};
+            const name = profile.name || app.influencer?.name || 'Influencer';
+            const initials = name.charAt(0).toUpperCase();
+            return (
+              <tr
+                key={app._id}
+                className={`inf-row inf-row-${app.status}`}
+                onClick={() => setSelectedApp(app)}
+                title="Click to view details"
+              >
+                <td className="td-influencer" onClick={e => e.stopPropagation()}>
+                  <div className="inf-name-cell" onClick={() => setSelectedApp(app)}>
+                    <div className={`inf-avatar inf-avatar-${(profile.platformType || 'default').toLowerCase()}`}>
+                      {profile.avatar
+                        ? <img src={profile.avatar} alt={name} />
+                        : <span>{initials}</span>}
+                    </div>
+                    <div className="inf-name-info">
+                      <span className="inf-name">{name}</span>
+                      {profile.location && <span className="inf-location">{profile.location}</span>}
+                    </div>
+                  </div>
+                </td>
+                {showCampaignCol && (
+                  <td className="td-campaign">
+                    <span className="inf-campaign-tag">{app.campaign?.title || '—'}</span>
+                  </td>
+                )}
+                <td className="td-platform">
+                  <span className={`inf-platform-badge plat-${(profile.platformType || 'other').toLowerCase()}`}>
+                    {profile.platformType || '—'}
+                  </span>
+                </td>
+                <td className="td-followers">
+                  <div className="inf-stat-cell">
+                    <Users size={13} />
+                    <span>{formatFollowers(profile.totalFollowers)}</span>
+                  </div>
+                </td>
+                <td className="td-engagement">
+                  <div className="inf-stat-cell">
+                    <TrendingUp size={13} />
+                    <span>{profile.averageEngagementRate ? `${profile.averageEngagementRate.toFixed(1)}%` : '—'}</span>
+                  </div>
+                </td>
+                <td className="td-niche">
+                  <div className="inf-niches">
+                    {(profile.niche || []).slice(0, 2).map((n, i) => (
+                      <span key={i} className="inf-niche-tag">{n}</span>
+                    ))}
+                    {(profile.niche || []).length > 2 && (
+                      <span className="inf-niche-more">+{profile.niche.length - 2}</span>
+                    )}
+                  </div>
+                </td>
+                <td className="td-rate">
+                  <span className="inf-rate">₹{(app.proposedRate || 0).toLocaleString()}</span>
+                </td>
+                <td className="td-date">
+                  <span className="inf-date">{formatDate(app.createdAt)}</span>
+                </td>
+                <td className="td-trust">
+                  <span className={`inf-trust-score ${getTrustClass(profile.trustScore)}`}>
+                    {profile.trustScore || '—'}
+                  </span>
+                </td>
+                <td className="td-status">
+                  <span className={`collab-status-badge collab-status-${app.status}`}>
+                    {getStatusIcon(app.status)}
+                    <span>{app.status}</span>
+                  </span>
+                </td>
+                <td className="td-actions" onClick={e => e.stopPropagation()}>
+                  <div className="inf-action-btns">
+                    {(app.status === 'pending' || app.status === 'reviewed') && (
+                      <>
+                        <button
+                          className="inf-act-btn inf-act-shortlist"
+                          title="Shortlist"
+                          onClick={() => handleStatusChange(app._id, 'shortlisted')}
+                        >
+                          <Award size={13} /> <span>Shortlist</span>
+                        </button>
+                        <button
+                          className="inf-act-btn inf-act-reject"
+                          title="Reject"
+                          onClick={() => handleStatusChange(app._id, 'rejected')}
+                        >
+                          <X size={13} />
+                        </button>
+                      </>
+                    )}
+                    {app.status === 'shortlisted' && (
+                      <>
+                        <button
+                          className="inf-act-btn inf-act-accept"
+                          title="Accept"
+                          onClick={() => handleStatusChange(app._id, 'accepted')}
+                        >
+                          <CheckCircle size={13} /> <span>Accept</span>
+                        </button>
+                        <button
+                          className="inf-act-btn inf-act-reject"
+                          title="Reject"
+                          onClick={() => handleStatusChange(app._id, 'rejected')}
+                        >
+                          <X size={13} />
+                        </button>
+                        <button
+                          className="inf-act-btn inf-act-msg"
+                          title="Message"
+                          onClick={handleGoToMessages}
+                        >
+                          <MessageSquare size={13} />
+                        </button>
+                      </>
+                    )}
+                    {app.status === 'accepted' && (
+                      <>
+                        <button
+                          className="inf-act-btn inf-act-deal"
+                          title="Create Deal"
+                          onClick={() => openCreateDealModal(app)}
+                        >
+                          <Handshake size={13} /> <span>Deal</span>
+                        </button>
+                        <button
+                          className="inf-act-btn inf-act-msg"
+                          title="Message"
+                          onClick={handleGoToMessages}
+                        >
+                          <MessageSquare size={13} />
+                        </button>
+                      </>
+                    )}
+                    {(app.status === 'rejected' || app.status === 'withdrawn') && (
+                      <span className="inf-act-na">—</span>
+                    )}
+                    <button
+                      className="inf-act-btn inf-act-view"
+                      title="View Details"
+                      onClick={() => setSelectedApp(app)}
+                    >
+                      <Eye size={13} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  // Render brand empty state
+  const renderBrandEmptyState = () => (
+    <div className="collab-empty-state">
+      <Briefcase size={48} />
+      <h3>No applications found</h3>
+      <p>
+        {activeFiltersCount > 0
+          ? 'No applications match your current filters. Try adjusting or clearing filters.'
+          : 'Create campaigns to start receiving influencer applications.'}
+      </p>
+      {activeFiltersCount > 0 && (
+        <button className="btn btn-secondary" onClick={clearAllBrandFilters}>
+          <X size={16} /> Clear All Filters
+        </button>
+      )}
+    </div>
+  );
+
+  // Render brand applications view
+  const renderBrandApplicationsView = () => (
+    <>
+      {/* ── Stats Pills ── */}
+      <div className="brand-apps-topbar">
+        <div className="brand-stat-pills">
+          {[
+            { key: 'all',         label: 'All',         count: brandStatusCounts.all },
+            { key: 'pending',     label: 'Pending',     count: brandStatusCounts.pending },
+            { key: 'shortlisted', label: 'Shortlisted', count: brandStatusCounts.shortlisted },
+            { key: 'accepted',    label: 'Accepted',    count: brandStatusCounts.accepted },
+            { key: 'rejected',    label: 'Rejected',    count: brandStatusCounts.rejected },
+          ].map(({ key, label, count }) => (
+            <button
+              key={key}
+              className={`brand-stat-pill brand-stat-${key} ${brandFilters.status === key ? 'active' : ''}`}
+              onClick={() => updateBrandFilter('status', key)}
+            >
+              {label}
+              <span className="brand-stat-cnt">{count}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* View Mode Toggle */}
+        <div className="brand-view-toggle">
+          <button
+            className={`brand-view-btn ${viewMode === 'campaign' ? 'active' : ''}`}
+            onClick={() => setViewMode('campaign')}
+            title="Group by campaign"
+          >
+            <LayoutGrid size={15} /> Campaign
+          </button>
+          <button
+            className={`brand-view-btn ${viewMode === 'table' ? 'active' : ''}`}
+            onClick={() => setViewMode('table')}
+            title="Flat table view"
+          >
+            <List size={15} /> Table
+          </button>
+        </div>
+      </div>
+
+      {/* ── Search + Filter Controls ── */}
+      <div className="brand-filter-row">
+        <div className="collab-search-box brand-search">
+          <Search size={17} />
+          <input
+            type="text"
+            placeholder="Search influencer name or campaign…"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button className="brand-search-clear" onClick={() => setSearchTerm('')} title="Clear search">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div className="brand-filter-controls">
+          {/* Campaign Selector */}
+          <select
+            className="brand-select"
+            value={brandFilters.selectedCampaign}
+            onChange={e => updateBrandFilter('selectedCampaign', e.target.value)}
+          >
+            <option value="all">All Campaigns</option>
+            {brandCampaignsList.map(c => (
+              <option key={c._id} value={c._id}>{c.title}</option>
+            ))}
+          </select>
+
+          {/* Platform */}
+          <select
+            className="brand-select"
+            value={brandFilters.platform}
+            onChange={e => updateBrandFilter('platform', e.target.value)}
+          >
+            <option value="all">All Platforms</option>
+            <option value="Instagram">Instagram</option>
+            <option value="YouTube">YouTube</option>
+            <option value="TikTok">TikTok</option>
+            <option value="Multiple">Multiple</option>
+          </select>
+
+          {/* Sort */}
+          <select
+            className="brand-select"
+            value={brandFilters.sortBy}
+            onChange={e => updateBrandFilter('sortBy', e.target.value)}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="rate_desc">Rate: High → Low</option>
+            <option value="rate_asc">Rate: Low → High</option>
+            <option value="followers_desc">Followers: High → Low</option>
+            <option value="trust_desc">Trust Score: High → Low</option>
+          </select>
+
+          {/* Advanced Filters Toggle */}
+          <button
+            className={`brand-adv-btn ${showAdvancedFilters ? 'open' : ''} ${activeFiltersCount > 0 ? 'has-active' : ''}`}
+            onClick={() => setShowAdvancedFilters(p => !p)}
+          >
+            <SlidersHorizontal size={15} />
+            <span>Filters</span>
+            {activeFiltersCount > 0 && <span className="brand-filter-badge">{activeFiltersCount}</span>}
+          </button>
+
+          {/* Clear All */}
+          {activeFiltersCount > 0 && (
+            <button className="brand-clear-btn" onClick={clearAllBrandFilters} title="Clear all filters">
+              <X size={14} /> Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Advanced Filters Panel ── */}
+      {showAdvancedFilters && (
+        <div className="brand-adv-panel">
+          {/* Niche Multi-Select */}
+          <div className="brand-adv-section">
+            <label className="brand-adv-label">
+              <Award size={14} /> Niche
+            </label>
+            <div className="brand-niche-chips">
+              {NICHES.map(niche => (
+                <button
+                  key={niche}
+                  className={`brand-niche-chip ${brandFilters.niches.includes(niche) ? 'active' : ''}`}
+                  onClick={() => toggleNiche(niche)}
+                >
+                  {niche}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Rate Range */}
+          <div className="brand-adv-section">
+            <label className="brand-adv-label">
+              <IndianRupee size={14} /> Proposed Rate (₹)
+            </label>
+            <div className="brand-range-row">
+              <input
+                type="number"
+                className="brand-range-input"
+                placeholder="Min"
+                value={brandFilters.rateMin}
+                onChange={e => updateBrandFilter('rateMin', e.target.value)}
+                min="0"
+              />
+              <span className="brand-range-sep">–</span>
+              <input
+                type="number"
+                className="brand-range-input"
+                placeholder="Max"
+                value={brandFilters.rateMax}
+                onChange={e => updateBrandFilter('rateMax', e.target.value)}
+                min="0"
+              />
+            </div>
+          </div>
+
+          {/* Min Followers */}
+          <div className="brand-adv-section">
+            <label className="brand-adv-label">
+              <Users size={14} /> Min Followers
+            </label>
+            <div className="brand-range-row">
+              <input
+                type="number"
+                className="brand-range-input"
+                placeholder="e.g. 10000"
+                value={brandFilters.minFollowers}
+                onChange={e => updateBrandFilter('minFollowers', e.target.value)}
+                min="0"
+              />
+            </div>
+          </div>
+
+          {/* Min Trust Score */}
+          <div className="brand-adv-section">
+            <label className="brand-adv-label">
+              <Award size={14} /> Min Trust Score
+            </label>
+            <div className="brand-range-row">
+              <input
+                type="number"
+                className="brand-range-input"
+                placeholder="e.g. 60"
+                value={brandFilters.minTrustScore}
+                onChange={e => updateBrandFilter('minTrustScore', e.target.value)}
+                min="0"
+                max="100"
+              />
+              <span className="brand-range-sep">/ 100</span>
+            </div>
+          </div>
+
+          {/* Applied Date Range */}
+          <div className="brand-adv-section">
+            <label className="brand-adv-label">
+              <Calendar size={14} /> Applied Date
+            </label>
+            <div className="brand-range-row">
+              <input
+                type="date"
+                className="brand-range-input"
+                value={brandFilters.dateFrom}
+                onChange={e => updateBrandFilter('dateFrom', e.target.value)}
+              />
+              <span className="brand-range-sep">–</span>
+              <input
+                type="date"
+                className="brand-range-input"
+                value={brandFilters.dateTo}
+                onChange={e => updateBrandFilter('dateTo', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Active Filter Chips ── */}
+      {activeFiltersCount > 0 && (
+        <div className="brand-active-chips">
+          {brandFilters.selectedCampaign !== 'all' && (
+            <span className="brand-chip">
+              Campaign: {brandCampaignsList.find(c => c._id === brandFilters.selectedCampaign)?.title || '...'}
+              <button onClick={() => updateBrandFilter('selectedCampaign', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {brandFilters.status !== 'all' && (
+            <span className="brand-chip">
+              Status: {brandFilters.status}
+              <button onClick={() => updateBrandFilter('status', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {brandFilters.platform !== 'all' && (
+            <span className="brand-chip">
+              Platform: {brandFilters.platform}
+              <button onClick={() => updateBrandFilter('platform', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {brandFilters.niches.map(n => (
+            <span key={n} className="brand-chip">
+              {n}
+              <button onClick={() => toggleNiche(n)}><X size={11} /></button>
+            </span>
+          ))}
+          {(brandFilters.rateMin || brandFilters.rateMax) && (
+            <span className="brand-chip">
+              Rate: ₹{brandFilters.rateMin || '0'} – ₹{brandFilters.rateMax || '∞'}
+              <button onClick={() => { updateBrandFilter('rateMin', ''); updateBrandFilter('rateMax', ''); }}><X size={11} /></button>
+            </span>
+          )}
+          {brandFilters.minFollowers && (
+            <span className="brand-chip">
+              Min followers: {Number(brandFilters.minFollowers).toLocaleString()}
+              <button onClick={() => updateBrandFilter('minFollowers', '')}><X size={11} /></button>
+            </span>
+          )}
+          {brandFilters.minTrustScore && (
+            <span className="brand-chip">
+              Trust ≥ {brandFilters.minTrustScore}
+              <button onClick={() => updateBrandFilter('minTrustScore', '')}><X size={11} /></button>
+            </span>
+          )}
+          {(brandFilters.dateFrom || brandFilters.dateTo) && (
+            <span className="brand-chip">
+              Date: {brandFilters.dateFrom || '…'} – {brandFilters.dateTo || '…'}
+              <button onClick={() => { updateBrandFilter('dateFrom', ''); updateBrandFilter('dateTo', ''); }}><X size={11} /></button>
+            </span>
+          )}
+          {searchTerm && (
+            <span className="brand-chip">
+              "{searchTerm}"
+              <button onClick={() => setSearchTerm('')}><X size={11} /></button>
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* ── Results Summary ── */}
+      <div className="brand-results-bar">
+        <span>
+          Showing <strong>{filteredBrandApps.length}</strong>
+          {filteredBrandApps.length !== brandApplications.length && ` of ${brandApplications.length}`} applications
+        </span>
+      </div>
+
+      {/* ── Campaign View ── */}
+      {viewMode === 'campaign' && (
+        <div className="brand-campaign-groups">
+          {groupedApps.length > 0 ? (
+            groupedApps.map(group => {
+              const cId = group.campaignId || 'unknown';
+              const isOpen = expandedCampaigns[cId] !== false;
+              const pending = group.apps.filter(a => a.status === 'pending' || a.status === 'reviewed').length;
+              const shortlisted = group.apps.filter(a => a.status === 'shortlisted').length;
+              const accepted = group.apps.filter(a => a.status === 'accepted').length;
+              return (
+                <div key={cId} className="brand-campaign-group">
+                  <div
+                    className={`brand-cg-header ${isOpen ? 'open' : ''}`}
+                    onClick={() => toggleCampaignExpanded(cId)}
+                  >
+                    <div className="brand-cg-left">
+                      <div className="brand-cg-icon">
+                        <Briefcase size={17} />
+                      </div>
+                      <div className="brand-cg-info">
+                        <h3 className="brand-cg-title">{group.campaign?.title || 'Untitled Campaign'}</h3>
+                        <div className="brand-cg-meta">
+                          {group.campaign?.category && (
+                            <span className="brand-cg-tag">{group.campaign.category}</span>
+                          )}
+                          {group.campaign?.platformType && (
+                            <span className="brand-cg-tag">{group.campaign.platformType}</span>
+                          )}
+                          {group.campaign?.budget && (
+                            <span className="brand-cg-tag budget">
+                              ₹{group.campaign.budget.min?.toLocaleString()} – ₹{group.campaign.budget.max?.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="brand-cg-right">
+                      <div className="brand-cg-counts">
+                        <span className="brand-cg-count total">{group.apps.length} total</span>
+                        {pending > 0 && <span className="brand-cg-count pending">{pending} pending</span>}
+                        {shortlisted > 0 && <span className="brand-cg-count shortlisted">{shortlisted} shortlisted</span>}
+                        {accepted > 0 && <span className="brand-cg-count accepted">{accepted} accepted</span>}
+                      </div>
+                      <button className="brand-cg-toggle" onClick={e => { e.stopPropagation(); toggleCampaignExpanded(cId); }}>
+                        {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                  {isOpen && (
+                    <div className="brand-cg-body">
+                      {renderInfluencerTable(group.apps, false)}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          ) : renderBrandEmptyState()}
+        </div>
+      )}
+
+      {/* ── Flat Table View ── */}
+      {viewMode === 'table' && (
+        <div className="brand-flat-table-wrap">
+          {filteredBrandApps.length > 0
+            ? renderInfluencerTable(filteredBrandApps, true)
+            : renderBrandEmptyState()}
+        </div>
+      )}
+    </>
+  );
+
+  const updateBrandDealFilter = (key, value) => {
+    setBrandDealFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearAllBrandDealFilters = () => {
+    setBrandDealFilters({
+      selectedCampaign: 'all',
+      status: 'all',
+      source: 'all',
+      paymentStatus: 'all',
+      rateMin: '',
+      rateMax: '',
+      deadlineFrom: '',
+      deadlineTo: '',
+      createdFrom: '',
+      createdTo: '',
+      overdueOnly: false,
+      sortBy: 'newest',
+    });
+    setDealSearchTerm('');
+  };
+
+  const toggleDealGroupExpanded = (groupKey) => {
+    setExpandedDealGroups(prev => ({
+      ...prev,
+      [groupKey]: prev[groupKey] === false ? true : false,
+    }));
+  };
+
+  const renderBrandDealEmptyState = () => (
+    <div className="collab-empty-state">
+      <Handshake size={48} />
+      <h3>No deals found</h3>
+      <p>
+        {activeDealFiltersCount > 0
+          ? 'No deals match your current filters. Try adjusting or clearing filters.'
+          : 'Deals will appear here once collaborations are confirmed.'}
+      </p>
+      {activeDealFiltersCount > 0 && (
+        <button className="btn btn-secondary" onClick={clearAllBrandDealFilters}>
+          <X size={16} /> Clear All Filters
+        </button>
+      )}
+    </div>
+  );
+
+  const renderBrandDealsTable = (dealList, showCampaignCol = false) => (
+    <div className="brand-inf-table-scroll">
+      <table className="brand-inf-table brand-deal-table">
+        <thead>
+          <tr>
+            <th>Influencer</th>
+            {showCampaignCol && <th>Campaign</th>}
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Rate</th>
+            <th>Deadline</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {dealList.map(deal => {
+            const paymentStatus = getDealPaymentStatus(deal);
+            const needsPayment = (deal.status === 'pending_payment' || deal.status === 'active') && (!deal.paymentId || paymentStatus === 'pending');
+            const canRelease = deal.status === 'completed' && paymentStatus === 'escrow';
+            const daysLeft = getDaysUntil(deal.deadline);
+            const isDirect = !getCampaignIdFromDeal(deal);
+
+            return (
+              <tr key={deal._id} className={`deal-row deal-row-${deal.status}`}>
+                <td>
+                  <div className="inf-name-cell">
+                    <div className="inf-avatar inf-avatar-default">
+                      <span>{(deal.influencer?.name || 'I').charAt(0).toUpperCase()}</span>
+                    </div>
+                    <div className="inf-name-info">
+                      <span className="inf-name">{deal.influencer?.name || 'Influencer'}</span>
+                      {deal.influencer?.email && <span className="inf-location">{deal.influencer.email}</span>}
+                    </div>
+                  </div>
+                </td>
+
+                {showCampaignCol && (
+                  <td>
+                    <span className={`inf-campaign-tag ${isDirect ? 'direct' : ''}`}>
+                      {isDirect ? 'Direct Outreach' : getDealCampaignTitle(deal)}
+                    </span>
+                  </td>
+                )}
+
+                <td>
+                  <span className={`collab-status-badge collab-deal-status-${deal.status}`}>
+                    {getDealStatusIcon(deal.status)}
+                    {deal.status.replace('_', ' ')}
+                  </span>
+                </td>
+
+                <td>
+                  <span className={`brand-payment-chip brand-payment-${paymentStatus}`}>
+                    {paymentStatus.replace('_', ' ')}
+                  </span>
+                </td>
+
+                <td>
+                  <span className="inf-rate">₹{(deal.agreedRate || 0).toLocaleString()}</span>
+                </td>
+
+                <td>
+                  <div className={`brand-deal-deadline ${daysLeft !== null && daysLeft < 0 ? 'overdue' : ''}`}>
+                    <span>{formatDate(deal.deadline)}</span>
+                    {daysLeft !== null && (
+                      <small>
+                        {daysLeft > 0 ? `${daysLeft}d left` : daysLeft === 0 ? 'Today' : 'Overdue'}
+                      </small>
+                    )}
+                  </div>
+                </td>
+
+                <td>
+                  <span className="inf-date">{formatDate(deal.createdAt)}</span>
+                </td>
+
+                <td>
+                  <div className="inf-action-btns brand-deal-actions">
+                    {needsPayment && (
+                      <button
+                        className="inf-act-btn inf-act-deal"
+                        onClick={() => handleInitiatePayment(deal)}
+                        disabled={paymentProcessing || !razorpayLoaded}
+                        title={!razorpayLoaded ? 'Payment gateway loading...' : 'Pay now'}
+                      >
+                        <CreditCard size={13} /> <span>Pay</span>
+                      </button>
+                    )}
+
+                    {deal.status === 'pending_review' && (
+                      <>
+                        <button
+                          className="inf-act-btn inf-act-accept"
+                          onClick={() => handleDealStatusChange(deal._id, 'completed')}
+                          disabled={submitting}
+                        >
+                          <CheckCircle size={13} /> <span>Approve</span>
+                        </button>
+                        <button
+                          className="inf-act-btn inf-act-shortlist"
+                          onClick={() => handleDealStatusChange(deal._id, 'in_progress')}
+                          disabled={submitting}
+                        >
+                          <Upload size={13} /> <span>Revision</span>
+                        </button>
+                      </>
+                    )}
+
+                    {canRelease && (
+                      <button
+                        className="inf-act-btn inf-act-accept"
+                        onClick={() => handleReleasePayment(deal._id)}
+                        disabled={submitting}
+                      >
+                        <IndianRupee size={13} /> <span>Release</span>
+                      </button>
+                    )}
+
+                    {deal.status === 'completed' && (
+                      <button
+                        className="inf-act-btn inf-act-view"
+                        onClick={() => {
+                          setShowReviewModal(deal);
+                          setReviewForm({ rating: 5, title: '', content: '' });
+                        }}
+                      >
+                        <Star size={13} /> <span>Review</span>
+                      </button>
+                    )}
+
+                    <button className="inf-act-btn inf-act-msg" onClick={handleGoToMessages}>
+                      <MessageSquare size={13} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const renderBrandDealsView = () => (
+    <>
+      <div className="brand-apps-topbar">
+        <div className="brand-stat-pills">
+          {[
+            { key: 'all', label: 'All', count: brandDealStatusCounts.all },
+            { key: 'payment', label: 'Payment', count: brandDealStatusCounts.payment },
+            { key: 'active', label: 'Active', count: brandDealStatusCounts.active },
+            { key: 'review', label: 'In Review', count: brandDealStatusCounts.review },
+            { key: 'completed', label: 'Completed', count: brandDealStatusCounts.completed },
+            { key: 'cancelled', label: 'Cancelled', count: brandDealStatusCounts.cancelled },
+          ].map(({ key, label, count }) => (
+            <button
+              key={key}
+              className={`brand-stat-pill brand-stat-${key} ${brandDealFilters.status === key ? 'active' : ''}`}
+              onClick={() => updateBrandDealFilter('status', key)}
+            >
+              {label}
+              <span className="brand-stat-cnt">{count}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="brand-view-toggle">
+          <button
+            className={`brand-view-btn ${dealViewMode === 'campaign' ? 'active' : ''}`}
+            onClick={() => setDealViewMode('campaign')}
+          >
+            <LayoutGrid size={15} /> Campaign
+          </button>
+          <button
+            className={`brand-view-btn ${dealViewMode === 'table' ? 'active' : ''}`}
+            onClick={() => setDealViewMode('table')}
+          >
+            <List size={15} /> Table
+          </button>
+        </div>
+      </div>
+
+      <div className="brand-filter-row">
+        <div className="collab-search-box brand-search">
+          <Search size={17} />
+          <input
+            type="text"
+            placeholder="Search influencer or campaign..."
+            value={dealSearchTerm}
+            onChange={(e) => setDealSearchTerm(e.target.value)}
+          />
+          {dealSearchTerm && (
+            <button className="brand-search-clear" onClick={() => setDealSearchTerm('')}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div className="brand-filter-controls">
+          <select
+            className="brand-select"
+            value={brandDealFilters.selectedCampaign}
+            onChange={(e) => updateBrandDealFilter('selectedCampaign', e.target.value)}
+          >
+            <option value="all">All Campaigns</option>
+            {brandDealCampaignOptions.campaigns.map(c => (
+              <option key={c.id} value={c.id}>{c.title}</option>
+            ))}
+            {brandDealCampaignOptions.hasDirect && <option value="direct">Direct Outreach</option>}
+          </select>
+
+          <select
+            className="brand-select"
+            value={brandDealFilters.source}
+            onChange={(e) => updateBrandDealFilter('source', e.target.value)}
+          >
+            <option value="all">All Sources</option>
+            <option value="campaign">Campaign Deals</option>
+            <option value="direct">Direct Outreach</option>
+          </select>
+
+          <select
+            className="brand-select"
+            value={brandDealFilters.paymentStatus}
+            onChange={(e) => updateBrandDealFilter('paymentStatus', e.target.value)}
+          >
+            <option value="all">All Payments</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="paid">Paid</option>
+            <option value="escrow">Escrow</option>
+            <option value="released">Released</option>
+            <option value="refunded">Refunded</option>
+          </select>
+
+          <select
+            className="brand-select"
+            value={brandDealFilters.sortBy}
+            onChange={(e) => updateBrandDealFilter('sortBy', e.target.value)}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="rate_desc">Rate: High → Low</option>
+            <option value="rate_asc">Rate: Low → High</option>
+            <option value="deadline_asc">Deadline: Nearest</option>
+            <option value="deadline_desc">Deadline: Farthest</option>
+          </select>
+
+          <button
+            className={`brand-adv-btn ${showDealAdvancedFilters ? 'open' : ''} ${activeDealFiltersCount > 0 ? 'has-active' : ''}`}
+            onClick={() => setShowDealAdvancedFilters(prev => !prev)}
+          >
+            <SlidersHorizontal size={15} />
+            <span>Filters</span>
+            {activeDealFiltersCount > 0 && <span className="brand-filter-badge">{activeDealFiltersCount}</span>}
+          </button>
+
+          {activeDealFiltersCount > 0 && (
+            <button className="brand-clear-btn" onClick={clearAllBrandDealFilters}>
+              <X size={14} /> Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showDealAdvancedFilters && (
+        <div className="brand-adv-panel">
+          <div className="brand-adv-section">
+            <label className="brand-adv-label"><IndianRupee size={14} /> Agreed Rate (₹)</label>
+            <div className="brand-range-row">
+              <input
+                type="number"
+                className="brand-range-input"
+                placeholder="Min"
+                value={brandDealFilters.rateMin}
+                onChange={(e) => updateBrandDealFilter('rateMin', e.target.value)}
+                min="0"
+              />
+              <span className="brand-range-sep">–</span>
+              <input
+                type="number"
+                className="brand-range-input"
+                placeholder="Max"
+                value={brandDealFilters.rateMax}
+                onChange={(e) => updateBrandDealFilter('rateMax', e.target.value)}
+                min="0"
+              />
+            </div>
+          </div>
+
+          <div className="brand-adv-section">
+            <label className="brand-adv-label"><Calendar size={14} /> Deadline Range</label>
+            <div className="brand-range-row">
+              <input
+                type="date"
+                className="brand-range-input"
+                value={brandDealFilters.deadlineFrom}
+                onChange={(e) => updateBrandDealFilter('deadlineFrom', e.target.value)}
+              />
+              <span className="brand-range-sep">–</span>
+              <input
+                type="date"
+                className="brand-range-input"
+                value={brandDealFilters.deadlineTo}
+                onChange={(e) => updateBrandDealFilter('deadlineTo', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="brand-adv-section">
+            <label className="brand-adv-label"><Clock size={14} /> Deal Created Date</label>
+            <div className="brand-range-row">
+              <input
+                type="date"
+                className="brand-range-input"
+                value={brandDealFilters.createdFrom}
+                onChange={(e) => updateBrandDealFilter('createdFrom', e.target.value)}
+              />
+              <span className="brand-range-sep">–</span>
+              <input
+                type="date"
+                className="brand-range-input"
+                value={brandDealFilters.createdTo}
+                onChange={(e) => updateBrandDealFilter('createdTo', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="brand-adv-section">
+            <label className="brand-adv-label"><AlertCircle size={14} /> Overdue</label>
+            <label className="brand-overdue-check">
+              <input
+                type="checkbox"
+                checked={brandDealFilters.overdueOnly}
+                onChange={(e) => updateBrandDealFilter('overdueOnly', e.target.checked)}
+              />
+              <span>Show only overdue active deals</span>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {activeDealFiltersCount > 0 && (
+        <div className="brand-active-chips">
+          {brandDealFilters.selectedCampaign !== 'all' && (
+            <span className="brand-chip">
+              {brandDealFilters.selectedCampaign === 'direct'
+                ? 'Direct Outreach'
+                : `Campaign: ${brandDealCampaignOptions.campaigns.find(c => c.id === brandDealFilters.selectedCampaign)?.title || '...'}`}
+              <button onClick={() => updateBrandDealFilter('selectedCampaign', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {brandDealFilters.status !== 'all' && (
+            <span className="brand-chip">
+              Status: {brandDealFilters.status}
+              <button onClick={() => updateBrandDealFilter('status', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {brandDealFilters.source !== 'all' && (
+            <span className="brand-chip">
+              Source: {brandDealFilters.source}
+              <button onClick={() => updateBrandDealFilter('source', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {brandDealFilters.paymentStatus !== 'all' && (
+            <span className="brand-chip">
+              Payment: {brandDealFilters.paymentStatus}
+              <button onClick={() => updateBrandDealFilter('paymentStatus', 'all')}><X size={11} /></button>
+            </span>
+          )}
+          {(brandDealFilters.rateMin || brandDealFilters.rateMax) && (
+            <span className="brand-chip">
+              ₹{brandDealFilters.rateMin || '0'} – ₹{brandDealFilters.rateMax || '∞'}
+              <button onClick={() => { updateBrandDealFilter('rateMin', ''); updateBrandDealFilter('rateMax', ''); }}><X size={11} /></button>
+            </span>
+          )}
+          {(brandDealFilters.deadlineFrom || brandDealFilters.deadlineTo) && (
+            <span className="brand-chip">
+              Deadline: {brandDealFilters.deadlineFrom || '…'} – {brandDealFilters.deadlineTo || '…'}
+              <button onClick={() => { updateBrandDealFilter('deadlineFrom', ''); updateBrandDealFilter('deadlineTo', ''); }}><X size={11} /></button>
+            </span>
+          )}
+          {(brandDealFilters.createdFrom || brandDealFilters.createdTo) && (
+            <span className="brand-chip">
+              Created: {brandDealFilters.createdFrom || '…'} – {brandDealFilters.createdTo || '…'}
+              <button onClick={() => { updateBrandDealFilter('createdFrom', ''); updateBrandDealFilter('createdTo', ''); }}><X size={11} /></button>
+            </span>
+          )}
+          {brandDealFilters.overdueOnly && (
+            <span className="brand-chip">
+              Overdue only
+              <button onClick={() => updateBrandDealFilter('overdueOnly', false)}><X size={11} /></button>
+            </span>
+          )}
+          {dealSearchTerm && (
+            <span className="brand-chip">
+              "{dealSearchTerm}"
+              <button onClick={() => setDealSearchTerm('')}><X size={11} /></button>
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="brand-results-bar">
+        <span>
+          Showing <strong>{filteredBrandDeals.length}</strong>
+          {filteredBrandDeals.length !== myDeals.length && ` of ${myDeals.length}`} deals
+        </span>
+      </div>
+
+      {dealViewMode === 'campaign' && (
+        <div className="brand-campaign-groups brand-deal-groups">
+          {groupedBrandDeals.length > 0 ? (
+            groupedBrandDeals.map(group => {
+              const isOpen = expandedDealGroups[group.groupKey] !== false;
+              const activeCount = group.deals.filter(d => d.status === 'active' || d.status === 'in_progress').length;
+              const reviewCount = group.deals.filter(d => d.status === 'pending_review').length;
+              const completedCount = group.deals.filter(d => d.status === 'completed').length;
+              return (
+                <div key={group.groupKey} className="brand-campaign-group brand-deal-group">
+                  <div className={`brand-cg-header brand-dg-header ${isOpen ? 'open' : ''}`} onClick={() => toggleDealGroupExpanded(group.groupKey)}>
+                    <div className="brand-cg-left">
+                      <div className={`brand-cg-icon ${group.isDirect ? 'direct' : ''}`}>
+                        {group.isDirect ? <MessageSquare size={17} /> : <Briefcase size={17} />}
+                      </div>
+                      <div className="brand-cg-info">
+                        <h3 className="brand-cg-title">{group.label}</h3>
+                        <div className="brand-cg-meta">
+                          <span className="brand-cg-tag">{group.isDirect ? 'Direct Outreach' : 'Campaign Deal'}</span>
+                          {group.campaign?.platformType && <span className="brand-cg-tag">{group.campaign.platformType}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="brand-cg-right">
+                      <div className="brand-cg-counts">
+                        <span className="brand-cg-count total">{group.deals.length} total</span>
+                        {activeCount > 0 && <span className="brand-cg-count shortlisted">{activeCount} active</span>}
+                        {reviewCount > 0 && <span className="brand-cg-count pending">{reviewCount} review</span>}
+                        {completedCount > 0 && <span className="brand-cg-count accepted">{completedCount} completed</span>}
+                      </div>
+                      <button className="brand-cg-toggle" onClick={(e) => { e.stopPropagation(); toggleDealGroupExpanded(group.groupKey); }}>
+                        {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {isOpen && (
+                    <div className="brand-cg-body">
+                      {renderBrandDealsTable(group.deals, false)}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          ) : renderBrandDealEmptyState()}
+        </div>
+      )}
+
+      {dealViewMode === 'table' && (
+        <div className="brand-flat-table-wrap brand-flat-deals-wrap">
+          {filteredBrandDeals.length > 0
+            ? renderBrandDealsTable(filteredBrandDeals, true)
+            : renderBrandDealEmptyState()}
+        </div>
+      )}
+    </>
+  );
 
   // Open create deal modal
   const openCreateDealModal = (application) => {
@@ -532,438 +2043,314 @@ const Collaborations = () => {
         {/* Applications Tab */}
         {activeTab === 'applications' && (
           <>
-            {/* Filters */}
-            <div className="collab-filters-bar">
-              <div className="collab-search-box">
-                <Search size={20} />
-                <input
-                  type="text"
-                  placeholder="Search applications..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+            {/* Brand: new campaign-wise table view */}
+            {isBrand && renderBrandApplicationsView()}
 
-              <div className="collab-filter-tabs">
-                {['all', 'pending', 'active', 'completed'].map(status => (
-                  <button
-                    key={status}
-                    className={`collab-filter-tab ${filter === status ? 'collab-active' : ''}`}
-                    onClick={() => setFilter(status)}
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                    <span className="collab-count">{statusCounts[status]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Applications List */}
-            <div className="collab-list">
-              {filteredItems.length > 0 ? (
-                filteredItems.map((app) => (
-                  <div key={app._id} className="collab-card">
-                    <div className="collab-header">
-                      <div className="collab-title">
-                        <h3>
-                          {isInfluencer
-                            ? (app.campaign?.brandProfile?.companyName || 'Brand')
-                            : (app.influencer?.name || app.influencerProfile?.name || 'Influencer')}
-                        </h3>
-                        <span className={`collab-status-badge collab-status-${app.status}`}>
-                          {getStatusIcon(app.status)}
-                          {app.status}
-                        </span>
-                      </div>
-                      <div className="collab-service">
-                        <Briefcase size={16} />
-                        {app.campaign?.title || 'Campaign'}
-                      </div>
-                    </div>
-
-                    <div className="collab-body">
-                      <p className="collab-message">{app.message || 'No message'}</p>
-                      
-                      <div className="collab-details">
-                        <div className="collab-detail-item">
-                          <IndianRupee size={16} />
-                          <span>Proposed Rate: <strong>{app.proposedRate || 'N/A'}</strong></span>
-                        </div>
-                        {app.campaign?.deadline && (
-                          <div className="collab-detail-item">
-                            <Calendar size={16} />
-                            <span>Deadline: <strong>{new Date(app.campaign.deadline).toLocaleDateString()}</strong></span>
-                          </div>
-                        )}
-                        <div className="collab-detail-item">
-                          <Clock size={16} />
-                          <span>Applied: <strong>{new Date(app.createdAt).toLocaleDateString()}</strong></span>
-                        </div>
-                        {app.campaign?.budget && (
-                          <div className="collab-detail-item">
-                            <IndianRupee size={16} />
-                            <span>Campaign Budget: <strong>{app.campaign.budget.min} - {app.campaign.budget.max}</strong></span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="collab-footer">
-                      {/* Brand actions: can shortlist, accept, or reject pending applications */}
-                      {isBrand && (app.status === 'pending' || app.status === 'reviewed') && (
-                        <div className="collab-action-buttons">
-                          <button 
-                            className="btn btn-primary btn-sm"
-                            onClick={() => handleStatusChange(app._id, 'shortlisted')}
-                          >
-                            Shortlist
-                          </button>
-                          <button 
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleStatusChange(app._id, 'rejected')}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                      {isBrand && app.status === 'shortlisted' && (
-                        <div className="collab-action-buttons">
-                          <button 
-                            className="btn btn-primary btn-sm"
-                            onClick={() => handleStatusChange(app._id, 'accepted')}
-                          >
-                            <CheckCircle size={16} />
-                            Accept
-                          </button>
-                          <button 
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleStatusChange(app._id, 'rejected')}
-                          >
-                            Reject
-                          </button>
-                          <button 
-                            className="btn btn-outline btn-sm"
-                            onClick={handleGoToMessages}
-                            style={{ marginLeft: 'auto' }}
-                          >
-                            <MessageSquare size={16} />
-                            Message
-                          </button>
-                        </div>
-                      )}
-                      {/* Brand: create deal from accepted application */}
-                      {isBrand && app.status === 'accepted' && (
-                        <div className="collab-action-buttons">
-                          <button 
-                            className="btn btn-primary btn-sm"
-                            onClick={() => openCreateDealModal(app)}
-                          >
-                            <Handshake size={16} />
-                            Create Deal
-                          </button>
-                          <button 
-                            className="btn btn-outline btn-sm"
-                            onClick={handleGoToMessages}
-                          >
-                            <MessageSquare size={16} />
-                            Message
-                          </button>
-                        </div>
-                      )}
-                      {/* Influencer: can withdraw pending applications */}
-                      {isInfluencer && app.status === 'pending' && (
-                        <div className="collab-action-buttons">
-                          <button 
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleStatusChange(app._id, 'withdrawn')}
-                          >
-                            Withdraw
-                          </button>
-                        </div>
-                      )}
-                      {isInfluencer && app.status === 'shortlisted' && (
-                        <div className="collab-action-buttons">
-                          <button 
-                            className="btn btn-outline btn-sm"
-                            onClick={handleGoToMessages}
-                          >
-                            <MessageSquare size={16} />
-                            Message
-                          </button>
-                        </div>
-                      )}
-                      {isInfluencer && app.status === 'accepted' && (
-                        <div className="collab-action-buttons">
-                          <button 
-                            className="btn btn-outline btn-sm"
-                            onClick={handleGoToMessages}
-                          >
-                            <MessageSquare size={16} />
-                            Message
-                          </button>
-                          <div className="collab-completed-info collab-success" style={{ marginLeft: 'auto' }}>
-                            <CheckCircle size={18} />
-                            <span>Accepted! Waiting for deal confirmation.</span>
-                          </div>
-                        </div>
-                      )}
-                      {(app.status === 'rejected' || app.status === 'withdrawn') && (
-                        <div className="collab-completed-info">
-                          <XCircle size={18} />
-                          <span>{app.status === 'withdrawn' ? 'Withdrawn' : 'Rejected'}{app.brandResponse?.message ? `: ${app.brandResponse.message}` : ''}</span>
-                        </div>
-                      )}
-                    </div>
+            {/* Influencer: existing card-based view */}
+            {isInfluencer && (
+              <>
+                {/* Filters */}
+                <div className="collab-filters-bar">
+                  <div className="collab-search-box">
+                    <Search size={20} />
+                    <input
+                      type="text"
+                      placeholder="Search applications..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                   </div>
-                ))
-              ) : (
-                <div className="collab-empty-state">
-                  <Briefcase size={48} />
-                  <h3>No applications found</h3>
-                  <p>
-                    {filter !== 'all' 
-                      ? `You don't have any ${filter} applications.` 
-                      : isInfluencer 
-                        ? 'Apply to campaigns to start collaborating!'
-                        : 'Create campaigns to receive applications.'}
-                  </p>
-                  {isInfluencer && (
-                    <Link to="/campaigns" className="btn btn-primary">
-                      Browse Campaigns
-                    </Link>
+
+                  <div className="collab-filter-tabs">
+                    {['all', 'pending', 'active', 'completed'].map(status => (
+                      <button
+                        key={status}
+                        className={`collab-filter-tab ${filter === status ? 'collab-active' : ''}`}
+                        onClick={() => setFilter(status)}
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        <span className="collab-count">{statusCounts[status]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Applications List */}
+                <div className="collab-list">
+                  {filteredItems.length > 0 ? (
+                    filteredItems.map((app) => (
+                      <div key={app._id} className="collab-card">
+                        <div className="collab-header">
+                          <div className="collab-title">
+                            <h3>{app.campaign?.brandProfile?.companyName || 'Brand'}</h3>
+                            <span className={`collab-status-badge collab-status-${app.status}`}>
+                              {getStatusIcon(app.status)}
+                              {app.status}
+                            </span>
+                          </div>
+                          <div className="collab-service">
+                            <Briefcase size={16} />
+                            {app.campaign?.title || 'Campaign'}
+                          </div>
+                        </div>
+
+                        <div className="collab-body">
+                          <p className="collab-message">{app.message || 'No message'}</p>
+                          <div className="collab-details">
+                            <div className="collab-detail-item">
+                              <IndianRupee size={16} />
+                              <span>Proposed Rate: <strong>{app.proposedRate || 'N/A'}</strong></span>
+                            </div>
+                            {app.campaign?.deadline && (
+                              <div className="collab-detail-item">
+                                <Calendar size={16} />
+                                <span>Deadline: <strong>{new Date(app.campaign.deadline).toLocaleDateString()}</strong></span>
+                              </div>
+                            )}
+                            <div className="collab-detail-item">
+                              <Clock size={16} />
+                              <span>Applied: <strong>{new Date(app.createdAt).toLocaleDateString()}</strong></span>
+                            </div>
+                            {app.campaign?.budget && (
+                              <div className="collab-detail-item">
+                                <IndianRupee size={16} />
+                                <span>Campaign Budget: <strong>₹{app.campaign.budget.min} – ₹{app.campaign.budget.max}</strong></span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="collab-footer">
+                          {app.status === 'pending' && (
+                            <div className="collab-action-buttons">
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => handleStatusChange(app._id, 'withdrawn')}
+                              >
+                                Withdraw
+                              </button>
+                            </div>
+                          )}
+                          {app.status === 'shortlisted' && (
+                            <div className="collab-action-buttons">
+                              <button className="btn btn-outline btn-sm" onClick={handleGoToMessages}>
+                                <MessageSquare size={16} /> Message
+                              </button>
+                            </div>
+                          )}
+                          {app.status === 'accepted' && (
+                            <div className="collab-action-buttons">
+                              <button className="btn btn-outline btn-sm" onClick={handleGoToMessages}>
+                                <MessageSquare size={16} /> Message
+                              </button>
+                              <div className="collab-completed-info collab-success" style={{ marginLeft: 'auto' }}>
+                                <CheckCircle size={18} />
+                                <span>Accepted! Waiting for deal confirmation.</span>
+                              </div>
+                            </div>
+                          )}
+                          {(app.status === 'rejected' || app.status === 'withdrawn') && (
+                            <div className="collab-completed-info">
+                              <XCircle size={18} />
+                              <span>{app.status === 'withdrawn' ? 'Withdrawn' : 'Rejected'}{app.brandResponse?.message ? `: ${app.brandResponse.message}` : ''}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="collab-empty-state">
+                      <Briefcase size={48} />
+                      <h3>No applications found</h3>
+                      <p>
+                        {filter !== 'all'
+                          ? `You don't have any ${filter} applications.`
+                          : 'Apply to campaigns to start collaborating!'}
+                      </p>
+                      <Link to="/campaigns" className="btn btn-primary">
+                        Browse Campaigns
+                      </Link>
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </>
         )}
 
         {/* Deals Tab */}
         {activeTab === 'deals' && (
           <>
-            {/* Deal Filters */}
-            <div className="collab-filters-bar">
-              <div className="collab-search-box">
-                <Search size={20} />
-                <input
-                  type="text"
-                  placeholder="Search deals..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+            {isBrand && renderBrandDealsView()}
 
-              <div className="collab-filter-tabs">
-                {['all', 'active', 'pending_review', 'completed'].map(status => (
-                  <button
-                    key={status}
-                    className={`collab-filter-tab ${dealFilter === status ? 'collab-active' : ''}`}
-                    onClick={() => setDealFilter(status)}
-                  >
-                    {status === 'pending_review' ? 'In Review' : status.charAt(0).toUpperCase() + status.slice(1)}
-                    <span className="collab-count">{dealStatusCounts[status]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {isInfluencer && (
+              <>
+                {/* Deal Filters */}
+                <div className="collab-filters-bar">
+                  <div className="collab-search-box">
+                    <Search size={20} />
+                    <input
+                      type="text"
+                      placeholder="Search deals..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
 
-            {/* Deals List */}
-            <div className="collab-list">
-              {filteredDeals.length > 0 ? (
-                filteredDeals.map((deal) => {
-                  const daysLeft = getDaysUntil(deal.deadline);
-                  return (
-                    <div key={deal._id} className="collab-card collab-deal-card">
-                      <div className="collab-header">
-                        <div className="collab-title">
-                          <h3>
-                            {isBrand 
-                              ? (deal.influencer?.name || 'Influencer')
-                              : (deal.brand?.name || 'Brand')}
-                          </h3>
-                          <span className={`collab-status-badge collab-deal-status-${deal.status}`}>
-                            {getDealStatusIcon(deal.status)}
-                            {deal.status.replace('_', ' ')}
-                          </span>
-                        </div>
-                        <div className="collab-service">
-                          <Briefcase size={16} />
-                          {deal.campaign?.title || 'Campaign'}
-                        </div>
-                      </div>
+                  <div className="collab-filter-tabs">
+                    {['all', 'active', 'pending_review', 'completed'].map(status => (
+                      <button
+                        key={status}
+                        className={`collab-filter-tab ${dealFilter === status ? 'collab-active' : ''}`}
+                        onClick={() => setDealFilter(status)}
+                      >
+                        {status === 'pending_review' ? 'In Review' : status.charAt(0).toUpperCase() + status.slice(1)}
+                        <span className="collab-count">{dealStatusCounts[status]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                      <div className="collab-body">
-                        <div className="collab-deal-stats">
-                          <div className="collab-deal-stat">
-                            <IndianRupee size={20} />
-                            <div>
-                              <span className="stat-label">Agreed Rate</span>
-                              <span className="stat-value">₹{deal.agreedRate?.toLocaleString() || 'N/A'}</span>
+                {/* Deals List */}
+                <div className="collab-list">
+                  {filteredDeals.length > 0 ? (
+                    filteredDeals.map((deal) => {
+                      const daysLeft = getDaysUntil(deal.deadline);
+                      return (
+                        <div key={deal._id} className="collab-card collab-deal-card">
+                          <div className="collab-header">
+                            <div className="collab-title">
+                              <h3>{deal.brand?.name || 'Brand'}</h3>
+                              <span className={`collab-status-badge collab-deal-status-${deal.status}`}>
+                                {getDealStatusIcon(deal.status)}
+                                {deal.status.replace('_', ' ')}
+                              </span>
+                            </div>
+                            <div className="collab-service">
+                              <Briefcase size={16} />
+                              {getDealCampaignTitle(deal)}
                             </div>
                           </div>
-                          <div className="collab-deal-stat">
-                            <Calendar size={20} />
-                            <div>
-                              <span className="stat-label">Deadline</span>
-                              <span className="stat-value">{formatDate(deal.deadline)}</span>
+
+                          <div className="collab-body">
+                            <div className="collab-deal-stats">
+                              <div className="collab-deal-stat">
+                                <IndianRupee size={20} />
+                                <div>
+                                  <span className="stat-label">Agreed Rate</span>
+                                  <span className="stat-value">₹{deal.agreedRate?.toLocaleString() || 'N/A'}</span>
+                                </div>
+                              </div>
+                              <div className="collab-deal-stat">
+                                <Calendar size={20} />
+                                <div>
+                                  <span className="stat-label">Deadline</span>
+                                  <span className="stat-value">{formatDate(deal.deadline)}</span>
+                                </div>
+                              </div>
+                              {daysLeft !== null && (
+                                <div className={`collab-deal-stat ${daysLeft < 3 ? 'urgent' : ''}`}>
+                                  <Clock size={20} />
+                                  <div>
+                                    <span className="stat-label">Time Left</span>
+                                    <span className="stat-value">
+                                      {daysLeft > 0 ? `${daysLeft} days` : daysLeft === 0 ? 'Today' : 'Overdue'}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
+
+                            {deal.deliverables && deal.deliverables.length > 0 && (
+                              <div className="collab-deliverables">
+                                <h4>Deliverables</h4>
+                                <div className="collab-deliverables-list">
+                                  {deal.deliverables.map((d, idx) => (
+                                    <div key={idx} className={`collab-deliverable collab-deliverable-${d.status}`}>
+                                      {d.status === 'approved' ? <CheckCircle size={14} /> : d.status === 'submitted' ? <Upload size={14} /> : <Clock size={14} />}
+                                      <span>{d.description || d.type}</span>
+                                      <span className="deliverable-status">{d.status}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          {daysLeft !== null && (
-                            <div className={`collab-deal-stat ${daysLeft < 3 ? 'urgent' : ''}`}>
-                              <Clock size={20} />
-                              <div>
-                                <span className="stat-label">Time Left</span>
-                                <span className="stat-value">
-                                  {daysLeft > 0 ? `${daysLeft} days` : daysLeft === 0 ? 'Today' : 'Overdue'}
+
+                          <div className="collab-footer">
+                            {deal.paymentStatus && (
+                              <div className={`collab-payment-info ${deal.paymentStatus === 'paid' ? 'success' : deal.paymentStatus === 'pending' ? 'warning' : ''}`}>
+                                <Lock size={16} />
+                                <span>
+                                  Payment: {deal.paymentStatus === 'paid'
+                                    ? 'Secured in Escrow'
+                                    : deal.paymentStatus === 'processing'
+                                      ? 'Processing...'
+                                      : deal.paymentStatus === 'pending'
+                                        ? 'Payment Required'
+                                        : deal.paymentStatus}
                                 </span>
                               </div>
-                            </div>
-                          )}
-                        </div>
+                            )}
 
-                        {/* Deliverables Progress */}
-                        {deal.deliverables && deal.deliverables.length > 0 && (
-                          <div className="collab-deliverables">
-                            <h4>Deliverables</h4>
-                            <div className="collab-deliverables-list">
-                              {deal.deliverables.map((d, idx) => (
-                                <div key={idx} className={`collab-deliverable collab-deliverable-${d.status}`}>
-                                  {d.status === 'approved' ? <CheckCircle size={14} /> : 
-                                   d.status === 'submitted' ? <Upload size={14} /> : 
-                                   <Clock size={14} />}
-                                  <span>{d.description || d.type}</span>
-                                  <span className="deliverable-status">{d.status}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="collab-footer">
-                        {/* Payment status display */}
-                        {deal.paymentStatus && (
-                          <div className={`collab-payment-info ${deal.paymentStatus === 'paid' ? 'success' : deal.paymentStatus === 'pending' ? 'warning' : ''}`}>
-                            <Lock size={16} />
-                            <span>
-                              Payment: {deal.paymentStatus === 'paid' ? 'Secured in Escrow' : 
-                                       deal.paymentStatus === 'processing' ? 'Processing...' :
-                                       deal.paymentStatus === 'pending' ? 'Payment Required' :
-                                       deal.paymentStatus}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Brand: Pay for deal */}
-                        {isBrand && (deal.status === 'pending_payment' || deal.status === 'active') && (!deal.paymentId || deal.paymentStatus === 'pending') && (
-                          <div className="collab-action-buttons">
-                            <button 
-                              className="btn btn-primary btn-sm btn-payment"
-                              onClick={() => handleInitiatePayment(deal)}
-                              disabled={paymentProcessing || !razorpayLoaded}
-                              title={!razorpayLoaded ? 'Payment gateway loading...' : ''}
-                            >
-                              {paymentProcessing ? (
-                                <><Loader size={16} className="spin-animation" /> Processing...</>
-                              ) : (
-                                <><CreditCard size={16} /> Pay Now (₹{deal.agreedRate})</>
-                              )}
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Influencer actions */}
-                        {isInfluencer && (deal.status === 'active' || deal.status === 'in_progress') && (
-                          <div className="collab-action-buttons">
-                            <button 
-                              className="btn btn-primary btn-sm"
-                              onClick={() => handleDealStatusChange(deal._id, 'pending_review')}
-                              disabled={submitting}
-                            >
-                              <Upload size={16} />
-                              Submit for Review
-                            </button>
-                          </div>
-                        )}
-                        {/* Brand actions */}
-                        {isBrand && deal.status === 'pending_review' && (
-                          <div className="collab-action-buttons">
-                            <button 
-                              className="btn btn-primary btn-sm"
-                              onClick={() => handleDealStatusChange(deal._id, 'completed')}
-                              disabled={submitting}
-                            >
-                              <CheckCircle size={16} />
-                              Approve & Complete
-                            </button>
-                            <button 
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => handleDealStatusChange(deal._id, 'in_progress')}
-                              disabled={submitting}
-                            >
-                              Request Revision
-                            </button>
-                          </div>
-                        )}
-                        {deal.status === 'completed' && (
-                          <div className="collab-deal-completed-section">
-                            <div className="collab-completed-info collab-success">
-                              <CheckCircle size={18} />
-                              <span>Deal completed{deal.completedAt ? ` on ${formatDate(deal.completedAt)}` : ''}</span>
-                            </div>
-                            <div className="collab-action-buttons">
-                              {/* Brand: Release payment to influencer */}
-                              {isBrand && deal.paymentStatus === 'escrow' && (
-                                <button 
-                                  className="btn btn-success btn-sm"
-                                  onClick={() => handleReleasePayment(deal._id)}
+                            {(deal.status === 'active' || deal.status === 'in_progress') && (
+                              <div className="collab-action-buttons">
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  onClick={() => handleDealStatusChange(deal._id, 'pending_review')}
                                   disabled={submitting}
                                 >
-                                  {submitting ? <Loader size={16} className="spin-animation" /> : <IndianRupee size={16} />}
-                                  Release Payment
+                                  <Upload size={16} />
+                                  Submit for Review
                                 </button>
-                              )}
-                              {isBrand && deal.paymentStatus === 'released' && (
+                              </div>
+                            )}
+
+                            {deal.status === 'completed' && (
+                              <div className="collab-deal-completed-section">
                                 <div className="collab-completed-info collab-success">
-                                  <CheckCircle size={16} />
-                                  <span>Payment released to influencer</span>
+                                  <CheckCircle size={18} />
+                                  <span>Deal completed{deal.completedAt ? ` on ${formatDate(deal.completedAt)}` : ''}</span>
                                 </div>
-                              )}
-                              <button 
-                                className="btn btn-primary btn-sm"
-                                onClick={() => {
-                                  setShowReviewModal(deal);
-                                  setReviewForm({ rating: 5, title: '', content: '' });
-                                }}
-                              >
-                                <Star size={16} />
-                                Leave Review
-                              </button>
-                            </div>
+                                <div className="collab-action-buttons">
+                                  <button
+                                    className="btn btn-primary btn-sm"
+                                    onClick={() => {
+                                      setShowReviewModal(deal);
+                                      setReviewForm({ rating: 5, title: '', content: '' });
+                                    }}
+                                  >
+                                    <Star size={16} />
+                                    Leave Review
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {deal.status === 'cancelled' && (
+                              <div className="collab-completed-info">
+                                <XCircle size={18} />
+                                <span>Deal cancelled</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {deal.status === 'cancelled' && (
-                          <div className="collab-completed-info">
-                            <XCircle size={18} />
-                            <span>Deal cancelled</span>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="collab-empty-state">
+                      <Handshake size={48} />
+                      <h3>No deals found</h3>
+                      <p>
+                        {dealFilter !== 'all'
+                          ? `You don't have any ${dealFilter.replace('_', ' ')} deals.`
+                          : 'Deals will appear here once applications are accepted and confirmed.'}
+                      </p>
                     </div>
-                  );
-                })
-              ) : (
-                <div className="collab-empty-state">
-                  <Handshake size={48} />
-                  <h3>No deals found</h3>
-                  <p>
-                    {dealFilter !== 'all' 
-                      ? `You don't have any ${dealFilter.replace('_', ' ')} deals.` 
-                      : 'Deals will appear here once applications are accepted and confirmed.'}
-                  </p>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </>
         )}
 
@@ -1081,6 +2468,195 @@ const Collaborations = () => {
                 >
                   {submitting ? <Loader size={16} className="spin-animation" /> : <Star size={16} />}
                   Submit Review
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ======== Influencer Detail Modal (Brand only) ======== */}
+        {selectedApp && isBrand && (
+          <div className="collab-modal-overlay" onClick={() => setSelectedApp(null)}>
+            <div className="collab-modal inf-detail-modal" onClick={e => e.stopPropagation()}>
+              <div className="collab-modal-header">
+                <h2>Influencer Details</h2>
+                <button className="collab-modal-close" onClick={() => setSelectedApp(null)}>
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="collab-modal-body inf-detail-body">
+                {/* Profile header */}
+                <div className="inf-detail-hero">
+                  <div className={`inf-detail-avatar inf-avatar-${(selectedApp.influencerProfile?.platformType || 'default').toLowerCase()}`}>
+                    {selectedApp.influencerProfile?.avatar
+                      ? <img src={selectedApp.influencerProfile.avatar} alt={selectedApp.influencerProfile?.name} />
+                      : <span>{(selectedApp.influencerProfile?.name || selectedApp.influencer?.name || '?').charAt(0).toUpperCase()}</span>}
+                  </div>
+                  <div className="inf-detail-hero-info">
+                    <h3>{selectedApp.influencerProfile?.name || selectedApp.influencer?.name || 'Influencer'}</h3>
+                    {selectedApp.influencerProfile?.location && (
+                      <p className="inf-detail-location">{selectedApp.influencerProfile.location}</p>
+                    )}
+                    {selectedApp.influencerProfile?.bio && (
+                      <p className="inf-detail-bio">{selectedApp.influencerProfile.bio}</p>
+                    )}
+                    <div className="inf-detail-tag-row">
+                      {(selectedApp.influencerProfile?.niche || []).map((n, i) => (
+                        <span key={i} className="inf-niche-tag">{n}</span>
+                      ))}
+                      {selectedApp.influencerProfile?.platformType && (
+                        <span className={`inf-platform-badge plat-${selectedApp.influencerProfile.platformType.toLowerCase()}`}>
+                          {selectedApp.influencerProfile.platformType}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats grid */}
+                <div className="inf-detail-stats-grid">
+                  <div className="inf-detail-stat-card">
+                    <Users size={20} />
+                    <div>
+                      <span className="stat-label">Total Followers</span>
+                      <span className="stat-value">{formatFollowers(selectedApp.influencerProfile?.totalFollowers)}</span>
+                    </div>
+                  </div>
+                  <div className="inf-detail-stat-card">
+                    <TrendingUp size={20} />
+                    <div>
+                      <span className="stat-label">Avg Engagement</span>
+                      <span className="stat-value">
+                        {selectedApp.influencerProfile?.averageEngagementRate
+                          ? `${selectedApp.influencerProfile.averageEngagementRate.toFixed(1)}%`
+                          : '—'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="inf-detail-stat-card">
+                    <Award size={20} />
+                    <div>
+                      <span className="stat-label">Trust Score</span>
+                      <span className={`stat-value ${getTrustClass(selectedApp.influencerProfile?.trustScore)}`}>
+                        {selectedApp.influencerProfile?.trustScore || 0}/100
+                      </span>
+                    </div>
+                  </div>
+                  <div className="inf-detail-stat-card">
+                    <IndianRupee size={20} />
+                    <div>
+                      <span className="stat-label">Proposed Rate</span>
+                      <span className="stat-value">₹{(selectedApp.proposedRate || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  {selectedApp.influencerProfile?.instagramStats?.followers > 0 && (
+                    <div className="inf-detail-stat-card">
+                      <span className="plat-icon plat-ig">IG</span>
+                      <div>
+                        <span className="stat-label">Instagram Followers</span>
+                        <span className="stat-value">{formatFollowers(selectedApp.influencerProfile.instagramStats.followers)}</span>
+                      </div>
+                    </div>
+                  )}
+                  {selectedApp.influencerProfile?.youtubeStats?.subscribers > 0 && (
+                    <div className="inf-detail-stat-card">
+                      <span className="plat-icon plat-yt">YT</span>
+                      <div>
+                        <span className="stat-label">YouTube Subscribers</span>
+                        <span className="stat-value">{formatFollowers(selectedApp.influencerProfile.youtubeStats.subscribers)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Campaign context */}
+                <div className="inf-detail-campaign-info">
+                  <h4><Briefcase size={15} /> Campaign</h4>
+                  <p><strong>{selectedApp.campaign?.title}</strong></p>
+                  <div className="inf-detail-meta-row">
+                    <span><Clock size={13} /> Applied: {formatDate(selectedApp.createdAt)}</span>
+                    {selectedApp.campaign?.deadline && (
+                      <span><Calendar size={13} /> Deadline: {formatDate(selectedApp.campaign.deadline)}</span>
+                    )}
+                    {selectedApp.campaign?.budget && (
+                      <span><IndianRupee size={13} /> Budget: ₹{selectedApp.campaign.budget.min?.toLocaleString()} – ₹{selectedApp.campaign.budget.max?.toLocaleString()}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Application message */}
+                {selectedApp.message && (
+                  <div className="inf-detail-section">
+                    <h4>Application Message</h4>
+                    <p>{selectedApp.message}</p>
+                  </div>
+                )}
+
+                {/* Portfolio links */}
+                {selectedApp.portfolioLinks && selectedApp.portfolioLinks.length > 0 && (
+                  <div className="inf-detail-section">
+                    <h4>Portfolio Links</h4>
+                    <div className="inf-portfolio-links">
+                      {selectedApp.portfolioLinks.map((link, i) => (
+                        <a
+                          key={i}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inf-portfolio-link"
+                        >
+                          <ExternalLink size={13} />
+                          {link.title || link.url}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="collab-modal-footer">
+                {(selectedApp.status === 'pending' || selectedApp.status === 'reviewed') && (
+                  <>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => { handleStatusChange(selectedApp._id, 'shortlisted'); setSelectedApp(null); }}
+                    >
+                      <Award size={16} /> Shortlist
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => { handleStatusChange(selectedApp._id, 'rejected'); setSelectedApp(null); }}
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
+                {selectedApp.status === 'shortlisted' && (
+                  <>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => { handleStatusChange(selectedApp._id, 'accepted'); setSelectedApp(null); }}
+                    >
+                      <CheckCircle size={16} /> Accept
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => { handleStatusChange(selectedApp._id, 'rejected'); setSelectedApp(null); }}
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
+                {selectedApp.status === 'accepted' && (
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => { openCreateDealModal(selectedApp); setSelectedApp(null); }}
+                  >
+                    <Handshake size={16} /> Create Deal
+                  </button>
+                )}
+                <button className="btn btn-outline" onClick={() => { handleGoToMessages(); setSelectedApp(null); }}>
+                  <MessageSquare size={16} /> Message
                 </button>
               </div>
             </div>
