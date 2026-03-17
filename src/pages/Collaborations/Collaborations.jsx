@@ -584,7 +584,7 @@ const Collaborations = () => {
   const toggleCampaignExpanded = (campaignId) => {
     setExpandedCampaigns(prev => ({
       ...prev,
-      [campaignId]: prev[campaignId] === false ? true : false,
+      [campaignId]: !prev[campaignId],
     }));
   };
 
@@ -1130,7 +1130,7 @@ const Collaborations = () => {
           {groupedApps.length > 0 ? (
             groupedApps.map(group => {
               const cId = group.campaignId || 'unknown';
-              const isOpen = expandedCampaigns[cId] !== false;
+              const isOpen = expandedCampaigns[cId] === true;
               const pending = group.apps.filter(a => a.status === 'pending' || a.status === 'reviewed').length;
               const shortlisted = group.apps.filter(a => a.status === 'shortlisted').length;
               const accepted = group.apps.filter(a => a.status === 'accepted').length;
@@ -1221,7 +1221,7 @@ const Collaborations = () => {
   const toggleDealGroupExpanded = (groupKey) => {
     setExpandedDealGroups(prev => ({
       ...prev,
-      [groupKey]: prev[groupKey] === false ? true : false,
+      [groupKey]: !prev[groupKey],
     }));
   };
 
@@ -1657,7 +1657,7 @@ const Collaborations = () => {
         <div className="brand-campaign-groups brand-deal-groups">
           {groupedBrandDeals.length > 0 ? (
             groupedBrandDeals.map(group => {
-              const isOpen = expandedDealGroups[group.groupKey] !== false;
+              const isOpen = expandedDealGroups[group.groupKey] === true;
               const activeCount = group.deals.filter(d => d.status === 'active' || d.status === 'in_progress').length;
               const reviewCount = group.deals.filter(d => d.status === 'pending_review').length;
               const completedCount = group.deals.filter(d => d.status === 'completed').length;
