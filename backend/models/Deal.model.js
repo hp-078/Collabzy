@@ -59,7 +59,7 @@ const dealSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['pending_payment', 'active', 'in_progress', 'pending_review', 'completed', 'cancelled', 'disputed'],
-    default: 'active'
+    default: 'pending_payment'
   },
 
   // Payment

@@ -65,7 +65,9 @@ exports.createDeal = async (req, res) => {
       influencer: application.influencer,
       agreedRate: agreedRate || application.proposedRate,
       deliverables: deliverables || application.campaign.deliverables,
-      deadline: deadline || application.campaign.deadline
+      deadline: deadline || application.campaign.deadline,
+      status: 'pending_payment',
+      paymentStatus: 'pending'
     });
 
     await deal.populate('influencer', 'name email');

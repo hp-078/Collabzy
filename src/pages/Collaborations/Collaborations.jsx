@@ -56,8 +56,13 @@ const Collaborations = () => {
     createReview
   } = useData();
   
-  // Tabs: 'applications' or 'deals'
-  const [activeTab, setActiveTab] = useState('applications');
+  // Tabs: 'applications' | 'pending_payment' | 'deals'
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('collabzy_collab_tab') || 'applications');
+
+  const switchTab = (tab) => {
+    setActiveTab(tab);
+    localStorage.setItem('collabzy_collab_tab', tab);
+  };
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [localLoading, setLocalLoading] = useState(true);
@@ -162,6 +167,14 @@ const Collaborations = () => {
     deal?.paymentStatus || deal?.paymentId?.paymentStatus || (deal?.paymentId ? 'paid' : 'pending')
   );
 
+  const isDealPendingPayment = (deal) => {
+    const paymentStatus = getDealPaymentStatus(deal);
+    if (deal?.status === 'pending_payment') return true;
+
+    // Backward-compatible fallback for older records created before pending_payment stage.
+    return (deal?.status === 'active' || deal?.status === 'in_progress') && paymentStatus === 'pending';
+  };
+
   // Fetch data on mount
   useEffect(() => {
     const loadData = async () => {
@@ -205,8 +218,27 @@ const Collaborations = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Use the right data source based on role
-  const items = isInfluencer ? applications : brandApplications;
+  const dealApplicationIds = useMemo(() => {
+    const ids = new Set();
+    myDeals.forEach((deal) => {
+      const appId = deal?.application?._id || (typeof deal?.application === 'string' ? deal.application : null);
+      if (appId) ids.add(appId);
+    });
+    return ids;
+  }, [myDeals]);
+
+  const visibleInfluencerApplications = useMemo(
+    () => applications.filter((app) => !dealApplicationIds.has(app._id)),
+    [applications, dealApplicationIds]
+  );
+
+  const visibleBrandApplications = useMemo(
+    () => brandApplications.filter((app) => !dealApplicationIds.has(app._id)),
+    [brandApplications, dealApplicationIds]
+  );
+
+  // Use the right data source based on role and exclude applications that already moved to deal flow.
+  const items = isInfluencer ? visibleInfluencerApplications : visibleBrandApplications;
 
   const filteredItems = items.filter(app => {
     // Status filter
@@ -276,8 +308,18 @@ const Collaborations = () => {
     completed: items.filter(a => a.status === 'accepted').length,
   };
 
-  // Filter deals
-  const filteredDeals = myDeals.filter(deal => {
+  const pendingPaymentDeals = useMemo(
+    () => myDeals.filter((deal) => isDealPendingPayment(deal)),
+    [myDeals]
+  );
+
+  const nonPendingPaymentDeals = useMemo(
+    () => myDeals.filter((deal) => !isDealPendingPayment(deal)),
+    [myDeals]
+  );
+
+  // Filter deals (excluding pending payment stage)
+  const filteredDeals = nonPendingPaymentDeals.filter(deal => {
     const matchesFilter = dealFilter === 'all' || deal.status === dealFilter;
     const campaignTitle = deal.campaign?.title || '';
     const otherPartyName = isBrand 
@@ -290,10 +332,10 @@ const Collaborations = () => {
   });
 
   const dealStatusCounts = {
-    all: myDeals.length,
-    active: myDeals.filter(d => d.status === 'active' || d.status === 'in_progress').length,
-    pending_review: myDeals.filter(d => d.status === 'pending_review').length,
-    completed: myDeals.filter(d => d.status === 'completed').length,
+    all: nonPendingPaymentDeals.length,
+    active: nonPendingPaymentDeals.filter(d => d.status === 'active' || d.status === 'in_progress').length,
+    pending_review: nonPendingPaymentDeals.filter(d => d.status === 'pending_review').length,
+    completed: nonPendingPaymentDeals.filter(d => d.status === 'completed').length,
   };
 
   const brandDealCampaignOptions = useMemo(() => {
@@ -301,7 +343,7 @@ const Collaborations = () => {
     const options = [];
     let hasDirect = false;
 
-    myDeals.forEach(deal => {
+    nonPendingPaymentDeals.forEach(deal => {
       const campaignId = getCampaignIdFromDeal(deal);
       if (!campaignId) {
         hasDirect = true;
@@ -323,20 +365,19 @@ const Collaborations = () => {
       campaigns: options,
       hasDirect,
     };
-  }, [myDeals]);
+  }, [nonPendingPaymentDeals]);
 
   const brandDealStatusCounts = useMemo(() => ({
-    all: myDeals.length,
-    payment: myDeals.filter(d => d.status === 'pending_payment').length,
-    active: myDeals.filter(d => d.status === 'active' || d.status === 'in_progress').length,
-    review: myDeals.filter(d => d.status === 'pending_review').length,
-    completed: myDeals.filter(d => d.status === 'completed').length,
-    cancelled: myDeals.filter(d => d.status === 'cancelled' || d.status === 'disputed').length,
-  }), [myDeals]);
+    all: nonPendingPaymentDeals.length,
+    active: nonPendingPaymentDeals.filter(d => d.status === 'active' || d.status === 'in_progress').length,
+    review: nonPendingPaymentDeals.filter(d => d.status === 'pending_review').length,
+    completed: nonPendingPaymentDeals.filter(d => d.status === 'completed').length,
+    cancelled: nonPendingPaymentDeals.filter(d => d.status === 'cancelled' || d.status === 'disputed').length,
+  }), [nonPendingPaymentDeals]);
 
   const filteredBrandDeals = useMemo(() => {
     const f = brandDealFilters;
-    let list = myDeals.filter(deal => {
+    let list = nonPendingPaymentDeals.filter(deal => {
       const campaignId = getCampaignIdFromDeal(deal);
       const isDirect = !campaignId;
       const influencerName = deal.influencer?.name || '';
@@ -363,7 +404,6 @@ const Collaborations = () => {
       if (f.status !== 'all') {
         if (f.status === 'active' && deal.status !== 'active' && deal.status !== 'in_progress') return false;
         if (f.status === 'review' && deal.status !== 'pending_review') return false;
-        if (f.status === 'payment' && deal.status !== 'pending_payment') return false;
         if (f.status === 'completed' && deal.status !== 'completed') return false;
         if (f.status === 'cancelled' && deal.status !== 'cancelled' && deal.status !== 'disputed') return false;
       }
@@ -407,7 +447,7 @@ const Collaborations = () => {
     });
 
     return list;
-  }, [myDeals, brandDealFilters, dealSearchTerm]);
+  }, [nonPendingPaymentDeals, brandDealFilters, dealSearchTerm]);
 
   const groupedBrandDeals = useMemo(() => {
     const groups = {};
@@ -460,7 +500,7 @@ const Collaborations = () => {
   const brandCampaignsList = useMemo(() => {
     const seen = new Set();
     const list = [];
-    brandApplications.forEach(app => {
+    visibleBrandApplications.forEach(app => {
       const cId = getCampaignIdFromApp(app);
       if (cId && !seen.has(cId)) {
         seen.add(cId);
@@ -470,19 +510,19 @@ const Collaborations = () => {
       }
     });
     return list;
-  }, [brandApplications]);
+  }, [visibleBrandApplications]);
 
   const brandStatusCounts = useMemo(() => ({
-    all: brandApplications.length,
-    pending: brandApplications.filter(a => a.status === 'pending' || a.status === 'reviewed').length,
-    shortlisted: brandApplications.filter(a => a.status === 'shortlisted').length,
-    accepted: brandApplications.filter(a => a.status === 'accepted').length,
-    rejected: brandApplications.filter(a => a.status === 'rejected').length,
-  }), [brandApplications]);
+    all: visibleBrandApplications.length,
+    pending: visibleBrandApplications.filter(a => a.status === 'pending' || a.status === 'reviewed').length,
+    shortlisted: visibleBrandApplications.filter(a => a.status === 'shortlisted').length,
+    accepted: visibleBrandApplications.filter(a => a.status === 'accepted').length,
+    rejected: visibleBrandApplications.filter(a => a.status === 'rejected').length,
+  }), [visibleBrandApplications]);
 
   const filteredBrandApps = useMemo(() => {
     const f = brandFilters;
-    let apps = brandApplications.filter(app => {
+    let apps = visibleBrandApplications.filter(app => {
       if (searchTerm) {
         const name = app.influencerProfile?.name || app.influencer?.name || '';
         const title = app.campaign?.title || '';
@@ -518,7 +558,7 @@ const Collaborations = () => {
       }
     });
     return apps;
-  }, [brandApplications, brandFilters, searchTerm]);
+  }, [visibleBrandApplications, brandFilters, searchTerm]);
 
   const groupedApps = useMemo(() => {
     const groups = {};
@@ -1120,7 +1160,7 @@ const Collaborations = () => {
       <div className="brand-results-bar">
         <span>
           Showing <strong>{filteredBrandApps.length}</strong>
-          {filteredBrandApps.length !== brandApplications.length && ` of ${brandApplications.length}`} applications
+          {filteredBrandApps.length !== visibleBrandApplications.length && ` of ${visibleBrandApplications.length}`} applications
         </span>
       </div>
 
@@ -1392,7 +1432,6 @@ const Collaborations = () => {
         <div className="brand-stat-pills">
           {[
             { key: 'all', label: 'All', count: brandDealStatusCounts.all },
-            { key: 'payment', label: 'Payment', count: brandDealStatusCounts.payment },
             { key: 'active', label: 'Active', count: brandDealStatusCounts.active },
             { key: 'review', label: 'In Review', count: brandDealStatusCounts.review },
             { key: 'completed', label: 'Completed', count: brandDealStatusCounts.completed },
@@ -1649,7 +1688,7 @@ const Collaborations = () => {
       <div className="brand-results-bar">
         <span>
           Showing <strong>{filteredBrandDeals.length}</strong>
-          {filteredBrandDeals.length !== myDeals.length && ` of ${myDeals.length}`} deals
+          {filteredBrandDeals.length !== nonPendingPaymentDeals.length && ` of ${nonPendingPaymentDeals.length}`} deals
         </span>
       </div>
 
@@ -1711,6 +1750,85 @@ const Collaborations = () => {
     </>
   );
 
+  const renderPendingPaymentView = () => {
+    if (isBrand) {
+      return (
+        <>
+          <div className="brand-results-bar">
+            <span>
+              Pending payment collaborations: <strong>{pendingPaymentDeals.length}</strong>
+            </span>
+          </div>
+          <div className="brand-flat-table-wrap brand-flat-deals-wrap">
+            {pendingPaymentDeals.length > 0
+              ? renderBrandDealsTable(pendingPaymentDeals, true)
+              : (
+                <div className="collab-empty-state">
+                  <CreditCard size={48} />
+                  <h3>No pending payments</h3>
+                  <p>Newly confirmed deals will appear here until payment is completed.</p>
+                </div>
+              )}
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <div className="collab-list">
+        {pendingPaymentDeals.length > 0 ? (
+          pendingPaymentDeals.map((deal) => (
+            <div key={deal._id} className="collab-card collab-deal-card">
+              <div className="collab-header">
+                <div className="collab-title">
+                  <h3>{deal.brand?.name || 'Brand'}</h3>
+                  <span className="collab-status-badge collab-deal-status-pending_payment">
+                    <CreditCard size={16} />
+                    pending payment
+                  </span>
+                </div>
+                <div className="collab-service">
+                  <Briefcase size={16} />
+                  {getDealCampaignTitle(deal)}
+                </div>
+              </div>
+              <div className="collab-body">
+                <div className="collab-deal-stats">
+                  <div className="collab-deal-stat">
+                    <IndianRupee size={20} />
+                    <div>
+                      <span className="stat-label">Agreed Rate</span>
+                      <span className="stat-value">₹{deal.agreedRate?.toLocaleString() || 'N/A'}</span>
+                    </div>
+                  </div>
+                  <div className="collab-deal-stat">
+                    <Calendar size={20} />
+                    <div>
+                      <span className="stat-label">Deadline</span>
+                      <span className="stat-value">{formatDate(deal.deadline)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="collab-footer">
+                <div className="collab-payment-info warning">
+                  <Lock size={16} />
+                  <span>Waiting for brand payment confirmation</span>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="collab-empty-state">
+            <CreditCard size={48} />
+            <h3>No pending payments</h3>
+            <p>Confirmed collaborations waiting for payment will appear here.</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Open create deal modal
   const openCreateDealModal = (application) => {
     setShowCreateDealModal(application);
@@ -1737,11 +1855,25 @@ const Collaborations = () => {
         deadline: dealForm.deadline
       });
       if (result.success) {
-        toast.success('Deal created successfully!');
+        toast.success('Deal created. Moved to Pending Payment.');
         setShowCreateDealModal(null);
-        // Refresh deals
+        switchTab('pending_payment');
+        // Refresh deals and applications to keep a single-stage display.
         const dealsData = await fetchMyDeals(true);
         setMyDeals(dealsData || []);
+        if (isInfluencer) {
+          await fetchMyApplications({}, true);
+        } else if (isBrand) {
+          const campaigns = await fetchMyCampaigns();
+          if (campaigns && campaigns.length > 0) {
+            const allApps = [];
+            for (const campaign of campaigns) {
+              const apps = await fetchCampaignApplications(campaign._id);
+              allApps.push(...apps.map(app => normalizeCampaignApplication(app, campaign)));
+            }
+            setBrandApplications(allApps);
+          }
+        }
       } else {
         toast.error(result.error || 'Failed to create deal');
       }
@@ -1809,6 +1941,7 @@ const Collaborations = () => {
 
             if (verifyResult.success) {
               toast.success('Payment successful! Deal is now active.');
+              switchTab('deals');
               // Refresh deals
               const dealsData = await fetchMyDeals(true);
               setMyDeals(dealsData || []);
@@ -1953,6 +2086,8 @@ const Collaborations = () => {
   // Get deal status icon
   const getDealStatusIcon = (status) => {
     switch (status) {
+      case 'pending_payment':
+        return <CreditCard size={16} />;
       case 'active':
         return <Play size={16} />;
       case 'in_progress':
@@ -2020,23 +2155,31 @@ const Collaborations = () => {
           </div>
         )}
 
-        {/* Main Tabs: Applications / Deals */}
+        {/* Main Tabs: Applications / Pending Payment / Deals */}
         <div className="collab-main-tabs">
           <button 
             className={`collab-main-tab ${activeTab === 'applications' ? 'active' : ''}`}
-            onClick={() => setActiveTab('applications')}
+            onClick={() => switchTab('applications')}
           >
             <FileText size={18} />
             Applications
             <span className="collab-tab-count">{items.length}</span>
           </button>
+          <button
+            className={`collab-main-tab ${activeTab === 'pending_payment' ? 'active' : ''}`}
+            onClick={() => switchTab('pending_payment')}
+          >
+            <CreditCard size={18} />
+            Pending Payment
+            <span className="collab-tab-count">{pendingPaymentDeals.length}</span>
+          </button>
           <button 
             className={`collab-main-tab ${activeTab === 'deals' ? 'active' : ''}`}
-            onClick={() => setActiveTab('deals')}
+            onClick={() => switchTab('deals')}
           >
             <Handshake size={18} />
             Deals
-            <span className="collab-tab-count">{myDeals.length}</span>
+            <span className="collab-tab-count">{nonPendingPaymentDeals.length}</span>
           </button>
         </div>
 
@@ -2175,6 +2318,13 @@ const Collaborations = () => {
                 </div>
               </>
             )}
+          </>
+        )}
+
+        {/* Pending Payment Tab */}
+        {activeTab === 'pending_payment' && (
+          <>
+            {renderPendingPaymentView()}
           </>
         )}
 
