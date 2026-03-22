@@ -10,19 +10,11 @@ Whenever you complete any task from this list, you MUST:
 
 # 🟡 PENDING TASKS
 
-## 🔹 Collaboration Page Issues
-
-
-
 ---
 
 ## 🔹 Influencer Selection & Actions
 
-- [ ] Allow selecting **multiple influencers**
-- [ ] Add feature: shortlist / accept / deal with **single click for selected influencers**
-- [ ] Remove individual action buttons (accept/reject/shortlist per influencer)
-- [ ] Add **checkbox selection system**
-- [ ] Add **global action buttons** for selected influencers
+
 
 ---
 
@@ -105,6 +97,11 @@ Example:
 - [x] Fixed missing engagement rate display on Collaboration page (Done on: 22/03/2026)
 - [x] Fixed missing platform visibility on Collaboration page (Done on: 22/03/2026)
 - [x] After refresh, Collaboration page now stays on the last opened tab (Done on: 22/03/2026)
+- [x] Added support to select **multiple influencers** (Done on: 22/03/2026)
+- [x] Added single-click bulk **shortlist / accept / deal** for selected influencers (Done on: 22/03/2026)
+- [x] Removed individual per-influencer **accept/reject/shortlist** actions (Done on: 22/03/2026)
+- [x] Added **checkbox selection system** for influencer rows (Done on: 22/03/2026)
+- [x] Added **global action buttons** for selected influencers (Done on: 22/03/2026)
 
 ---
 

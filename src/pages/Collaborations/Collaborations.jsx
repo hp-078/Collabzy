@@ -106,6 +106,8 @@ const Collaborations = () => {
   });
   const [expandedCampaigns, setExpandedCampaigns] = useState({});
   const [selectedApp, setSelectedApp] = useState(null);
+  const [selectedApplicationIds, setSelectedApplicationIds] = useState([]);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
 
   // === Brand deals state ===
   const [dealViewMode, setDealViewMode] = useState('campaign'); // 'campaign' | 'table'
@@ -212,6 +214,21 @@ const Collaborations = () => {
     };
   };
 
+  const loadBrandApplications = async () => {
+    const campaigns = await fetchMyCampaigns();
+    if (!campaigns || campaigns.length === 0) {
+      setBrandApplications([]);
+      return;
+    }
+
+    const allApps = [];
+    for (const campaign of campaigns) {
+      const apps = await fetchCampaignApplications(campaign._id);
+      allApps.push(...apps.map(app => normalizeCampaignApplication(app, campaign)));
+    }
+    setBrandApplications(allApps);
+  };
+
   const getCampaignIdFromDeal = (deal) => (
     deal?.campaign?._id ||
     deal?.campaignId ||
@@ -259,15 +276,7 @@ const Collaborations = () => {
         if (isInfluencer) {
           await fetchMyApplications();
         } else if (isBrand) {
-          const campaigns = await fetchMyCampaigns();
-          if (campaigns && campaigns.length > 0) {
-            const allApps = [];
-            for (const campaign of campaigns) {
-              const apps = await fetchCampaignApplications(campaign._id);
-              allApps.push(...apps.map(app => normalizeCampaignApplication(app, campaign)));
-            }
-            setBrandApplications(allApps);
-          }
+          await loadBrandApplications();
         }
         
         // Load deals
@@ -635,6 +644,16 @@ const Collaborations = () => {
     return apps;
   }, [visibleBrandApplications, brandFilters, searchTerm]);
 
+  const selectedApplications = useMemo(
+    () => visibleBrandApplications.filter((app) => selectedApplicationIds.includes(app._id)),
+    [visibleBrandApplications, selectedApplicationIds]
+  );
+
+  const selectedIdsSet = useMemo(
+    () => new Set(selectedApplicationIds),
+    [selectedApplicationIds]
+  );
+
   const groupedApps = useMemo(() => {
     const groups = {};
     filteredBrandApps.forEach(app => {
@@ -665,6 +684,13 @@ const Collaborations = () => {
     return c;
   }, [brandFilters, searchTerm]);
 
+  useEffect(() => {
+    setSelectedApplicationIds((prev) => {
+      const validIds = new Set(visibleBrandApplications.map((app) => app._id));
+      return prev.filter((id) => validIds.has(id));
+    });
+  }, [visibleBrandApplications]);
+
   // ======== Brand helper functions ========
   const updateBrandFilter = (key, value) => {
     setBrandFilters(prev => ({ ...prev, [key]: value }));
@@ -694,6 +720,126 @@ const Collaborations = () => {
       sortBy: 'newest',
     });
     setSearchTerm('');
+  };
+
+  const toggleApplicationSelection = (applicationId) => {
+    setSelectedApplicationIds((prev) => (
+      prev.includes(applicationId)
+        ? prev.filter((id) => id !== applicationId)
+        : [...prev, applicationId]
+    ));
+  };
+
+  const toggleSelectAllInList = (apps, shouldSelect) => {
+    const ids = apps.map((app) => app._id);
+    if (ids.length === 0) return;
+
+    setSelectedApplicationIds((prev) => {
+      if (shouldSelect) {
+        const merged = new Set([...prev, ...ids]);
+        return [...merged];
+      }
+      return prev.filter((id) => !ids.includes(id));
+    });
+  };
+
+  const refreshBrandApplicationAndDealData = async () => {
+    await Promise.all([
+      loadBrandApplications(),
+      fetchMyDeals(true).then((dealsData) => setMyDeals(dealsData || [])),
+    ]);
+  };
+
+  const handleBulkStatusAction = async (targetStatus, allowedStatuses, actionLabel) => {
+    if (selectedApplications.length === 0) {
+      toast.error('Select at least one influencer first');
+      return;
+    }
+
+    const applicable = selectedApplications.filter((app) => allowedStatuses.includes(app.status));
+    if (applicable.length === 0) {
+      toast.error(`Selected influencers are not eligible for ${actionLabel.toLowerCase()}`);
+      return;
+    }
+
+    setBulkProcessing(true);
+    try {
+      const results = await Promise.all(
+        applicable.map((app) => updateApplicationStatus(app._id, targetStatus))
+      );
+
+      const successCount = results.filter((r) => r.success).length;
+      if (successCount > 0) {
+        toast.success(`${actionLabel} applied to ${successCount} influencer${successCount > 1 ? 's' : ''}`);
+      }
+
+      if (successCount !== applicable.length) {
+        toast.error(`${applicable.length - successCount} update(s) failed`);
+      }
+
+      await loadBrandApplications();
+      setSelectedApplicationIds((prev) => prev.filter((id) => !applicable.some((app) => app._id === id)));
+    } catch (err) {
+      toast.error(`Failed to ${actionLabel.toLowerCase()} selected influencers`);
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const resolveDealDeadline = (application) => {
+    if (application?.campaign?.deadline) {
+      return new Date(application.campaign.deadline).toISOString().split('T')[0];
+    }
+    const fallback = new Date();
+    fallback.setDate(fallback.getDate() + 14);
+    return fallback.toISOString().split('T')[0];
+  };
+
+  const handleBulkCreateDeals = async () => {
+    if (selectedApplications.length === 0) {
+      toast.error('Select at least one influencer first');
+      return;
+    }
+
+    const eligible = selectedApplications.filter((app) => app.status === 'accepted');
+    if (eligible.length === 0) {
+      toast.error('Select accepted influencers to create deals');
+      return;
+    }
+
+    const withValidRate = eligible.filter((app) => Number(app.proposedRate || 0) > 0);
+    if (withValidRate.length === 0) {
+      toast.error('Selected influencers must have a valid proposed rate to create deals');
+      return;
+    }
+
+    setBulkProcessing(true);
+    try {
+      const results = await Promise.all(
+        withValidRate.map((app) => createDeal({
+          applicationId: app._id,
+          agreedRate: Number(app.proposedRate),
+          deadline: resolveDealDeadline(app),
+        }))
+      );
+
+      const successCount = results.filter((r) => r.success).length;
+      if (successCount > 0) {
+        toast.success(`Created ${successCount} deal${successCount > 1 ? 's' : ''}. Moved to Pending Payment.`);
+        switchTab('pending_payment');
+      }
+
+      if (successCount !== withValidRate.length) {
+        toast.error(`${withValidRate.length - successCount} deal(s) failed to create`);
+      }
+
+      await refreshBrandApplicationAndDealData();
+      setSelectedApplicationIds((prev) => prev.filter((id) => !withValidRate.some((app) => app._id === id)));
+    } catch (err) {
+      toast.error('Failed to create deals for selected influencers');
+    } finally {
+      setBulkProcessing(false);
+    }
   };
 
   const toggleCampaignExpanded = (campaignId) => {
@@ -733,6 +879,15 @@ const Collaborations = () => {
       <table className="brand-inf-table">
         <thead>
           <tr>
+            <th className="th-select">
+              <input
+                type="checkbox"
+                className="brand-select-checkbox"
+                checked={apps.length > 0 && apps.every((app) => selectedIdsSet.has(app._id))}
+                onChange={(e) => toggleSelectAllInList(apps, e.target.checked)}
+                title="Select all in this list"
+              />
+            </th>
             <th className="th-influencer">Influencer</th>
             {showCampaignCol && <th className="th-campaign">Campaign</th>}
             <th className="th-platform">Platform</th>
@@ -784,6 +939,15 @@ const Collaborations = () => {
                 onClick={() => setSelectedApp(app)}
                 title="Click to view details"
               >
+                <td className="td-select" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    className="brand-select-checkbox"
+                    checked={selectedIdsSet.has(app._id)}
+                    onChange={() => toggleApplicationSelection(app._id)}
+                    title="Select influencer"
+                  />
+                </td>
                 <td className="td-influencer" onClick={e => e.stopPropagation()}>
                   <div className="inf-name-cell" onClick={() => setSelectedApp(app)}>
                     <div className={`inf-avatar inf-avatar-${platformClass}`}>
@@ -848,70 +1012,7 @@ const Collaborations = () => {
                 </td>
                 <td className="td-actions" onClick={e => e.stopPropagation()}>
                   <div className="inf-action-btns">
-                    {(app.status === 'pending' || app.status === 'reviewed') && (
-                      <>
-                        <button
-                          className="inf-act-btn inf-act-shortlist"
-                          title="Shortlist"
-                          onClick={() => handleStatusChange(app._id, 'shortlisted')}
-                        >
-                          <Award size={13} /> <span>Shortlist</span>
-                        </button>
-                        <button
-                          className="inf-act-btn inf-act-reject"
-                          title="Reject"
-                          onClick={() => handleStatusChange(app._id, 'rejected')}
-                        >
-                          <X size={13} />
-                        </button>
-                      </>
-                    )}
-                    {app.status === 'shortlisted' && (
-                      <>
-                        <button
-                          className="inf-act-btn inf-act-accept"
-                          title="Accept"
-                          onClick={() => handleStatusChange(app._id, 'accepted')}
-                        >
-                          <CheckCircle size={13} /> <span>Accept</span>
-                        </button>
-                        <button
-                          className="inf-act-btn inf-act-reject"
-                          title="Reject"
-                          onClick={() => handleStatusChange(app._id, 'rejected')}
-                        >
-                          <X size={13} />
-                        </button>
-                        <button
-                          className="inf-act-btn inf-act-msg"
-                          title="Message"
-                          onClick={handleGoToMessages}
-                        >
-                          <MessageSquare size={13} />
-                        </button>
-                      </>
-                    )}
-                    {app.status === 'accepted' && (
-                      <>
-                        <button
-                          className="inf-act-btn inf-act-deal"
-                          title="Create Deal"
-                          onClick={() => openCreateDealModal(app)}
-                        >
-                          <Handshake size={13} /> <span>Deal</span>
-                        </button>
-                        <button
-                          className="inf-act-btn inf-act-msg"
-                          title="Message"
-                          onClick={handleGoToMessages}
-                        >
-                          <MessageSquare size={13} />
-                        </button>
-                      </>
-                    )}
-                    {(app.status === 'rejected' || app.status === 'withdrawn') && (
-                      <span className="inf-act-na">—</span>
-                    )}
+                    <span className="inf-act-hint">Use global actions</span>
                     <button
                       className="inf-act-btn inf-act-view"
                       title="View Details"
@@ -1239,6 +1340,42 @@ const Collaborations = () => {
           Showing <strong>{filteredBrandApps.length}</strong>
           {filteredBrandApps.length !== visibleBrandApplications.length && ` of ${visibleBrandApplications.length}`} applications
         </span>
+      </div>
+
+      <div className="brand-bulk-actions-bar">
+        <div className="brand-bulk-left">
+          <span className="brand-bulk-count">
+            <strong>{selectedApplications.length}</strong> selected
+          </span>
+          {selectedApplications.length > 0 && (
+            <button className="brand-bulk-clear" onClick={() => setSelectedApplicationIds([])}>
+              Clear Selection
+            </button>
+          )}
+        </div>
+        <div className="brand-bulk-actions">
+          <button
+            className="inf-act-btn inf-act-shortlist"
+            onClick={() => handleBulkStatusAction('shortlisted', ['pending', 'reviewed'], 'Shortlist')}
+            disabled={bulkProcessing || selectedApplications.length === 0}
+          >
+            <Award size={13} /> <span>Shortlist Selected</span>
+          </button>
+          <button
+            className="inf-act-btn inf-act-accept"
+            onClick={() => handleBulkStatusAction('accepted', ['shortlisted'], 'Accept')}
+            disabled={bulkProcessing || selectedApplications.length === 0}
+          >
+            <CheckCircle size={13} /> <span>Accept Selected</span>
+          </button>
+          <button
+            className="inf-act-btn inf-act-deal"
+            onClick={handleBulkCreateDeals}
+            disabled={bulkProcessing || selectedApplications.length === 0}
+          >
+            <Handshake size={13} /> <span>Deal Selected</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Campaign View ── */}
@@ -2840,48 +2977,12 @@ const Collaborations = () => {
               </div>
 
               <div className="collab-modal-footer">
-                {(selectedApp.status === 'pending' || selectedApp.status === 'reviewed') && (
-                  <>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => { handleStatusChange(selectedApp._id, 'shortlisted'); setSelectedApp(null); }}
-                    >
-                      <Award size={16} /> Shortlist
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => { handleStatusChange(selectedApp._id, 'rejected'); setSelectedApp(null); }}
-                    >
-                      Reject
-                    </button>
-                  </>
-                )}
-                {selectedApp.status === 'shortlisted' && (
-                  <>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => { handleStatusChange(selectedApp._id, 'accepted'); setSelectedApp(null); }}
-                    >
-                      <CheckCircle size={16} /> Accept
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => { handleStatusChange(selectedApp._id, 'rejected'); setSelectedApp(null); }}
-                    >
-                      Reject
-                    </button>
-                  </>
-                )}
-                {selectedApp.status === 'accepted' && (
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => { openCreateDealModal(selectedApp); setSelectedApp(null); }}
-                  >
-                    <Handshake size={16} /> Create Deal
-                  </button>
-                )}
+                <div className="inf-modal-footer-note">Use the global action bar for shortlist, accept, and deal actions.</div>
                 <button className="btn btn-outline" onClick={() => { handleGoToMessages(); setSelectedApp(null); }}>
                   <MessageSquare size={16} /> Message
+                </button>
+                <button className="btn btn-secondary" onClick={() => setSelectedApp(null)}>
+                  Close
                 </button>
               </div>
             </div>
