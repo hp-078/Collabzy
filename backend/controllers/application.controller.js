@@ -274,7 +274,10 @@ exports.getApplicationsForCampaign = async (req, res) => {
     const [applications, total] = await Promise.all([
       Application.find(filter)
         .populate('influencer', 'name email')
-        .populate('influencerProfile', 'name avatar niche platformType totalFollowers trustScore')
+        .populate(
+          'influencerProfile',
+          'name avatar niche platformType platforms.type totalFollowers trustScore averageEngagementRate instagramStats.engagementRate instagramStats.followers youtubeStats.engagementRate youtubeStats.subscribers'
+        )
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit)),

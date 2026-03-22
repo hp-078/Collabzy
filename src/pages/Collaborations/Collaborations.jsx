@@ -56,12 +56,18 @@ const Collaborations = () => {
     createReview
   } = useData();
   
+  const getTabStorageKey = () => {
+    const role = isBrand ? 'brand' : isInfluencer ? 'influencer' : 'user';
+    const userPart = user?._id || user?.id || 'guest';
+    return `collabzy_collab_tab_${role}_${userPart}`;
+  };
+
   // Tabs: 'applications' | 'pending_payment' | 'deals'
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('collabzy_collab_tab') || 'applications');
+  const [activeTab, setActiveTab] = useState('applications');
 
   const switchTab = (tab) => {
     setActiveTab(tab);
-    localStorage.setItem('collabzy_collab_tab', tab);
+    localStorage.setItem(getTabStorageKey(), tab);
   };
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -123,6 +129,62 @@ const Collaborations = () => {
 
   const NICHES = ['Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel', 'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports'];
 
+  const getProfilePlatformLabel = (profile = {}) => {
+    if (profile.platformType) return profile.platformType;
+
+    const connectedPlatforms = Array.isArray(profile.platforms)
+      ? profile.platforms
+        .map((p) => p?.type)
+        .filter(Boolean)
+      : [];
+
+    const uniqueConnected = [...new Set(connectedPlatforms)];
+    if (uniqueConnected.length > 1) return 'Multiple';
+    if (uniqueConnected.length === 1) return uniqueConnected[0];
+
+    const hasInstagram = Number(profile?.instagramStats?.followers || 0) > 0;
+    const hasYouTube = Number(profile?.youtubeStats?.subscribers || 0) > 0;
+
+    if (hasInstagram && hasYouTube) return 'Multiple';
+    if (hasInstagram) return 'Instagram';
+    if (hasYouTube) return 'YouTube';
+
+    return 'Unknown';
+  };
+
+  const getProfilePlatformClass = (platformLabel) => {
+    const normalized = String(platformLabel || 'other').toLowerCase();
+    if (normalized.includes('instagram')) return 'instagram';
+    if (normalized.includes('youtube')) return 'youtube';
+    if (normalized.includes('tiktok')) return 'tiktok';
+    if (normalized.includes('multiple')) return 'multiple';
+    return 'other';
+  };
+
+  const getProfileEngagementRate = (profile = {}) => {
+    const direct = Number(profile?.averageEngagementRate);
+    if (Number.isFinite(direct) && direct >= 0) return direct;
+
+    const yt = Number(profile?.youtubeStats?.engagementRate);
+    const ig = Number(profile?.instagramStats?.engagementRate);
+    const values = [yt, ig].filter((v) => Number.isFinite(v) && v >= 0);
+
+    if (values.length === 0) return null;
+    const avg = values.reduce((sum, value) => sum + value, 0) / values.length;
+    return avg;
+  };
+
+  const formatEngagementRate = (profile = {}) => {
+    const value = getProfileEngagementRate(profile);
+    return value === null ? '—' : `${value.toFixed(1)}%`;
+  };
+
+  const isPlatformMatch = (profile = {}, selectedPlatform = 'all') => {
+    if (selectedPlatform === 'all') return true;
+    const platformLabel = getProfilePlatformLabel(profile);
+    return platformLabel.toLowerCase() === selectedPlatform.toLowerCase();
+  };
+
   const isCampaignObject = (campaignValue) => (
     !!campaignValue && typeof campaignValue === 'object' && !Array.isArray(campaignValue)
   );
@@ -176,6 +238,19 @@ const Collaborations = () => {
   };
 
   // Fetch data on mount
+  useEffect(() => {
+    const storageKey = getTabStorageKey();
+    const savedTab = localStorage.getItem(storageKey);
+    const validTabs = ['applications', 'pending_payment', 'deals'];
+    setActiveTab(validTabs.includes(savedTab) ? savedTab : 'applications');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id, user?.id, isBrand, isInfluencer]);
+
+  useEffect(() => {
+    localStorage.setItem(getTabStorageKey(), activeTab);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, user?._id, user?.id, isBrand, isInfluencer]);
+
   useEffect(() => {
     const loadData = async () => {
       setLocalLoading(true);
@@ -534,7 +609,7 @@ const Collaborations = () => {
         if (f.status === 'pending' && app.status !== 'pending' && app.status !== 'reviewed') return false;
         if (f.status !== 'pending' && app.status !== f.status) return false;
       }
-      if (f.platform !== 'all' && (app.influencerProfile?.platformType || '') !== f.platform) return false;
+      if (!isPlatformMatch(app.influencerProfile, f.platform)) return false;
       if (f.niches.length > 0) {
         const iNiches = app.influencerProfile?.niche || [];
         if (!f.niches.some(n => iNiches.includes(n))) return false;
@@ -700,6 +775,8 @@ const Collaborations = () => {
             const profile = app.influencerProfile || {};
             const name = profile.name || app.influencer?.name || 'Influencer';
             const initials = name.charAt(0).toUpperCase();
+            const platformLabel = getProfilePlatformLabel(profile);
+            const platformClass = getProfilePlatformClass(platformLabel);
             return (
               <tr
                 key={app._id}
@@ -709,7 +786,7 @@ const Collaborations = () => {
               >
                 <td className="td-influencer" onClick={e => e.stopPropagation()}>
                   <div className="inf-name-cell" onClick={() => setSelectedApp(app)}>
-                    <div className={`inf-avatar inf-avatar-${(profile.platformType || 'default').toLowerCase()}`}>
+                    <div className={`inf-avatar inf-avatar-${platformClass}`}>
                       {profile.avatar
                         ? <img src={profile.avatar} alt={name} />
                         : <span>{initials}</span>}
@@ -726,8 +803,8 @@ const Collaborations = () => {
                   </td>
                 )}
                 <td className="td-platform">
-                  <span className={`inf-platform-badge plat-${(profile.platformType || 'other').toLowerCase()}`}>
-                    {profile.platformType || '—'}
+                  <span className={`inf-platform-badge plat-${platformClass}`}>
+                    {platformLabel === 'Unknown' ? '—' : platformLabel}
                   </span>
                 </td>
                 <td className="td-followers">
@@ -739,7 +816,7 @@ const Collaborations = () => {
                 <td className="td-engagement">
                   <div className="inf-stat-cell">
                     <TrendingUp size={13} />
-                    <span>{profile.averageEngagementRate ? `${profile.averageEngagementRate.toFixed(1)}%` : '—'}</span>
+                    <span>{formatEngagementRate(profile)}</span>
                   </div>
                 </td>
                 <td className="td-niche">
@@ -1170,7 +1247,7 @@ const Collaborations = () => {
           {groupedApps.length > 0 ? (
             groupedApps.map(group => {
               const cId = group.campaignId || 'unknown';
-              const isOpen = expandedCampaigns[cId] === true;
+              const isOpen = expandedCampaigns[cId] ?? false;
               const pending = group.apps.filter(a => a.status === 'pending' || a.status === 'reviewed').length;
               const shortlisted = group.apps.filter(a => a.status === 'shortlisted').length;
               const accepted = group.apps.filter(a => a.status === 'accepted').length;
@@ -1696,7 +1773,7 @@ const Collaborations = () => {
         <div className="brand-campaign-groups brand-deal-groups">
           {groupedBrandDeals.length > 0 ? (
             groupedBrandDeals.map(group => {
-              const isOpen = expandedDealGroups[group.groupKey] === true;
+              const isOpen = expandedDealGroups[group.groupKey] ?? false;
               const activeCount = group.deals.filter(d => d.status === 'active' || d.status === 'in_progress').length;
               const reviewCount = group.deals.filter(d => d.status === 'pending_review').length;
               const completedCount = group.deals.filter(d => d.status === 'completed').length;
@@ -2677,9 +2754,7 @@ const Collaborations = () => {
                     <div>
                       <span className="stat-label">Avg Engagement</span>
                       <span className="stat-value">
-                        {selectedApp.influencerProfile?.averageEngagementRate
-                          ? `${selectedApp.influencerProfile.averageEngagementRate.toFixed(1)}%`
-                          : '—'}
+                        {formatEngagementRate(selectedApp.influencerProfile || {})}
                       </span>
                     </div>
                   </div>
