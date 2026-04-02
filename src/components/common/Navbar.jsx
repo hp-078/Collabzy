@@ -421,9 +421,13 @@ const Navbar = () => {
                 {showDropdown && (
                   <div className="nav-dropdown-menu">
                     <div className="nav-dropdown-header">
-                                          <div className="nav-dropdown-avatar">
+                                          {user?.avatar ? (
+                                            <img src={user.avatar} alt={user.name} className="nav-dropdown-avatar-img" />
+                                          ) : (
+                                            <div className="nav-dropdown-avatar">
                                               {user?.name?.charAt(0) || 'U'}
-                                          </div>
+                                            </div>
+                                          )}
                                           <div className="nav-dropdown-info">
                                               <span className="nav-dropdown-name">{user?.name}</span>
                                               <span className="nav-dropdown-role">{user?.role}</span>

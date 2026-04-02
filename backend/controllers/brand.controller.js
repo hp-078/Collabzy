@@ -132,9 +132,16 @@ exports.updateProfile = async (req, res) => {
 
     await profile.save();
 
-    // Sync companyName to User.name so auth/me returns updated name
+    // Sync companyName and logo to User model so auth/me returns updated data
+    const userUpdates = {};
     if (req.body.companyName && req.body.companyName !== req.user.name) {
-      await User.findByIdAndUpdate(req.user._id, { name: req.body.companyName });
+      userUpdates.name = req.body.companyName;
+    }
+    if (req.body.logo !== undefined && req.body.logo !== req.user.avatar) {
+      userUpdates.avatar = req.body.logo;
+    }
+    if (Object.keys(userUpdates).length > 0) {
+      await User.findByIdAndUpdate(req.user._id, userUpdates);
     }
 
     res.json({

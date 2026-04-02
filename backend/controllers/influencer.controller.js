@@ -197,9 +197,16 @@ exports.updateProfile = async (req, res) => {
 
     await profile.save();
 
-    // Sync name to User model so auth/me returns updated name
+    // Sync name and avatar to User model so auth/me returns updated data
+    const userUpdates = {};
     if (req.body.name && req.body.name !== req.user.name) {
-      await User.findByIdAndUpdate(req.user._id, { name: req.body.name });
+      userUpdates.name = req.body.name;
+    }
+    if (req.body.avatar !== undefined && req.body.avatar !== req.user.avatar) {
+      userUpdates.avatar = req.body.avatar;
+    }
+    if (Object.keys(userUpdates).length > 0) {
+      await User.findByIdAndUpdate(req.user._id, userUpdates);
     }
 
     res.json({

@@ -247,6 +247,20 @@ exports.getMe = async (req, res) => {
       profile = await BrandProfile.findOne({ user: user._id });
     }
 
+    // Resolve avatar: prefer User.avatar, fall back to profile's avatar/logo
+    let resolvedAvatar = user.avatar || '';
+    if (!resolvedAvatar && profile) {
+      if (user.role === 'influencer' && profile.avatar) {
+        resolvedAvatar = profile.avatar;
+      } else if (user.role === 'brand' && profile.logo) {
+        resolvedAvatar = profile.logo;
+      }
+      // Sync back to User model so future requests are fast
+      if (resolvedAvatar) {
+        await User.findByIdAndUpdate(user._id, { avatar: resolvedAvatar });
+      }
+    }
+
     res.json({
       success: true,
       user: {
@@ -254,7 +268,7 @@ exports.getMe = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        avatar: user.avatar,
+        avatar: resolvedAvatar,
         isActive: user.isActive,
         createdAt: user.createdAt,
         hasProfile: !!profile,

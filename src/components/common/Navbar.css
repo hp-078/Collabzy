@@ -511,6 +511,15 @@
   box-shadow: var(--clay-shadow-xs);
 }
 
+.nav-dropdown-avatar-img {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  object-fit: cover;
+  box-shadow: var(--clay-shadow-xs);
+  flex-shrink: 0;
+}
+
 .nav-dropdown-info {
   display: flex;
   flex-direction: column;

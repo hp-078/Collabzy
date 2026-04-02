@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import influencerService from '../../services/influencer.service';
 import brandService from '../../services/brand.service';
-import authService from '../../services/auth.service';
 import youtubeService from '../../services/youtube.service';
 import instagramService from '../../services/instagram.service';
 import { CATEGORY_OPTIONS, normalizeCategoryList } from '../../constants/categories';
@@ -24,34 +23,24 @@ import {
   RefreshCw,
   TrendingUp,
   Eye,
-  Users as UsersIcon
+  Users as UsersIcon,
 } from 'lucide-react';
 import './Profile.css';
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
 const toCategoryArray = (value) => {
-  if (Array.isArray(value)) {
-    return normalizeCategoryList(value);
-  }
-
-  if (typeof value === 'string' && value.trim()) {
-    return normalizeCategoryList([value]);
-  }
-
+  if (Array.isArray(value)) return normalizeCategoryList(value);
+  if (typeof value === 'string' && value.trim()) return normalizeCategoryList([value]);
   return [];
 };
 
 const pickNumber = (...values) => {
   for (const value of values) {
-    if (value === null || value === undefined || value === '') {
-      continue;
-    }
-
+    if (value === null || value === undefined || value === '') continue;
     const parsed = Number(value);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
+    if (Number.isFinite(parsed)) return parsed;
   }
-
   return 0;
 };
 
@@ -62,39 +51,15 @@ const formatYouTubeStats = (raw = {}, previous = null) => {
   return {
     channel: {
       title: channel.title || channel.channelTitle || previous?.channel?.title || '',
-      subscriberCount: pickNumber(
-        channel.subscriberCount,
-        channel.subscribers,
-        raw.youtubeStats?.subscribers,
-        previous?.channel?.subscriberCount,
-      ),
-      viewCount: pickNumber(
-        channel.viewCount,
-        channel.totalViews,
-        channel.views,
-        raw.youtubeStats?.totalViews,
-        previous?.channel?.viewCount,
-      ),
-      videoCount: pickNumber(
-        channel.videoCount,
-        channel.videos,
-        raw.youtubeStats?.videoCount,
-        previous?.channel?.videoCount,
-      ),
+      subscriberCount: pickNumber(channel.subscriberCount, channel.subscribers, raw.youtubeStats?.subscribers, previous?.channel?.subscriberCount),
+      viewCount: pickNumber(channel.viewCount, channel.totalViews, channel.views, raw.youtubeStats?.totalViews, previous?.channel?.viewCount),
+      videoCount: pickNumber(channel.videoCount, channel.videos, raw.youtubeStats?.videoCount, previous?.channel?.videoCount),
       thumbnail: channel.thumbnail || previous?.channel?.thumbnail || '',
       channelId: channel.channelId || raw.youtubeChannelId || previous?.channel?.channelId || '',
     },
     metrics: {
-      engagementRate: pickNumber(
-        metrics.engagementRate,
-        raw.youtubeStats?.engagementRate,
-        previous?.metrics?.engagementRate,
-      ),
-      averageViews: pickNumber(
-        metrics.averageViews,
-        raw.youtubeStats?.averageViews,
-        previous?.metrics?.averageViews,
-      ),
+      engagementRate: pickNumber(metrics.engagementRate, raw.youtubeStats?.engagementRate, previous?.metrics?.engagementRate),
+      averageViews: pickNumber(metrics.averageViews, raw.youtubeStats?.averageViews, previous?.metrics?.averageViews),
     },
     recentVideos: raw.recentVideos || raw.youtubeData?.recentVideos || previous?.recentVideos || [],
     fetchedAt: raw.fetchedAt || raw.youtubeData?.fetchedAt || raw.youtubeStats?.lastFetched || previous?.fetchedAt,
@@ -112,42 +77,15 @@ const formatInstagramStats = (raw = {}, previous = null) => {
       name: profile.name || previous?.profile?.name || '',
       biography: profile.biography || previous?.profile?.biography || '',
       profilePicture: profile.profilePicture || profile.profile_picture_url || previous?.profile?.profilePicture || '',
-      followers: pickNumber(
-        profile.followers,
-        profile.followers_count,
-        raw.instagramStats?.followers,
-        previous?.profile?.followers,
-      ),
-      following: pickNumber(
-        profile.following,
-        profile.follows_count,
-        raw.instagramStats?.following,
-        previous?.profile?.following,
-      ),
-      posts: pickNumber(
-        profile.posts,
-        profile.media_count,
-        raw.instagramStats?.posts,
-        previous?.profile?.posts,
-      ),
+      followers: pickNumber(profile.followers, profile.followers_count, raw.instagramStats?.followers, previous?.profile?.followers),
+      following: pickNumber(profile.following, profile.follows_count, raw.instagramStats?.following, previous?.profile?.following),
+      posts: pickNumber(profile.posts, profile.media_count, raw.instagramStats?.posts, previous?.profile?.posts),
       isVerified: Boolean(profile.isVerified || previous?.profile?.isVerified),
     },
     metrics: {
-      engagementRate: pickNumber(
-        metrics.engagementRate,
-        raw.instagramStats?.engagementRate,
-        previous?.metrics?.engagementRate,
-      ),
-      averageLikes: pickNumber(
-        metrics.averageLikes,
-        raw.instagramStats?.averageLikes,
-        previous?.metrics?.averageLikes,
-      ),
-      averageComments: pickNumber(
-        metrics.averageComments,
-        raw.instagramStats?.averageComments,
-        previous?.metrics?.averageComments,
-      ),
+      engagementRate: pickNumber(metrics.engagementRate, raw.instagramStats?.engagementRate, previous?.metrics?.engagementRate),
+      averageLikes: pickNumber(metrics.averageLikes, raw.instagramStats?.averageLikes, previous?.metrics?.averageLikes),
+      averageComments: pickNumber(metrics.averageComments, raw.instagramStats?.averageComments, previous?.metrics?.averageComments),
     },
     recentPosts: raw.recentPosts || profile.recentMedia || raw.instagramData?.recentMedia || previous?.recentPosts || [],
     fetchedAt: raw.fetchedAt || raw.instagramData?.fetchedAt || raw.instagramStats?.lastFetched || previous?.fetchedAt,
@@ -155,243 +93,357 @@ const formatInstagramStats = (raw = {}, previous = null) => {
   };
 };
 
+// ─── Initial form state builder ──────────────────────────────────────────────
+
+const buildFormData = (source = {}) => ({
+  name: source.name || '',
+  email: source.email || '',
+  bio: source.description || source.bio || '',
+  categories: toCategoryArray(source.niche || source.category),
+  platformType: source.platform || source.platformType || 'Instagram',
+  youtubeUrl: source.youtubeUrl || '',
+  instagramUrl: source.instagramUrl || '',
+  location: source.location || '',
+  website: source.website || source.websiteUrl || '',
+  industry: source.industry || '',
+  services: source.services || [],
+  platforms: source.platforms || [],
+});
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 const Profile = () => {
   const { user, updateUser, isInfluencer, isBrand } = useAuth();
   const { clearCache } = useData();
+
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState(() => buildFormData(user));
+  const [previewImage, setPreviewImage] = useState(user?.avatar || '');
+
+  // Category picker state
   const [categorySearch, setCategorySearch] = useState('');
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(-1);
   const categorySearchRef = useRef(null);
 
-  const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    bio: user?.description || user?.bio || '',
-    categories: toCategoryArray(user?.niche || user?.category),
-    platformType: user?.platform || user?.platformType || 'Instagram',
-    youtubeUrl: user?.youtubeUrl || '',
-    instagramUrl: user?.instagramUrl || '',
-    location: user?.location || '',
-    website: user?.website || '',
-    industry: user?.industry || '',
-    services: user?.services || [],
-    platforms: user?.platforms || [],
-  });
+  // Social stats state
+  const [youtubeStats, setYoutubeStats] = useState(null);
+  const [fetchingYouTube, setFetchingYouTube] = useState(false);
+  const [instagramStats, setInstagramStats] = useState(null);
+  const [fetchingInstagram, setFetchingInstagram] = useState(false);
 
-  const [newService, setNewService] = useState({
-    name: '',
-    price: '',
-    description: '',
-  });
-
-  const [newPlatform, setNewPlatform] = useState({
-    type: 'YouTube',
-    url: '',
-  });
-
+  // Modal state
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [showPlatformModal, setShowPlatformModal] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [previewImage, setPreviewImage] = useState(user?.avatar || '');
-  const [fetchingYouTube, setFetchingYouTube] = useState(false);
-  const [youtubeStats, setYoutubeStats] = useState(null);
-  const [fetchingInstagram, setFetchingInstagram] = useState(false);
-  const [instagramStats, setInstagramStats] = useState(null);
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [addingPlatform, setAddingPlatform] = useState(false);
+  const [importingPhoto, setImportingPhoto] = useState(false);
 
-  // Update form data when user object changes
-  useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        name: user.name || prev.name,
-        email: user.email || prev.email,
-        bio: user.description || user.bio || prev.bio,
-        categories: toCategoryArray(user.niche || user.category).length > 0
-          ? toCategoryArray(user.niche || user.category)
-          : prev.categories,
-        platformType: user.platform || user.platformType || prev.platformType,
-        youtubeUrl: user.youtubeUrl || prev.youtubeUrl,
-        instagramUrl: user.instagramUrl || prev.instagramUrl,
-        location: user.location || prev.location,
-        website: user.website || prev.website,
-        industry: user.industry || prev.industry,
-        services: user.services || prev.services,
-        platforms: user.platforms || prev.platforms,
-      }));
-      
-      if (user.avatar) {
-        setPreviewImage(user.avatar);
-      }
-    }
-  }, [user]);
+  const [newService, setNewService] = useState({ name: '', price: '', description: '' });
+  const [newPlatform, setNewPlatform] = useState({ type: 'YouTube', url: '' });
 
-  // Fetch profile data on mount
+  const fileInputRef = useRef(null);
+
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  // Camera state
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [cameraError, setCameraError] = useState(null);
+
+  // ── Load profile on mount ────────────────────────────────────────────────
+
   useEffect(() => {
     const loadProfile = async () => {
-      if (isInfluencer) {
-        try {
+      try {
+        if (isInfluencer) {
           const response = await influencerService.getOwnProfile();
-          const profileData = response.data || response;
-          setProfile(profileData);
+          const data = response.data || response;
 
-          if (profileData) {
-            setFormData(prev => {
-              const newData = {
-                ...prev,
-                name: profileData.name || prev.name,
-                bio: profileData.bio || prev.bio,
-                categories: toCategoryArray(profileData.niche),
-                platformType: profileData.platformType || profileData.platform || prev.platformType,
-                youtubeUrl: profileData.youtubeUrl || prev.youtubeUrl,
-                instagramUrl: profileData.instagramUrl || prev.instagramUrl,
-                location: profileData.location || prev.location,
-                website: profileData.website || prev.website,
-                services: profileData.services || prev.services,
-                platforms: profileData.platforms || prev.platforms || [],
-              };
-              return newData;
-            });
+          setFormData((prev) => ({
+            ...prev,
+            name: data.name || prev.name,
+            bio: data.bio || prev.bio,
+            categories: toCategoryArray(data.niche).length > 0 ? toCategoryArray(data.niche) : prev.categories,
+            platformType: data.platformType || data.platform || prev.platformType,
+            youtubeUrl: data.youtubeUrl || prev.youtubeUrl,
+            instagramUrl: data.instagramUrl || prev.instagramUrl,
+            location: data.location || prev.location,
+            website: data.website || prev.website,
+            services: data.services || prev.services,
+            platforms: data.platforms || prev.platforms,
+          }));
 
-            if (profileData.avatar) {
-              setPreviewImage(profileData.avatar);
-            }
+          if (data.avatar) setPreviewImage(data.avatar);
 
-            // Load cached YouTube stats if available (from DB fields)
-            if (profileData.youtubeData || profileData.youtubeStats) {
-              setYoutubeStats(formatYouTubeStats(profileData));
-            } else {
-              // Fallback: try to reconstruct from platforms array
-              const ytPlatform = (profileData.platforms || []).find(p => p.type === 'YouTube');
-              if (ytPlatform?.stats) {
-                setYoutubeStats(formatYouTubeStats({
-                  channel: {
-                    channelTitle: ytPlatform.channelTitle,
-                    subscribers: ytPlatform.stats.subscribers,
-                    views: ytPlatform.stats.views,
-                    videos: ytPlatform.stats.videos,
-                    channelId: ytPlatform.channelId,
-                  },
-                  metrics: {
-                    engagementRate: ytPlatform.stats.engagementRate,
-                  },
-                  fetchedAt: ytPlatform.lastFetched,
-                }));
-              }
-            }
-
-            // Load cached Instagram stats if available (from DB fields)
-            if (profileData.instagramData || profileData.instagramStats) {
-              setInstagramStats(formatInstagramStats(profileData));
-            } else {
-              // Fallback: try to reconstruct from platforms array
-              const igPlatform = (profileData.platforms || []).find(p => p.type === 'Instagram');
-              if (igPlatform?.stats) {
-                setInstagramStats(formatInstagramStats({
-                  profile: {
-                    username: igPlatform.username,
-                    followers: igPlatform.stats.followers,
-                    following: igPlatform.stats.following,
-                    posts: igPlatform.stats.posts,
-                  },
-                  metrics: {
-                    engagementRate: igPlatform.stats.engagementRate,
-                  },
-                  fetchedAt: igPlatform.lastFetched,
-                }));
-              }
+          // Load cached YouTube stats
+          if (data.youtubeData || data.youtubeStats) {
+            setYoutubeStats(formatYouTubeStats(data));
+          } else {
+            const ytPlatform = (data.platforms || []).find((p) => p.type === 'YouTube');
+            if (ytPlatform?.stats) {
+              setYoutubeStats(formatYouTubeStats({
+                channel: {
+                  channelTitle: ytPlatform.channelTitle,
+                  subscribers: ytPlatform.stats.subscribers,
+                  views: ytPlatform.stats.views,
+                  videos: ytPlatform.stats.videos,
+                  channelId: ytPlatform.channelId,
+                },
+                metrics: { engagementRate: ytPlatform.stats.engagementRate },
+                fetchedAt: ytPlatform.lastFetched,
+              }));
             }
           }
-        } catch (error) {
-          // Profile not found or error loading
-        }
-      } else if (isBrand) {
-        try {
+
+          // Load cached Instagram stats
+          if (data.instagramData || data.instagramStats) {
+            setInstagramStats(formatInstagramStats(data));
+          } else {
+            const igPlatform = (data.platforms || []).find((p) => p.type === 'Instagram');
+            if (igPlatform?.stats) {
+              setInstagramStats(formatInstagramStats({
+                profile: {
+                  username: igPlatform.username,
+                  followers: igPlatform.stats.followers,
+                  following: igPlatform.stats.following,
+                  posts: igPlatform.stats.posts,
+                },
+                metrics: { engagementRate: igPlatform.stats.engagementRate },
+                fetchedAt: igPlatform.lastFetched,
+              }));
+            }
+          }
+        } else if (isBrand) {
           const response = await brandService.getOwnProfile();
-          const profileData = response.data || response;
-          setProfile(profileData);
+          const data = response.data || response;
 
-          if (profileData) {
-            setFormData(prev => ({
-              ...prev,
-              name: profileData.companyName || prev.name,
-              bio: profileData.description || prev.bio,
-              location: profileData.location || prev.location,
-              website: profileData.websiteUrl || prev.website,
-              industry: profileData.industry || prev.industry,
-              instagramUrl: profileData.instagramUrl || prev.instagramUrl,
-            }));
+          setFormData((prev) => ({
+            ...prev,
+            name: data.companyName || prev.name,
+            bio: data.description || prev.bio,
+            location: data.location || prev.location,
+            website: data.websiteUrl || prev.website,
+            industry: data.industry || prev.industry,
+            instagramUrl: data.instagramUrl || prev.instagramUrl,
+          }));
 
-            if (profileData.logo) {
-              setPreviewImage(profileData.logo);
-            }
-          }
-        } catch (error) {
-          // Profile not found or error loading
+          if (data.logo) setPreviewImage(data.logo);
         }
+      } catch {
+        // Profile not found yet — silently ignore
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     loadProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInfluencer, isBrand]);
+  }, [isInfluencer, isBrand]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Image upload ─────────────────────────────────────────────────────────
 
   const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size must be less than 5MB');
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-        toast.success('Profile picture uploaded!');
-      };
-      reader.readAsDataURL(file);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      e.target.value = '';
+      return;
     }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const filteredCategoryOptions = useMemo(() => {
-    const query = categorySearch.trim().toLowerCase();
-
-    if (query.length < 2) {
-      return [];
-    }
-
-    return CATEGORY_OPTIONS
-      .filter((category) => !formData.categories.includes(category))
-      .filter((category) => category.toLowerCase().includes(query));
-  }, [categorySearch, formData.categories]);
-
-  const addCategory = (category) => {
-    if (!category) {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      e.target.value = '';
       return;
     }
 
-    setFormData((prev) => {
-      if (prev.categories.includes(category)) {
-        return prev;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewImage(reader.result);
+      toast.success('Photo selected! Click "Save Changes" to apply.');
+      setShowPhotoUploadModal(false);
+      e.target.value = '';
+    };
+    reader.onerror = () => {
+      toast.error('Failed to read image file');
+      e.target.value = '';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const stopCamera = useCallback(() => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+  }, [cameraStream]);
+
+  const handleTakePhoto = async () => {
+    setShowPhotoUploadModal(false);
+    setCameraError(null);
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast.error('Camera is not supported in this browser. Please use "Choose from Gallery" instead.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
+        audio: false,
+      });
+      setCameraStream(stream);
+      setShowCameraModal(true);
+
+      // Attach stream to video element after modal renders
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      }, 100);
+    } catch (err) {
+      console.error('Camera access error:', err);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setCameraError('Camera access was denied. Please allow camera permissions in your browser settings.');
+        toast.error('Camera permission denied. Please allow camera access and try again.');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setCameraError('No camera found on this device.');
+        toast.error('No camera found on this device. Please use "Choose from Gallery" instead.');
+      } else {
+        setCameraError('Failed to access camera. Please try again.');
+        toast.error('Failed to open camera. Please try "Choose from Gallery" instead.');
       }
+    }
+  };
 
-      return {
-        ...prev,
-        categories: [...prev.categories, category]
-      };
-    });
+  const handleCapturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
 
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    // Use the video's actual dimensions for best quality
+    const size = Math.min(video.videoWidth, video.videoHeight);
+    canvas.width = size;
+    canvas.height = size;
+
+    const ctx = canvas.getContext('2d');
+    // Center-crop to square
+    const offsetX = (video.videoWidth - size) / 2;
+    const offsetY = (video.videoHeight - size) / 2;
+    ctx.drawImage(video, offsetX, offsetY, size, size, 0, 0, size, size);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    setPreviewImage(dataUrl);
+    toast.success('Photo captured! Click "Save Changes" to apply.');
+
+    // Clean up
+    stopCamera();
+    setShowCameraModal(false);
+  };
+
+  const handleCloseCameraModal = () => {
+    stopCamera();
+    setShowCameraModal(false);
+    setCameraError(null);
+  };
+
+  // Clean up camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
+
+  const handleImportInstagramPhoto = async () => {
+    // 1. Try existing data first (already loaded from database)
+    const existingPhoto = instagramStats?.profile?.profilePicture;
+    if (existingPhoto) {
+      setPreviewImage(existingPhoto);
+      toast.success('Instagram profile photo imported!');
+      setShowPhotoUploadModal(false);
+      return;
+    }
+
+    // 2. No cached photo — fall back to API call
+    const url = formData.instagramUrl || (formData.platforms || []).find((p) => p.type === 'Instagram')?.url;
+    if (!url) { toast.error('Please add your Instagram profile URL first'); return; }
+
+    setImportingPhoto(true);
+    try {
+      const response = await instagramService.fetchProfile(url);
+      if (response.success && response.data?.profile?.profilePicture) {
+        setPreviewImage(response.data.profile.profilePicture);
+        toast.success('Instagram profile photo imported!');
+        setShowPhotoUploadModal(false);
+      } else {
+        toast.error('Could not fetch Instagram profile photo');
+      }
+    } catch {
+      toast.error('Failed to import Instagram photo');
+    } finally {
+      setImportingPhoto(false);
+    }
+  };
+
+  const handleImportYouTubePhoto = async () => {
+    // 1. Try existing data first (already loaded from database)
+    const existingPhoto = youtubeStats?.channel?.thumbnail;
+    if (existingPhoto) {
+      setPreviewImage(existingPhoto);
+      toast.success('YouTube channel photo imported!');
+      setShowPhotoUploadModal(false);
+      return;
+    }
+
+    // 2. No cached photo — fall back to API call
+    const url = formData.youtubeUrl || (formData.platforms || []).find((p) => p.type === 'YouTube')?.url;
+    if (!url) { toast.error('Please add your YouTube channel URL first'); return; }
+
+    setImportingPhoto(true);
+    try {
+      const response = await youtubeService.fetchProfile(url);
+      if (response.success && response.data?.channel?.thumbnail) {
+        setPreviewImage(response.data.channel.thumbnail);
+        toast.success('YouTube channel photo imported!');
+        setShowPhotoUploadModal(false);
+      } else {
+        toast.error('Could not fetch YouTube channel photo');
+      }
+    } catch {
+      toast.error('Failed to import YouTube photo');
+    } finally {
+      setImportingPhoto(false);
+    }
+  };
+
+  // ── Form change ──────────────────────────────────────────────────────────
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // ── Category picker ──────────────────────────────────────────────────────
+
+  const filteredCategoryOptions = useMemo(() => {
+    const query = categorySearch.trim().toLowerCase();
+    if (query.length < 2) return [];
+    return CATEGORY_OPTIONS
+      .filter((c) => !formData.categories.includes(c))
+      .filter((c) => c.toLowerCase().includes(query));
+  }, [categorySearch, formData.categories]);
+
+  const addCategory = (category) => {
+    if (!category) return;
+    setFormData((prev) =>
+      prev.categories.includes(category) ? prev : { ...prev, categories: [...prev.categories, category] }
+    );
     setCategorySearch('');
     setActiveCategoryIndex(-1);
     setIsCategoryDropdownOpen(false);
@@ -399,142 +451,67 @@ const Profile = () => {
   };
 
   const removeCategory = (category) => {
-    setFormData((prev) => ({
-      ...prev,
-      categories: prev.categories.filter((item) => item !== category)
-    }));
+    setFormData((prev) => ({ ...prev, categories: prev.categories.filter((c) => c !== category) }));
   };
 
-  const handleCategorySearchKeyDown = (event) => {
+  const handleCategorySearchKeyDown = (e) => {
     if (!isCategoryDropdownOpen || filteredCategoryOptions.length === 0) {
-      if (event.key === 'Backspace' && !categorySearch && formData.categories.length > 0) {
+      if (e.key === 'Backspace' && !categorySearch && formData.categories.length > 0) {
         removeCategory(formData.categories[formData.categories.length - 1]);
       }
       return;
     }
-
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      setActiveCategoryIndex((prev) => (prev + 1) % filteredCategoryOptions.length);
-    }
-
-    if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      setActiveCategoryIndex((prev) => (prev <= 0 ? filteredCategoryOptions.length - 1 : prev - 1));
-    }
-
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      const selectedCategory = filteredCategoryOptions[activeCategoryIndex] || filteredCategoryOptions[0];
-      addCategory(selectedCategory);
-    }
-
-    if (event.key === 'Escape') {
-      setIsCategoryDropdownOpen(false);
-      setActiveCategoryIndex(-1);
-    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveCategoryIndex((p) => (p + 1) % filteredCategoryOptions.length); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); setActiveCategoryIndex((p) => (p <= 0 ? filteredCategoryOptions.length - 1 : p - 1)); }
+    if (e.key === 'Enter') { e.preventDefault(); addCategory(filteredCategoryOptions[activeCategoryIndex] || filteredCategoryOptions[0]); }
+    if (e.key === 'Escape') { setIsCategoryDropdownOpen(false); setActiveCategoryIndex(-1); }
   };
 
+  // ── Services ─────────────────────────────────────────────────────────────
+
   const handleAddService = () => {
-    if (!newService.name || !newService.price) {
-      toast.error('Please fill in service name and price');
-      return;
-    }
-
-    const service = {
-      id: Date.now().toString(),
-      name: newService.name,
-      price: parseInt(newService.price),
-      description: newService.description,
-    };
-
-    setFormData({
-      ...formData,
-      services: [...formData.services, service],
-    });
-
+    if (!newService.name || !newService.price) { toast.error('Please fill in service name and price'); return; }
+    const service = { id: Date.now().toString(), name: newService.name, price: parseInt(newService.price), description: newService.description };
+    setFormData((prev) => ({ ...prev, services: [...prev.services, service] }));
     setNewService({ name: '', price: '', description: '' });
     setShowServiceModal(false);
-    toast.success('Service added successfully!');
+    toast.success('Service added!');
   };
 
   const handleRemoveService = (serviceId) => {
-    setFormData({
-      ...formData,
-      services: formData.services.filter(s => (s.id || s._id) !== serviceId),
-    });
+    setFormData((prev) => ({ ...prev, services: prev.services.filter((s) => (s.id || s._id) !== serviceId) }));
   };
 
+  // ── Platforms ────────────────────────────────────────────────────────────
+
   const handleAddPlatform = async () => {
-    if (!newPlatform.url) {
-      toast.error('Please enter the platform URL');
-      return;
-    }
+    if (!newPlatform.url) { toast.error('Please enter the platform URL'); return; }
 
-    // Only YouTube is supported for auto-fetch initially
+    // Non-auto-fetch platforms (e.g. TikTok)
     if (newPlatform.type !== 'YouTube' && newPlatform.type !== 'Instagram') {
-      const platform = {
-        type: newPlatform.type,
-        url: newPlatform.url,
-        addedAt: new Date().toISOString(),
-      };
-
+      const platform = { type: newPlatform.type, url: newPlatform.url, addedAt: new Date().toISOString() };
       const updatedPlatforms = [...(formData.platforms || []), platform];
-      
-      setFormData({
-        ...formData,
-        platforms: updatedPlatforms,
-      });
-
-      // Auto-save to backend
-      try {
-        await influencerService.updateProfile({
-          platforms: updatedPlatforms,
-        });
-      } catch (err) {
-        console.warn('Failed to auto-save platform:', err);
-      }
-
+      setFormData((prev) => ({ ...prev, platforms: updatedPlatforms }));
+      try { await influencerService.updateProfile({ platforms: updatedPlatforms }); } catch { /* best-effort */ }
       setNewPlatform({ type: 'YouTube', url: '' });
       setShowPlatformModal(false);
-      toast.success(`✅ ${newPlatform.type} platform connected and saved! It will appear in your Connected Platforms list.`);
+      toast.success(`✅ ${newPlatform.type} platform connected and saved!`);
       return;
     }
 
-    // Instagram platform - fetch stats immediately
-    if (newPlatform.type === 'Instagram') {
-      setAddingPlatform(true);
-      try {
+    setAddingPlatform(true);
+    try {
+      if (newPlatform.type === 'Instagram') {
         const response = await instagramService.fetchProfile(newPlatform.url);
-        
+
         if (response.requiresManualInput) {
-          // Auto-fetch not available, add without stats
-          const platform = {
-            type: 'Instagram',
-            url: newPlatform.url,
-            addedAt: new Date().toISOString(),
-          };
-          
+          const platform = { type: 'Instagram', url: newPlatform.url, addedAt: new Date().toISOString() };
           const updatedPlatforms = [...(formData.platforms || []), platform];
-          
-          setFormData({
-            ...formData,
-            platforms: updatedPlatforms,
-          });
-          
-          // Auto-save to backend
-          try {
-            await influencerService.updateProfile({
-              instagramUrl: newPlatform.url,
-              platforms: updatedPlatforms,
-            });
-          } catch (err) {
-            console.warn('Failed to auto-save Instagram platform:', err);
-          }
-          
+          setFormData((prev) => ({ ...prev, platforms: updatedPlatforms }));
+          try { await influencerService.updateProfile({ instagramUrl: newPlatform.url, platforms: updatedPlatforms }); } catch { /* best-effort */ }
           setNewPlatform({ type: 'YouTube', url: '' });
           setShowPlatformModal(false);
-          toast.success('✅ Instagram connected and saved! Check Connected Platforms section below.');
+          toast.success('✅ Instagram connected and saved!');
           return;
         }
 
@@ -552,101 +529,51 @@ const Profile = () => {
             lastFetched: new Date().toISOString(),
             username: igData.profile?.username,
           };
-
           const updatedPlatforms = [...(formData.platforms || []), platform];
-
-          // Also set instagramUrl so backend stores it and Social Media Analytics section shows
-          setFormData(prev => ({
-            ...prev,
-            instagramUrl: newPlatform.url,
-            platforms: updatedPlatforms,
-          }));
-
-          // Populate instagramStats state so it shows immediately in Social Media Analytics
-          const formattedIgStats = formatInstagramStats({ ...igData, fetchedAt: new Date(), cached: false }, instagramStats);
-          setInstagramStats(formattedIgStats);
-
-          // Persist to DB via influencer service so data survives reload
+          setFormData((prev) => ({ ...prev, instagramUrl: newPlatform.url, platforms: updatedPlatforms }));
+          setInstagramStats(formatInstagramStats({ ...igData, fetchedAt: new Date(), cached: false }, instagramStats));
           try {
             await influencerService.fetchInstagramProfile(newPlatform.url);
-            // Also update platforms array in backend
-            await influencerService.updateProfile({
-              instagramUrl: newPlatform.url,
-              platforms: updatedPlatforms,
-            });
+            await influencerService.updateProfile({ instagramUrl: newPlatform.url, platforms: updatedPlatforms });
             clearCache();
-          } catch (persistErr) {
-            console.warn('Instagram data shown but failed to persist to DB:', persistErr);
-          }
-
+          } catch { /* best-effort */ }
           setNewPlatform({ type: 'YouTube', url: '' });
           setShowPlatformModal(false);
-          toast.success('🎉 Instagram connected with stats! Check Connected Platforms section 📸');
+          toast.success('🎉 Instagram connected with stats!');
         }
-      } catch (error) {
-        console.error('Error adding Instagram platform:', error);
-        toast.error(error.response?.data?.message || 'Failed to fetch Instagram data');
-      } finally {
-        setAddingPlatform(false);
-      }
-      return;
-    }
-
-    // YouTube platform - fetch stats immediately
-    setAddingPlatform(true);
-    try {
-      const response = await youtubeService.fetchProfile(newPlatform.url);
-      
-      if (response.success && response.data) {
-        const ytData = response.data;
-        
-        const platform = {
-          type: 'YouTube',
-          url: newPlatform.url,
-          stats: {
-            subscribers: ytData.channel?.subscriberCount || 0,
-            views: ytData.channel?.viewCount || 0,
-            videos: ytData.channel?.videoCount || 0,
-            engagementRate: ytData.metrics?.engagementRate || 0,
-          },
-          lastFetched: new Date().toISOString(),
-          channelId: ytData.channel?.channelId,
-          channelTitle: ytData.channel?.title,
-        };
-
-        const updatedPlatforms = [...(formData.platforms || []), platform];
-
-        // Also set youtubeUrl so the backend stores it and Social Media Analytics section shows
-        setFormData(prev => ({
-          ...prev,
-          youtubeUrl: newPlatform.url,
-          platforms: updatedPlatforms,
-        }));
-
-        // Populate youtubeStats state so it shows immediately in Social Media Analytics
-        const formattedYtStats = formatYouTubeStats({ ...ytData, fetchedAt: new Date(), cached: false }, youtubeStats);
-        setYoutubeStats(formattedYtStats);
-
-        // Persist to DB via influencer service so data survives reload
-        try {
-          await influencerService.fetchYouTubeProfile(newPlatform.url);
-          // Also update platforms array in backend
-          await influencerService.updateProfile({
-            youtubeUrl: newPlatform.url,
-            platforms: updatedPlatforms,
-          });
-          clearCache();
-        } catch (persistErr) {
-          console.warn('YouTube data shown but failed to persist to DB:', persistErr);
+      } else {
+        // YouTube
+        const response = await youtubeService.fetchProfile(newPlatform.url);
+        if (response.success && response.data) {
+          const ytData = response.data;
+          const platform = {
+            type: 'YouTube',
+            url: newPlatform.url,
+            stats: {
+              subscribers: ytData.channel?.subscriberCount || 0,
+              views: ytData.channel?.viewCount || 0,
+              videos: ytData.channel?.videoCount || 0,
+              engagementRate: ytData.metrics?.engagementRate || 0,
+            },
+            lastFetched: new Date().toISOString(),
+            channelId: ytData.channel?.channelId,
+            channelTitle: ytData.channel?.title,
+          };
+          const updatedPlatforms = [...(formData.platforms || []), platform];
+          setFormData((prev) => ({ ...prev, youtubeUrl: newPlatform.url, platforms: updatedPlatforms }));
+          setYoutubeStats(formatYouTubeStats({ ...ytData, fetchedAt: new Date(), cached: false }, youtubeStats));
+          try {
+            await influencerService.fetchYouTubeProfile(newPlatform.url);
+            await influencerService.updateProfile({ youtubeUrl: newPlatform.url, platforms: updatedPlatforms });
+            clearCache();
+          } catch { /* best-effort */ }
+          setNewPlatform({ type: 'YouTube', url: '' });
+          setShowPlatformModal(false);
+          toast.success('🎉 YouTube connected with stats!');
         }
-
-        setNewPlatform({ type: 'YouTube', url: '' });
-        setShowPlatformModal(false);
-        toast.success('🎉 YouTube connected with stats! Check Connected Platforms section 🎥');
       }
     } catch (error) {
-      console.error('Error adding platform:', error);
-      toast.error(error.response?.data?.message || 'Failed to fetch YouTube data');
+      toast.error(error.response?.data?.message || `Failed to fetch ${newPlatform.type} data`);
     } finally {
       setAddingPlatform(false);
     }
@@ -654,64 +581,35 @@ const Profile = () => {
 
   const handleRemovePlatform = async (index) => {
     const updatedPlatforms = formData.platforms.filter((_, i) => i !== index);
-    setFormData({
-      ...formData,
-      platforms: updatedPlatforms,
-    });
-    
-    // Auto-save to backend
+    setFormData((prev) => ({ ...prev, platforms: updatedPlatforms }));
     try {
-      await influencerService.updateProfile({
-        platforms: updatedPlatforms,
-      });
-      toast.success('Platform removed and saved successfully');
-    } catch (err) {
-      console.warn('Failed to auto-save after removing platform:', err);
-      toast.success('Platform removed locally (click Save Profile to persist)');
+      await influencerService.updateProfile({ platforms: updatedPlatforms });
+      toast.success('Platform removed successfully');
+    } catch {
+      toast.success('Platform removed locally (click Save to persist)');
     }
   };
 
+  // ── YouTube analytics ────────────────────────────────────────────────────
 
   const handleFetchYouTubeData = async () => {
-    // Get YouTube URL from either direct field or platforms array
-    const youtubeUrl = formData.youtubeUrl || 
-      (formData.platforms || []).find(p => p.type === 'YouTube')?.url;
-    
-    if (!youtubeUrl) {
-      toast.error('Please enter your YouTube channel URL first');
-      return;
-    }
+    const url = formData.youtubeUrl || (formData.platforms || []).find((p) => p.type === 'YouTube')?.url;
+    if (!url) { toast.error('Please enter your YouTube channel URL first'); return; }
 
     setFetchingYouTube(true);
     try {
-      const response = await influencerService.fetchYouTubeProfile(youtubeUrl);
-
+      const response = await influencerService.fetchYouTubeProfile(url);
       if (response.success && response.data) {
-        const ytData = response.data;
-
-        // Update the stats state with fetched data
-        const formattedData = formatYouTubeStats({
-          ...ytData,
-          fetchedAt: new Date(),
-          cached: response.cached || false,
-        }, youtubeStats);
-        
-        setYoutubeStats(formattedData);
-        
-        // Invalidate influencer list cache so public profile shows fresh data
+        const formatted = formatYouTubeStats({ ...response.data, fetchedAt: new Date(), cached: response.cached || false }, youtubeStats);
+        setYoutubeStats(formatted);
         clearCache();
-
-        // Show success message with stats
-        const message = response.cached
-          ? `📦 YouTube data loaded from cache\n📊 ${formattedData.channel.subscriberCount?.toLocaleString()} subscribers`
-          : `✅ YouTube data fetched!\n📊 ${formattedData.channel.subscriberCount?.toLocaleString()} subscribers\n📹 ${formattedData.channel.videoCount} videos\n💫 ${formattedData.metrics.engagementRate?.toFixed(2)}% engagement`;
-        
-        toast.success(message, { duration: 5000 });
+        const msg = response.cached
+          ? `📦 YouTube data from cache\n📊 ${formatted.channel.subscriberCount?.toLocaleString()} subscribers`
+          : `✅ YouTube fetched!\n📊 ${formatted.channel.subscriberCount?.toLocaleString()} subscribers\n📹 ${formatted.channel.videoCount} videos\n💫 ${formatted.metrics.engagementRate?.toFixed(2)}% engagement`;
+        toast.success(msg, { duration: 5000 });
       }
     } catch (error) {
-      console.error('Error fetching YouTube data:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to fetch YouTube data';
-      toast.error(errorMsg);
+      toast.error(error.response?.data?.message || 'Failed to fetch YouTube data');
     } finally {
       setFetchingYouTube(false);
     }
@@ -721,77 +619,40 @@ const Profile = () => {
     setFetchingYouTube(true);
     try {
       const response = await influencerService.refreshYouTubeProfile();
-
       if (response.success && response.data) {
-        const ytData = response.data;
-        
-        // Update the stats state with refreshed data
-        const formattedData = formatYouTubeStats({ ...ytData, fetchedAt: new Date(), cached: false }, youtubeStats);
-        
-        setYoutubeStats(formattedData);
-        
-        // Invalidate cache so public profile shows fresh data
+        const formatted = formatYouTubeStats({ ...response.data, fetchedAt: new Date(), cached: false }, youtubeStats);
+        setYoutubeStats(formatted);
         clearCache();
-
-        toast.success(
-          `🔄 YouTube data refreshed!\n📊 ${formattedData.channel.subscriberCount?.toLocaleString()} subscribers\n📹 ${formattedData.channel.videoCount} videos\n💫 ${formattedData.metrics.engagementRate?.toFixed(2)}% engagement`,
-          { duration: 5000 }
-        );
+        toast.success(`🔄 YouTube refreshed!\n📊 ${formatted.channel.subscriberCount?.toLocaleString()} subscribers`, { duration: 5000 });
       }
     } catch (error) {
-      console.error('Error refreshing YouTube data:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to refresh YouTube data';
-      toast.error(errorMsg);
+      toast.error(error.response?.data?.message || 'Failed to refresh YouTube data');
     } finally {
       setFetchingYouTube(false);
     }
   };
 
+  // ── Instagram analytics ──────────────────────────────────────────────────
+
   const handleFetchInstagramData = async () => {
-    // Get Instagram URL from either direct field or platforms array
-    const instagramUrl = formData.instagramUrl || 
-      (formData.platforms || []).find(p => p.type === 'Instagram')?.url;
-    
-    if (!instagramUrl) {
-      toast.error('Please enter your Instagram profile URL first');
-      return;
-    }
+    const url = formData.instagramUrl || (formData.platforms || []).find((p) => p.type === 'Instagram')?.url;
+    if (!url) { toast.error('Please enter your Instagram profile URL first'); return; }
 
     setFetchingInstagram(true);
     try {
-      const response = await influencerService.fetchInstagramProfile(instagramUrl);
-
-      if (response.requiresManualInput) {
-        toast.error('Auto-fetch unavailable. Please enter your Instagram stats manually.');
-        return;
-      }
-
+      const response = await influencerService.fetchInstagramProfile(url);
+      if (response.requiresManualInput) { toast.error('Auto-fetch unavailable. Please enter stats manually.'); return; }
       if (response.success && response.data) {
-        const igData = response.data;
-
-        // Update the stats state with fetched data
-        const formattedData = formatInstagramStats({
-          ...igData,
-          fetchedAt: new Date(),
-          cached: response.cached || false,
-        }, instagramStats);
-        
-        setInstagramStats(formattedData);
-        
-        // Invalidate cache so public profile shows fresh data
+        const formatted = formatInstagramStats({ ...response.data, fetchedAt: new Date(), cached: response.cached || false }, instagramStats);
+        setInstagramStats(formatted);
         clearCache();
-
-        // Show success message with stats
-        const message = response.cached
-          ? `📦 Instagram data loaded from cache\n👥 ${formattedData.profile.followers?.toLocaleString()} followers`
-          : `✅ Instagram data fetched!\n👥 ${formattedData.profile.followers?.toLocaleString()} followers\n📸 ${formattedData.profile.posts} posts\n💫 ${formattedData.metrics.engagementRate?.toFixed(2)}% engagement`;
-        
-        toast.success(message, { duration: 5000 });
+        const msg = response.cached
+          ? `📦 Instagram data from cache\n👥 ${formatted.profile.followers?.toLocaleString()} followers`
+          : `✅ Instagram fetched!\n👥 ${formatted.profile.followers?.toLocaleString()} followers\n📸 ${formatted.profile.posts} posts\n💫 ${formatted.metrics.engagementRate?.toFixed(2)}% engagement`;
+        toast.success(msg, { duration: 5000 });
       }
     } catch (error) {
-      console.error('Error fetching Instagram data:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to fetch Instagram data';
-      toast.error(errorMsg);
+      toast.error(error.response?.data?.message || 'Failed to fetch Instagram data');
     } finally {
       setFetchingInstagram(false);
     }
@@ -801,45 +662,28 @@ const Profile = () => {
     setFetchingInstagram(true);
     try {
       const response = await influencerService.refreshInstagramProfile();
-
-      if (response.requiresManualInput) {
-        toast.error('Auto-fetch unavailable. Please enter your Instagram stats manually.');
-        return;
-      }
-
+      if (response.requiresManualInput) { toast.error('Auto-fetch unavailable. Please enter stats manually.'); return; }
       if (response.success && response.data) {
-        const igData = response.data;
-        
-        // Update the stats state with refreshed data
-        const formattedData = formatInstagramStats({ ...igData, fetchedAt: new Date(), cached: false }, instagramStats);
-        
-        setInstagramStats(formattedData);
-        
-        // Invalidate cache so public profile shows fresh data
+        const formatted = formatInstagramStats({ ...response.data, fetchedAt: new Date(), cached: false }, instagramStats);
+        setInstagramStats(formatted);
         clearCache();
-
-        toast.success(
-          `🔄 Instagram data refreshed!\n👥 ${formattedData.profile.followers?.toLocaleString()} followers\n📸 ${formattedData.profile.posts} posts\n💫 ${formattedData.metrics.engagementRate?.toFixed(2)}% engagement`,
-          { duration: 5000 }
-        );
+        toast.success(`🔄 Instagram refreshed!\n👥 ${formatted.profile.followers?.toLocaleString()} followers`, { duration: 5000 });
       }
     } catch (error) {
-      console.error('Error refreshing Instagram data:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to refresh Instagram data';
-      toast.error(errorMsg);
+      toast.error(error.response?.data?.message || 'Failed to refresh Instagram data');
     } finally {
       setFetchingInstagram(false);
     }
   };
 
+  // ── Submit ───────────────────────────────────────────────────────────────
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-
     try {
       if (isInfluencer) {
-        // Map frontend fields to backend fields for influencer
-        const updatedData = {
+        const payload = {
           name: formData.name,
           bio: formData.bio,
           niche: formData.categories,
@@ -852,29 +696,18 @@ const Profile = () => {
           services: formData.services,
           platforms: formData.platforms || [],
         };
-
         try {
-          await influencerService.updateProfile(updatedData);
-          // Invalidate DataContext cache so influencer list reflects changes
+          await influencerService.updateProfile(payload);
           clearCache();
           toast.success('Profile updated successfully!');
-        } catch (updateError) {
-          if (updateError.response?.status === 404) {
-            await influencerService.createProfile(updatedData);
+        } catch (err) {
+          if (err.response?.status === 404) {
+            await influencerService.createProfile(payload);
             toast.success('Profile created successfully!');
-          } else {
-            throw updateError;
-          }
+          } else throw err;
         }
-
-        updateUser({
-          ...user,
-          name: formData.name,
-          avatar: previewImage
-        });
       } else if (isBrand) {
-        // Map frontend fields to backend BrandProfile fields
-        const brandData = {
+        await brandService.updateProfile({
           companyName: formData.name,
           description: formData.bio,
           location: formData.location,
@@ -882,49 +715,37 @@ const Profile = () => {
           industry: formData.industry,
           instagramUrl: formData.instagramUrl,
           logo: previewImage,
-        };
-
-        try {
-          await brandService.updateProfile(brandData);
-          toast.success('Brand profile updated successfully!');
-        } catch (updateError) {
-          console.error('Brand profile update error:', updateError);
-          throw updateError;
-        }
-
-        updateUser({
-          ...user,
-          name: formData.name,
-          avatar: previewImage
         });
+        toast.success('Brand profile updated successfully!');
       }
+      updateUser({ ...user, name: formData.name, avatar: previewImage });
     } catch (error) {
-      console.error('Error saving profile:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to update profile. Please try again.';
-      toast.error(errorMsg);
+      toast.error(error.response?.data?.message || 'Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  // Show loading state
+  // ── Loading state ────────────────────────────────────────────────────────
+
   if (loading) {
     return (
       <div className="prof-page">
-        <div className="prof-container" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-          gap: '1rem'
-        }}>
+        <div className="prof-container prof-loading">
           <Loader size={48} className="spin-animation" />
-          <p>Loading profile...</p>
+          <p>Loading profile…</p>
         </div>
       </div>
     );
   }
+
+  // ── Derived values ───────────────────────────────────────────────────────
+
+  const platforms = formData.platforms || [];
+  const hasYouTube = platforms.some((p) => p.type === 'YouTube');
+  const hasInstagram = platforms.some((p) => p.type === 'Instagram');
+
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="prof-page">
@@ -936,27 +757,27 @@ const Profile = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="prof-grid">
-            {/* Profile Header */}
+
+            {/* ── Avatar Section ─────────────────────────────────────────── */}
             <div className="prof-section prof-avatar-section">
               <div className="prof-avatar-wrapper">
                 {previewImage ? (
                   <img src={previewImage} alt={user.name} className="prof-avatar" />
                 ) : (
-                  <div className="prof-avatar-placeholder">
-                    {user?.name?.charAt(0) || 'U'}
-                  </div>
+                  <div className="prof-avatar-placeholder">{user?.name?.charAt(0) || 'U'}</div>
                 )}
-                <label htmlFor="avatar-upload" className="prof-avatar-upload">
+                <button
+                  type="button"
+                  className="prof-avatar-upload"
+                  onClick={() => setShowPhotoUploadModal(true)}
+                  title="Change profile photo"
+                >
                   <Camera size={18} />
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="prof-avatar-input"
-                  />
-                </label>
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+
               </div>
+
               <div className="prof-avatar-details">
                 <h3>{user?.name}</h3>
                 <span className="prof-user-role">{user?.role}</span>
@@ -964,140 +785,69 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Basic Info */}
+            {/* ── Basic Information ──────────────────────────────────────── */}
             <div className="prof-section">
               <h2>Basic Information</h2>
-              
               <div className="prof-form-grid">
                 <div className="input-group">
-                  <label htmlFor="name">
-                    <User size={16} />
-                    {isInfluencer ? 'Full Name' : 'Brand Name'}
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="input"
-                  />
+                  <label htmlFor="name"><User size={16} />{isInfluencer ? 'Full Name' : 'Brand Name'}</label>
+                  <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className="input" />
                 </div>
 
                 <div className="input-group">
-                  <label htmlFor="email">
-                    <Mail size={16} />
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    readOnly
-                    className="input prof-input-readonly"
-                    title="Email cannot be changed"
-                  />
+                  <label htmlFor="email"><Mail size={16} />Email Address</label>
+                  <input type="email" id="email" name="email" value={formData.email} readOnly className="input prof-input-readonly" title="Email cannot be changed" />
                 </div>
 
                 <div className="input-group">
-                  <label htmlFor="location">
-                    <MapPin size={16} />
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    placeholder="City, Country"
-                    className="input"
-                  />
+                  <label htmlFor="location"><MapPin size={16} />Location</label>
+                  <input type="text" id="location" name="location" value={formData.location} onChange={handleChange} placeholder="City, Country" className="input" />
                 </div>
 
                 {isBrand && (
                   <div className="input-group">
-                    <label htmlFor="website">
-                      <Globe size={16} />
-                      Website
-                    </label>
-                    <input
-                      type="url"
-                      id="website"
-                      name="website"
-                      value={formData.website}
-                      onChange={handleChange}
-                      placeholder="https://example.com"
-                      className="input"
-                    />
+                    <label htmlFor="website"><Globe size={16} />Website</label>
+                    <input type="url" id="website" name="website" value={formData.website} onChange={handleChange} placeholder="https://example.com" className="input" />
                   </div>
                 )}
               </div>
 
               <div className="input-group prof-full-width">
                 <label htmlFor="bio">About</label>
-                <textarea
-                  id="bio"
-                  name="bio"
-                  value={formData.bio}
-                  onChange={handleChange}
-                  placeholder="Tell us about yourself or your brand..."
-                  className="input prof-textarea"
-                  rows={4}
-                />
+                <textarea id="bio" name="bio" value={formData.bio} onChange={handleChange} placeholder="Tell us about yourself or your brand…" className="input prof-textarea" rows={4} />
               </div>
             </div>
 
-            {/* Influencer Specific */}
+            {/* ── Influencer-specific ────────────────────────────────────── */}
             {isInfluencer && (
               <>
                 <div className="prof-section">
                   <h2>Creator Details</h2>
-                  
                   <div className="prof-form-grid">
+
+                    {/* Category picker */}
                     <div className="input-group">
                       <label htmlFor="category">Niche / Category</label>
                       <div className="prof-category-picker">
-                        <div
-                          className="prof-category-input-wrapper"
-                          onClick={() => categorySearchRef.current?.focus()}
-                        >
+                        <div className="prof-category-input-wrapper" onClick={() => categorySearchRef.current?.focus()}>
                           <input
                             ref={categorySearchRef}
                             id="category"
                             type="text"
                             value={categorySearch}
-                            onChange={(event) => {
-                              const value = event.target.value;
-                              setCategorySearch(value);
-                              setIsCategoryDropdownOpen(value.trim().length >= 2);
+                            onChange={(e) => {
+                              setCategorySearch(e.target.value);
+                              setIsCategoryDropdownOpen(e.target.value.trim().length >= 2);
                               setActiveCategoryIndex(-1);
                             }}
                             onFocus={() => setIsCategoryDropdownOpen(categorySearch.trim().length >= 2)}
-                            onBlur={() => {
-                              setTimeout(() => {
-                                setIsCategoryDropdownOpen(false);
-                                setActiveCategoryIndex(-1);
-                              }, 120);
-                            }}
+                            onBlur={() => setTimeout(() => { setIsCategoryDropdownOpen(false); setActiveCategoryIndex(-1); }, 120)}
                             onKeyDown={handleCategorySearchKeyDown}
                             className="prof-category-search-input"
-                            placeholder="Enter 2 letters to search categories"
+                            placeholder="Type 2+ letters to search"
                           />
                           {categorySearch && (
-                            <button
-                              type="button"
-                              className="prof-category-clear-btn"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setCategorySearch('');
-                                setIsCategoryDropdownOpen(false);
-                                setActiveCategoryIndex(-1);
-                                categorySearchRef.current?.focus();
-                              }}
-                              aria-label="Clear category search"
-                            >
+                            <button type="button" className="prof-category-clear-btn" onClick={(e) => { e.stopPropagation(); setCategorySearch(''); setIsCategoryDropdownOpen(false); setActiveCategoryIndex(-1); categorySearchRef.current?.focus(); }} aria-label="Clear">
                               <X size={14} />
                             </button>
                           )}
@@ -1105,17 +855,10 @@ const Profile = () => {
 
                         {formData.categories.length > 0 && (
                           <div className="prof-category-chips">
-                            {formData.categories.map((category) => (
-                              <span key={category} className="prof-category-chip">
-                                {category}
-                                <button
-                                  type="button"
-                                  className="prof-category-chip-remove"
-                                  onClick={() => removeCategory(category)}
-                                  aria-label={`Remove ${category}`}
-                                >
-                                  <X size={12} />
-                                </button>
+                            {formData.categories.map((c) => (
+                              <span key={c} className="prof-category-chip">
+                                {c}
+                                <button type="button" className="prof-category-chip-remove" onClick={() => removeCategory(c)} aria-label={`Remove ${c}`}><X size={12} /></button>
                               </span>
                             ))}
                           </div>
@@ -1123,40 +866,22 @@ const Profile = () => {
 
                         {isCategoryDropdownOpen && (
                           <div className="prof-category-dropdown">
-                            {filteredCategoryOptions.length > 0 ? (
-                              filteredCategoryOptions.map((category, index) => (
-                                <button
-                                  key={category}
-                                  type="button"
-                                  className={`prof-category-option ${index === activeCategoryIndex ? 'active' : ''}`}
-                                  onMouseDown={() => addCategory(category)}
-                                >
-                                  {category}
-                                </button>
+                            {filteredCategoryOptions.length > 0
+                              ? filteredCategoryOptions.map((c, i) => (
+                                <button key={c} type="button" className={`prof-category-option${i === activeCategoryIndex ? ' active' : ''}`} onMouseDown={() => addCategory(c)}>{c}</button>
                               ))
-                            ) : (
-                              <p className="prof-category-empty">No matching category found</p>
-                            )}
+                              : <p className="prof-category-empty">No matching category found</p>
+                            }
                           </div>
                         )}
-
-                        <small className="prof-category-hint">
-                          Select multiple categories. Type at least 2 letters to search.
-                        </small>
+                        <small className="prof-category-hint">Select multiple categories. Type at least 2 letters to search.</small>
                       </div>
                     </div>
 
+                    {/* Primary platform */}
                     <div className="input-group">
-                      <label htmlFor="platformType">
-                        Primary Platform
-                      </label>
-                      <select
-                        id="platformType"
-                        name="platformType"
-                        value={formData.platformType}
-                        onChange={handleChange}
-                        className="input"
-                      >
+                      <label htmlFor="platformType">Primary Platform</label>
+                      <select id="platformType" name="platformType" value={formData.platformType} onChange={handleChange} className="input">
                         <option value="Instagram">Instagram</option>
                         <option value="YouTube">YouTube</option>
                         <option value="TikTok">TikTok</option>
@@ -1165,66 +890,95 @@ const Profile = () => {
                     </div>
                   </div>
 
-                  {/* Connected Platforms Section */}
+                  {/* Connected Platforms (unified — includes stats, refresh & remove) */}
                   <div className="prof-section-header" style={{ marginTop: '1.5rem' }}>
                     <h3>Connected Platforms</h3>
-                    <button 
-                      type="button" 
-                      className="btn btn-primary btn-sm"
-                      onClick={() => setShowPlatformModal(true)}
-                    >
-                      <Plus size={16} />
-                      Add Platform
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowPlatformModal(true)}>
+                      <Plus size={16} />Add Platform
                     </button>
                   </div>
 
                   <div className="prof-platforms-list">
-                    {(formData.platforms || []).length > 0 ? (
-                      (formData.platforms || []).map((platform, index) => (
-                        <div key={index} className="prof-platform-item">
-                          <div className="prof-platform-icon">
-                            {platform.type === 'YouTube' && <Youtube size={24} />}
-                            {platform.type === 'Instagram' && <Instagram size={24} />}
-                            {platform.type === 'TikTok' && <Globe size={24} />}
-                          </div>
-                          <div className="prof-platform-info">
-                            <h4>{platform.type}</h4>
-                            <p className="prof-platform-url">{platform.url}</p>
-                            {platform.stats && (
-                              <div className="prof-platform-stats">
-                                {platform.stats.subscribers != null && (
-                                  <span><UsersIcon size={14} /> {platform.stats.subscribers.toLocaleString()} subscribers</span>
-                                )}
-                                {platform.stats.followers != null && (
-                                  <span><UsersIcon size={14} /> {platform.stats.followers.toLocaleString()} followers</span>
-                                )}
-                                {platform.stats.views != null && (
-                                  <span><Eye size={14} /> {platform.stats.views.toLocaleString()} views</span>
-                                )}
-                                {platform.stats.posts != null && (
-                                  <span><Camera size={14} /> {platform.stats.posts.toLocaleString()} posts</span>
-                                )}
-                                {platform.stats.engagementRate != null && (
-                                  <span><TrendingUp size={14} /> {platform.stats.engagementRate.toFixed(2)}% engagement</span>
-                                )}
+                    {platforms.length > 0 ? platforms.map((platform, index) => {
+                      const isYT = platform.type === 'YouTube';
+                      const isIG = platform.type === 'Instagram';
+                      const stats = isYT ? youtubeStats : isIG ? instagramStats : null;
+
+                      return (
+                        <div key={index} className="prof-social-stats-card">
+                          {/* Header: icon + name + URL + actions */}
+                          <div className="prof-stats-header">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
+                              {isYT && <Youtube size={24} style={{ color: '#FF0000', flexShrink: 0 }} />}
+                              {isIG && <Instagram size={24} style={{ color: '#E4405F', flexShrink: 0 }} />}
+                              {!isYT && !isIG && <Globe size={24} style={{ flexShrink: 0 }} />}
+                              <div style={{ minWidth: 0 }}>
+                                <h3 style={{ margin: 0 }}>{platform.type}</h3>
+                                <p className="prof-platform-url" style={{ margin: 0, fontSize: '0.8rem' }}>{platform.url}</p>
                               </div>
-                            )}
-                            {platform.lastFetched && (
-                              <p className="prof-platform-last-fetched">
-                                Last updated: {new Date(platform.lastFetched).toLocaleDateString()}
-                              </p>
-                            )}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                              {/* Refresh / Fetch button (YouTube & Instagram only) */}
+                              {isYT && (
+                                <button type="button" onClick={stats ? handleRefreshYouTubeData : handleFetchYouTubeData} disabled={fetchingYouTube} className="btn btn-outline btn-sm">
+                                  {fetchingYouTube ? <><Loader size={16} className="animate-spin" />{stats ? 'Refreshing…' : 'Fetching…'}</> : <><RefreshCw size={16} />{stats ? 'Refresh' : 'Fetch Stats'}</>}
+                                </button>
+                              )}
+                              {isIG && (
+                                <button type="button" onClick={stats ? handleRefreshInstagramData : handleFetchInstagramData} disabled={fetchingInstagram} className="btn btn-outline btn-sm">
+                                  {fetchingInstagram ? <><Loader size={16} className="animate-spin" />{stats ? 'Refreshing…' : 'Fetching…'}</> : <><RefreshCw size={16} />{stats ? 'Refresh' : 'Fetch Stats'}</>}
+                                </button>
+                              )}
+                              {/* Remove button */}
+                              <button type="button" onClick={() => handleRemovePlatform(index)} className="prof-platform-remove">
+                                <X size={18} />
+                              </button>
+                            </div>
                           </div>
-                          <button 
-                            type="button"
-                            onClick={() => handleRemovePlatform(index)}
-                            className="prof-platform-remove"
-                          >
-                            <X size={18} />
-                          </button>
+
+                          {/* Stats grid */}
+                          {isYT && stats ? (
+                            <>
+                              <div className="prof-stats-grid">
+                                <div className="prof-stat-item"><UsersIcon size={18} /><div><p className="prof-stat-value">{stats.channel?.subscriberCount?.toLocaleString() || '0'}</p><p className="prof-stat-label">Subscribers</p></div></div>
+                                <div className="prof-stat-item"><Eye size={18} /><div><p className="prof-stat-value">{stats.channel?.viewCount?.toLocaleString() || '0'}</p><p className="prof-stat-label">Total Views</p></div></div>
+                                <div className="prof-stat-item"><Camera size={18} /><div><p className="prof-stat-value">{stats.channel?.videoCount?.toLocaleString() || '0'}</p><p className="prof-stat-label">Videos</p></div></div>
+                                <div className="prof-stat-item"><TrendingUp size={18} /><div><p className="prof-stat-value">{stats.metrics?.engagementRate?.toFixed(2) || '0'}%</p><p className="prof-stat-label">Engagement</p></div></div>
+                              </div>
+                              {stats.fetchedAt && (
+                                <p className="prof-stats-last-updated">Last updated: {new Date(stats.fetchedAt).toLocaleString()}{stats.cached && ' (from cache)'}</p>
+                              )}
+                            </>
+                          ) : isIG && stats ? (
+                            <>
+                              <div className="prof-stats-grid">
+                                <div className="prof-stat-item"><UsersIcon size={18} /><div><p className="prof-stat-value">{stats.profile?.followers?.toLocaleString() || '0'}</p><p className="prof-stat-label">Followers</p></div></div>
+                                <div className="prof-stat-item"><UsersIcon size={18} /><div><p className="prof-stat-value">{stats.profile?.following?.toLocaleString() || '0'}</p><p className="prof-stat-label">Following</p></div></div>
+                                <div className="prof-stat-item"><Camera size={18} /><div><p className="prof-stat-value">{stats.profile?.posts?.toLocaleString() || '0'}</p><p className="prof-stat-label">Posts</p></div></div>
+                                <div className="prof-stat-item"><TrendingUp size={18} /><div><p className="prof-stat-value">{stats.metrics?.engagementRate?.toFixed(2) || '0'}%</p><p className="prof-stat-label">Engagement</p></div></div>
+                              </div>
+                              {stats.fetchedAt && (
+                                <p className="prof-stats-last-updated">Last updated: {new Date(stats.fetchedAt).toLocaleString()}{stats.cached && ' (from cache)'}</p>
+                              )}
+                            </>
+                          ) : (isYT || isIG) ? (
+                            <div className="prof-empty-state" style={{ padding: '1.5rem' }}>
+                              {isYT ? <Youtube size={36} style={{ opacity: 0.3 }} /> : <Instagram size={36} style={{ opacity: 0.3 }} />}
+                              <p>No stats available yet</p>
+                              <p className="prof-empty-hint">Click "{stats ? 'Refresh' : 'Fetch Stats'}" to load analytics</p>
+                            </div>
+                          ) : (
+                            /* Non-YouTube/Instagram platforms: show basic info */
+                            platform.stats && (
+                              <div className="prof-platform-stats" style={{ marginTop: '0.75rem' }}>
+                                {platform.stats.subscribers != null && <span><UsersIcon size={14} />{platform.stats.subscribers.toLocaleString()} subscribers</span>}
+                                {platform.stats.followers != null && <span><UsersIcon size={14} />{platform.stats.followers.toLocaleString()} followers</span>}
+                              </div>
+                            )
+                          )}
                         </div>
-                      ))
-                    ) : (
+                      );
+                    }) : (
                       <div className="prof-empty-state">
                         <Globe size={48} />
                         <p>No platforms connected yet</p>
@@ -1234,243 +988,46 @@ const Profile = () => {
                   </div>
                 </div>
 
-                {/* Social Media Stats Section - Only show if user has connected platforms */}
-                {(formData.platforms || []).length > 0 && (
-                  <div className="prof-section" style={{ marginTop: '2rem' }}>
-                    <h2>Social Media Analytics</h2>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                      Detailed statistics for your connected platforms
-                    </p>
-
-                    {/* YouTube Stats - Only show if YouTube is connected */}
-                    {(formData.platforms || []).some(p => p.type === 'YouTube') && (
-                    <div className="prof-social-stats-card" style={{ marginBottom: '1.5rem' }}>
-                      <div className="prof-stats-header">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Youtube size={24} style={{ color: '#FF0000' }} />
-                          <h3>YouTube</h3>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={youtubeStats ? handleRefreshYouTubeData : handleFetchYouTubeData}
-                          disabled={fetchingYouTube}
-                          className="btn btn-outline btn-sm"
-                        >
-                          {fetchingYouTube ? (
-                            <>
-                              <Loader size={16} className="animate-spin" />
-                              {youtubeStats ? 'Refreshing...' : 'Fetching...'}
-                            </>
-                          ) : (
-                            <>
-                              <RefreshCw size={16} />
-                              {youtubeStats ? 'Refresh Stats' : 'Fetch Stats'}
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      {youtubeStats ? (
-                        <>
-                          <div className="prof-stats-grid">
-                            <div className="prof-stat-item">
-                              <UsersIcon size={18} />
-                              <div>
-                                <p className="prof-stat-value">{youtubeStats.channel?.subscriberCount?.toLocaleString() || '0'}</p>
-                                <p className="prof-stat-label">Subscribers</p>
-                              </div>
-                            </div>
-                            <div className="prof-stat-item">
-                              <Eye size={18} />
-                              <div>
-                                <p className="prof-stat-value">{youtubeStats.channel?.viewCount?.toLocaleString() || '0'}</p>
-                                <p className="prof-stat-label">Total Views</p>
-                              </div>
-                            </div>
-                            <div className="prof-stat-item">
-                              <Camera size={18} />
-                              <div>
-                                <p className="prof-stat-value">{youtubeStats.channel?.videoCount?.toLocaleString() || '0'}</p>
-                                <p className="prof-stat-label">Videos</p>
-                              </div>
-                            </div>
-                            <div className="prof-stat-item">
-                              <TrendingUp size={18} />
-                              <div>
-                                <p className="prof-stat-value">{youtubeStats.metrics?.engagementRate?.toFixed(2) || '0'}%</p>
-                                <p className="prof-stat-label">Engagement</p>
-                              </div>
-                            </div>
-                          </div>
-                          {youtubeStats.fetchedAt && (
-                            <p className="prof-stats-last-updated">
-                              Last updated: {new Date(youtubeStats.fetchedAt).toLocaleString()}
-                              {youtubeStats.cached && ' (from cache)'}
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <div className="prof-empty-state" style={{ padding: '2rem' }}>
-                          <Youtube size={48} style={{ opacity: 0.3 }} />
-                          <p>No YouTube stats available</p>
-                          <p className="prof-empty-hint">Click "Fetch Stats" to load your YouTube analytics</p>
-                        </div>
-                      )}
-                    </div>
-                    )}
-
-                    {/* Instagram Stats - Only show if Instagram is connected */}
-                    {(formData.platforms || []).some(p => p.type === 'Instagram') && (
-                    <div className="prof-social-stats-card">
-                      <div className="prof-stats-header">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Instagram size={24} style={{ color: '#E4405F' }} />
-                          <h3>Instagram</h3>
-                        </div>
-                      </div>
-
-                      {instagramStats ? (
-                        <>
-                          <div className="prof-stats-grid">
-                            <div className="prof-stat-item">
-                              <UsersIcon size={18} />
-                              <div>
-                                <p className="prof-stat-value">{instagramStats.profile?.followers?.toLocaleString() || '0'}</p>
-                                <p className="prof-stat-label">Followers</p>
-                              </div>
-                            </div>
-                            <div className="prof-stat-item">
-                              <UsersIcon size={18} />
-                              <div>
-                                <p className="prof-stat-value">{instagramStats.profile?.following?.toLocaleString() || '0'}</p>
-                                <p className="prof-stat-label">Following</p>
-                              </div>
-                            </div>
-                            <div className="prof-stat-item">
-                              <Camera size={18} />
-                              <div>
-                                <p className="prof-stat-value">{instagramStats.profile?.posts?.toLocaleString() || '0'}</p>
-                                <p className="prof-stat-label">Posts</p>
-                              </div>
-                            </div>
-                            <div className="prof-stat-item">
-                              <TrendingUp size={18} />
-                              <div>
-                                <p className="prof-stat-value">{instagramStats.metrics?.engagementRate?.toFixed(2) || '0'}%</p>
-                                <p className="prof-stat-label">Engagement</p>
-                              </div>
-                            </div>
-                          </div>
-                          {instagramStats.fetchedAt && (
-                            <p className="prof-stats-last-updated">
-                              Last updated: {new Date(instagramStats.fetchedAt).toLocaleString()}
-                              {instagramStats.cached && ' (from cache)'}
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <div className="prof-empty-state" style={{ padding: '2rem' }}>
-                          <Instagram size={48} style={{ opacity: 0.3 }} />
-                          <p>No Instagram stats available</p>
-                          <p className="prof-empty-hint">Click "Fetch Stats" to load your Instagram analytics</p>
-                        </div>
-                      )}
-
-                      <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
-                        <button
-                          type="button"
-                          onClick={instagramStats ? handleRefreshInstagramData : handleFetchInstagramData}
-                          disabled={fetchingInstagram}
-                          className="btn btn-outline btn-sm"
-                        >
-                          {fetchingInstagram ? (
-                            <>
-                              <Loader size={16} className="animate-spin" />
-                              {instagramStats ? 'Refreshing...' : 'Fetching...'}
-                            </>
-                          ) : (
-                            <>{instagramStats ? 'Refresh Stats' : 'Fetch Stats'}</>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Services Section */}
+                {/* Services */}
                 <div className="prof-section prof-services-section">
                   <div className="prof-section-header">
                     <h2>Services</h2>
-                    <button 
-                      type="button" 
-                      className="btn btn-primary btn-sm"
-                      onClick={() => setShowServiceModal(true)}
-                    >
-                      <Plus size={16} />
-                      Add Service
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowServiceModal(true)}>
+                      <Plus size={16} />Add Service
                     </button>
                   </div>
-
                   <div className="prof-services-list">
-                    {formData.services.length > 0 ? (
-                      formData.services.map((service) => (
-                        <div key={service.id || service._id} className="prof-service-item">
-                          <div className="prof-service-info">
-                            <h4>{service.name}</h4>
-                            <p>{service.description}</p>
-                          </div>
-                          <div className="prof-service-actions">
-                            <span className="prof-service-price">
-                              <IndianRupee size={16} />
-                              {service.price}
-                            </span>
-                            <button 
-                              type="button"
-                              className="prof-remove-btn"
-                              onClick={() => handleRemoveService(service.id || service._id)}
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
+                    {formData.services.length > 0 ? formData.services.map((service) => (
+                      <div key={service.id || service._id} className="prof-service-item">
+                        <div className="prof-service-info">
+                          <h4>{service.name}</h4>
+                          <p>{service.description}</p>
                         </div>
-                      ))
-                    ) : (
-                      <p className="prof-no-services">
-                        No services added yet. Add your services to start receiving collaboration requests.
-                      </p>
+                        <div className="prof-service-actions">
+                          <span className="prof-service-price"><IndianRupee size={16} />{service.price}</span>
+                          <button type="button" className="prof-remove-btn" onClick={() => handleRemoveService(service.id || service._id)}><X size={16} /></button>
+                        </div>
+                      </div>
+                    )) : (
+                      <p className="prof-no-services">No services added yet. Add your services to start receiving collaboration requests.</p>
                     )}
                   </div>
                 </div>
               </>
             )}
 
-            {/* Brand Specific */}
+            {/* ── Brand-specific ─────────────────────────────────────────── */}
             {isBrand && (
               <div className="prof-section">
                 <h2>Brand Details</h2>
-                
                 <div className="prof-form-grid">
                   <div className="input-group">
                     <label htmlFor="industry">Industry</label>
-                    <select
-                      id="industry"
-                      name="industry"
-                      value={formData.industry}
-                      onChange={handleChange}
-                      className="input"
-                    >
+                    <select id="industry" name="industry" value={formData.industry} onChange={handleChange} className="input">
                       <option value="">Select an industry</option>
-                      <option value="Technology">Technology</option>
-                      <option value="Fashion">Fashion</option>
-                      <option value="Food & Beverage">Food & Beverage</option>
-                      <option value="Beauty & Cosmetics">Beauty & Cosmetics</option>
-                      <option value="Health & Wellness">Health & Wellness</option>
-                      <option value="Travel & Hospitality">Travel & Hospitality</option>
-                      <option value="E-commerce">E-commerce</option>
-                      <option value="Entertainment">Entertainment</option>
-                      <option value="Finance">Finance</option>
-                      <option value="Other">Other</option>
+                      {['Technology','Fashion','Food & Beverage','Beauty & Cosmetics','Health & Wellness','Travel & Hospitality','E-commerce','Entertainment','Finance','Other'].map((ind) => (
+                        <option key={ind} value={ind}>{ind}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -1478,208 +1035,194 @@ const Profile = () => {
             )}
           </div>
 
-          {/* Save Button */}
+          {/* Save button */}
           <div className="prof-form-actions">
             <button type="submit" className="btn btn-primary btn-lg prof-save-btn" disabled={saving}>
               <Save size={18} />
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving…' : 'Save Changes'}
             </button>
           </div>
         </form>
 
-        {/* Add Service Modal */}
+        {/* ── Add Service Modal ──────────────────────────────────────────── */}
         {showServiceModal && (
           <div className="prof-modal-overlay" onClick={() => setShowServiceModal(false)}>
             <div className="prof-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="prof-modal-header">
                 <h2>Add Service</h2>
-                <button 
-                  type="button" 
-                  className="prof-modal-close"
-                  onClick={() => setShowServiceModal(false)}
-                >
-                  <X size={24} />
-                </button>
+                <button type="button" className="prof-modal-close" onClick={() => setShowServiceModal(false)}><X size={24} /></button>
               </div>
-              
               <div className="prof-modal-body">
                 <div className="input-group">
                   <label htmlFor="serviceName">Service Name</label>
-                  <input
-                    type="text"
-                    id="serviceName"
-                    value={newService.name}
-                    onChange={(e) => setNewService({ ...newService, name: e.target.value })}
-                    placeholder="e.g., Instagram Post, YouTube Review"
-                    className="input"
-                  />
+                  <input type="text" id="serviceName" value={newService.name} onChange={(e) => setNewService((p) => ({ ...p, name: e.target.value }))} placeholder="e.g., Instagram Post, YouTube Review" className="input" />
                 </div>
-
                 <div className="input-group">
                   <label htmlFor="servicePrice">Price (₹)</label>
-                  <input
-                    type="number"
-                    id="servicePrice"
-                    value={newService.price}
-                    onChange={(e) => setNewService({ ...newService, price: e.target.value })}
-                    placeholder="500"
-                    className="input"
-                  />
+                  <input type="number" id="servicePrice" value={newService.price} onChange={(e) => setNewService((p) => ({ ...p, price: e.target.value }))} placeholder="500" className="input" />
                 </div>
-
                 <div className="input-group">
                   <label htmlFor="serviceDescription">Description</label>
-                  <textarea
-                    id="serviceDescription"
-                    value={newService.description}
-                    onChange={(e) => setNewService({ ...newService, description: e.target.value })}
-                    placeholder="Describe what's included in this service..."
-                    className="input prof-textarea"
-                    rows={3}
-                  />
+                  <textarea id="serviceDescription" value={newService.description} onChange={(e) => setNewService((p) => ({ ...p, description: e.target.value }))} placeholder="Describe what's included…" className="input prof-textarea" rows={3} />
                 </div>
               </div>
-
               <div className="prof-modal-actions">
-                <button 
-                  type="button" 
-                  className="btn btn-secondary"
-                  onClick={() => setShowServiceModal(false)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-primary"
-                  onClick={handleAddService}
-                >
-                  Add Service
-                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowServiceModal(false)}>Cancel</button>
+                <button type="button" className="btn btn-primary" onClick={handleAddService}>Add Service</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Add Platform Modal */}
+        {/* ── Add Platform Modal ─────────────────────────────────────────── */}
         {showPlatformModal && (
           <div className="prof-modal-overlay" onClick={() => setShowPlatformModal(false)}>
             <div className="prof-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="prof-modal-header">
                 <h2>Add Platform</h2>
-                <button 
-                  type="button" 
-                  className="prof-modal-close"
-                  onClick={() => setShowPlatformModal(false)}
-                >
-                  <X size={24} />
-                </button>
+                <button type="button" className="prof-modal-close" onClick={() => setShowPlatformModal(false)}><X size={24} /></button>
               </div>
-              
               <div className="prof-modal-body">
                 <div className="input-group">
-                  <label htmlFor="platformType">Platform Type</label>
-                  <select
-                    id="platformType"
-                    value={newPlatform.type}
-                    onChange={(e) => setNewPlatform({ ...newPlatform, type: e.target.value })}
-                    className="input"
-                  >
+                  <label htmlFor="newPlatformType">Platform Type</label>
+                  <select id="newPlatformType" value={newPlatform.type} onChange={(e) => setNewPlatform((p) => ({ ...p, type: e.target.value }))} className="input">
                     <option value="YouTube">YouTube</option>
                     <option value="Instagram">Instagram</option>
                     <option value="TikTok">TikTok</option>
                   </select>
                 </div>
-
                 <div className="input-group">
                   <label htmlFor="platformUrl">
                     {newPlatform.type === 'YouTube' && <Youtube size={16} />}
                     {newPlatform.type === 'Instagram' && <Instagram size={16} />}
                     {newPlatform.type === 'TikTok' && <Globe size={16} />}
-                    {' '} Platform URL
+                    {' '}Platform URL
                   </label>
                   <input
-                    type="url"
-                    id="platformUrl"
-                    value={newPlatform.url}
-                    onChange={(e) => setNewPlatform({ ...newPlatform, url: e.target.value })}
+                    type="url" id="platformUrl" value={newPlatform.url}
+                    onChange={(e) => setNewPlatform((p) => ({ ...p, url: e.target.value }))}
                     placeholder={
-                      newPlatform.type === 'YouTube' 
-                        ? 'https://youtube.com/@yourchannel'
-                        : newPlatform.type === 'Instagram'
-                        ? 'https://instagram.com/yourusername'
+                      newPlatform.type === 'YouTube' ? 'https://youtube.com/@yourchannel'
+                        : newPlatform.type === 'Instagram' ? 'https://instagram.com/yourusername'
                         : 'https://tiktok.com/@yourusername'
                     }
                     className="input"
                   />
                 </div>
-
-                {newPlatform.type === 'YouTube' && (
-                  <div className="prof-platform-note">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                      <TrendingUp size={16} style={{ color: 'var(--accent-coral)' }} />
-                      <strong>Auto-fetch enabled</strong>
-                    </div>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                      YouTube stats will be fetched immediately and automatically updated every 24 hours.
-                    </p>
+                <div className="prof-platform-note">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    {newPlatform.type === 'TikTok' ? <Globe size={16} style={{ color: 'var(--pastel-sky)' }} /> : <TrendingUp size={16} style={{ color: 'var(--accent-coral)' }} />}
+                    <strong>{newPlatform.type === 'TikTok' ? 'Coming Soon' : 'Auto-fetch enabled'}</strong>
                   </div>
-                )}
-
-                {newPlatform.type === 'Instagram' && (
-                  <div className="prof-platform-note">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                      <TrendingUp size={16} style={{ color: 'var(--accent-coral)' }} />
-                      <strong>Auto-fetch enabled</strong>
-                    </div>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                      Instagram stats (followers, posts, engagement) will be fetched automatically via Graph API.
-                    </p>
-                  </div>
-                )}
-
-                {newPlatform.type !== 'YouTube' && newPlatform.type !== 'Instagram' && (
-                  <div className="prof-platform-note">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                      <Globe size={16} style={{ color: 'var(--pastel-sky)' }} />
-                      <strong>Coming Soon</strong>
-                    </div>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                      Auto-fetch for {newPlatform.type} will be available soon. You can add the platform now to keep it linked.
-                    </p>
-                  </div>
-                )}
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                    {newPlatform.type === 'YouTube' && 'YouTube stats will be fetched immediately.'}
+                    {newPlatform.type === 'Instagram' && 'Instagram stats will be fetched via Graph API.'}
+                    {newPlatform.type === 'TikTok' && 'Auto-fetch for TikTok will be available soon.'}
+                  </p>
+                </div>
               </div>
-
               <div className="prof-modal-actions">
-                <button 
-                  type="button" 
-                  className="btn btn-secondary"
-                  onClick={() => setShowPlatformModal(false)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-primary"
-                  onClick={handleAddPlatform}
-                  disabled={addingPlatform}
-                >
-                  {addingPlatform ? (
-                    <>
-                      <Loader size={18} className="animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={18} />
-                      Add Platform
-                    </>
-                  )}
+                <button type="button" className="btn btn-secondary" onClick={() => setShowPlatformModal(false)}>Cancel</button>
+                <button type="button" className="btn btn-primary" onClick={handleAddPlatform} disabled={addingPlatform}>
+                  {addingPlatform ? <><Loader size={18} className="animate-spin" />Adding…</> : <><Plus size={18} />Add Platform</>}
                 </button>
               </div>
             </div>
           </div>
         )}
+
+        {/* ── Photo Upload Modal ─────────────────────────────────────────── */}
+        {showPhotoUploadModal && (
+          <div className="prof-modal-overlay" onClick={() => setShowPhotoUploadModal(false)}>
+            <div className="prof-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+              <div className="prof-modal-header">
+                <h2>Change Profile Photo</h2>
+                <button type="button" className="prof-modal-close" onClick={() => setShowPhotoUploadModal(false)}><X size={24} /></button>
+              </div>
+              <div className="prof-modal-body">
+                {previewImage && (
+                  <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>Current Photo</p>
+                    <img src={previewImage} alt="Current profile" style={{ width: 200, height: 200, borderRadius: 'var(--clay-radius)', objectFit: 'cover', border: '2px solid var(--gray-200)' }} />
+                  </div>
+                )}
+                <p style={{ fontSize: '0.95rem', color: 'var(--dark-text)', marginBottom: '1.5rem', fontWeight: 500 }}>Choose how to change your photo:</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <button type="button" onClick={handleTakePhoto} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', fontWeight: 500 }}>
+                    <Camera size={20} />Take Photo with Camera
+                  </button>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', fontWeight: 500 }}>
+                    <Camera size={20} />Choose from Gallery
+                  </button>
+                  {(formData.instagramUrl || hasInstagram) && (
+                    <button type="button" onClick={handleImportInstagramPhoto} disabled={importingPhoto} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', fontWeight: 500, opacity: importingPhoto ? 0.6 : 1 }}>
+                      {importingPhoto ? <><Loader size={20} className="animate-spin" />Importing…</> : <><Instagram size={20} style={{ color: '#E4405F' }} />Import from Instagram</>}
+                    </button>
+                  )}
+                  {(formData.youtubeUrl || hasYouTube) && (
+                    <button type="button" onClick={handleImportYouTubePhoto} disabled={importingPhoto} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', fontWeight: 500, opacity: importingPhoto ? 0.6 : 1 }}>
+                      {importingPhoto ? <><Loader size={20} className="animate-spin" />Importing…</> : <><Youtube size={20} style={{ color: '#FF0000' }} />Import from YouTube</>}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="prof-modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowPhotoUploadModal(false)}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Camera Preview Modal ────────────────────────────────────────── */}
+        {showCameraModal && (
+          <div className="prof-modal-overlay" onClick={handleCloseCameraModal}>
+            <div className="prof-modal-content prof-camera-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '560px' }}>
+              <div className="prof-modal-header">
+                <h2>📸 Take Photo</h2>
+                <button type="button" className="prof-modal-close" onClick={handleCloseCameraModal}><X size={24} /></button>
+              </div>
+              <div className="prof-modal-body" style={{ padding: '0' }}>
+                <div className="prof-camera-preview">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    style={{
+                      width: '100%',
+                      maxHeight: '400px',
+                      objectFit: 'cover',
+                      borderRadius: '12px',
+                      transform: 'scaleX(-1)',
+                      background: '#000',
+                    }}
+                  />
+                  {cameraError && (
+                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      <Camera size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+                      <p>{cameraError}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="prof-modal-actions" style={{ justifyContent: 'center', gap: '1rem', padding: '1.25rem' }}>
+                <button type="button" className="btn btn-secondary" onClick={handleCloseCameraModal}>Cancel</button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleCapturePhoto}
+                  disabled={!cameraStream}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Camera size={18} />Capture Photo
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hidden canvas for camera capture */}
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
     </div>
   );
