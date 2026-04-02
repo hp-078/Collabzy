@@ -435,6 +435,67 @@ campaignSchema.methods.isEligible = function(influencerProfile) {
   };
 };
 
+/**
+ * Calculate recommendation match score for an eligible influencer.
+ * Returns a 0-100 score where higher is a better campaign fit.
+ */
+campaignSchema.methods.calculateMatchScore = function(influencerProfile) {
+  const totalFollowers = getInfluencerFollowers(influencerProfile);
+  const engagementRate = getInfluencerEngagementRate(influencerProfile);
+  const trustScore = influencerProfile?.trustScore || 0;
+  const influencerNiches = getInfluencerNiches(influencerProfile).map((n) => String(n).toLowerCase());
+  const influencerPlatforms = getInfluencerPlatforms(influencerProfile);
+
+  const minFollowers = this.eligibility?.minFollowers || 0;
+  const minEngagementRate = this.eligibility?.minEngagementRate || 0;
+  const minTrustScore = this.eligibility?.minTrustScore || 0;
+  const requiredNiches = (this.eligibility?.requiredNiches || []).map((n) => String(n).toLowerCase());
+  const requiredPlatforms = this.eligibility?.requiredPlatforms || [];
+
+  // Followers fit (max 30)
+  const followersScore = minFollowers > 0
+    ? Math.min((totalFollowers / minFollowers) * 30, 30)
+    : 30;
+
+  // Engagement fit (max 25)
+  const engagementScore = minEngagementRate > 0
+    ? Math.min((engagementRate / minEngagementRate) * 25, 25)
+    : 25;
+
+  // Trust fit (max 20)
+  const trustScorePart = minTrustScore > 0
+    ? Math.min((trustScore / minTrustScore) * 20, 20)
+    : 20;
+
+  // Niche fit (max 15)
+  let nicheScore = 15;
+  if (requiredNiches.length > 0) {
+    const matchedNiches = requiredNiches.filter((requiredNiche) =>
+      influencerNiches.some((influencerNiche) =>
+        influencerNiche.includes(requiredNiche) || requiredNiche.includes(influencerNiche)
+      )
+    ).length;
+
+    nicheScore = (matchedNiches / requiredNiches.length) * 15;
+  }
+
+  // Platform fit (max 10)
+  let platformScore = 10;
+  if (requiredPlatforms.length > 0) {
+    const hasRequiredPlatform = requiredPlatforms.some((platform) => {
+      if (platform === 'both') {
+        return influencerPlatforms.includes('youtube') && influencerPlatforms.includes('instagram');
+      }
+      return influencerPlatforms.includes(platform);
+    });
+
+    platformScore = hasRequiredPlatform ? 10 : 0;
+  }
+
+  const totalScore = followersScore + engagementScore + trustScorePart + nicheScore + platformScore;
+  return Math.max(0, Math.min(100, Math.round(totalScore)));
+};
+
 // Auto-update status based on deadline
 campaignSchema.pre('save', function(next) {
   if (this.deadline < new Date() && this.status === 'active') {
