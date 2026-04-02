@@ -11,8 +11,7 @@ import {
   Instagram,
   Youtube,
   TrendingUp,
-  Loader,
-  X
+  Loader
 } from 'lucide-react';
 import './Influencers.css';
 

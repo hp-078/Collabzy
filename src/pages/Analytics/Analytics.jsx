@@ -1,18 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import {
   TrendingUp, IndianRupee, Users, Briefcase, Star, CheckCircle,
   Clock, BarChart3, PieChart, Activity, ArrowUpRight, ArrowDownRight,
-  Calendar, Target, Zap, Award, Eye, MessageSquare, Loader
+  Target, Zap, Award, Loader
 } from 'lucide-react';
 import './Analytics.css';
 
 const Analytics = () => {
   const { user, isInfluencer, isBrand } = useAuth();
   const {
-    applications, deals, campaigns,
-    fetchMyApplications, fetchMyDeals, fetchMyCampaigns, fetchCampaigns,
+    applications, deals,
+    fetchMyApplications, fetchMyDeals, fetchMyCampaigns,
     getReviewsForUser
   } = useData();
 

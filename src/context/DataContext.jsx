@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { useAuth } from './AuthContext';
 import influencerService from '../services/influencer.service';
 import campaignService from '../services/campaign.service';

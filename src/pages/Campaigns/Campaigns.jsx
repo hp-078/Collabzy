@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import {
-  Search, Plus, Filter, Calendar, IndianRupee, Users, Eye,
-  Briefcase, ChevronDown, X, CheckCircle, Clock, Tag, MapPin,
-  TrendingUp, Star, Megaphone, Target
+  Search, Plus, Calendar, IndianRupee, Users, Eye,
+  X, CheckCircle, Tag,
+  TrendingUp, Star, Megaphone
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CATEGORY_OPTIONS, normalizeCategory } from '../../constants/categories';
