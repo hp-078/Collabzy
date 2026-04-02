@@ -12,47 +12,9 @@ Whenever you complete any task from this list, you MUST:
 
 ---
 
-## 🔹 Influencer Selection & Actions
-
-
-
----
-
-## 🔹 Payment Flow (VERY IMPORTANT)
-
-- [ ] Payment must be done **during deal creation (mandatory)**
-- [ ] Payment should NOT be allowed after deal creation
-- [ ] Influencer should NOT move to Deals until payment is completed
-- [ ] If payment is pending → stay in pending state only
-
----
-
-## 🔹 Pending Payment Tab (New Feature)
-
-- [ ] Create new tab: **Pending Payment**
-- [ ] Show influencers:
-  - Accepted but payment NOT completed
-- [ ] Do NOT show them in Accepted list
-- [ ] After payment:
-  - Move automatically → Deals tab
-
----
-
-## 🔹 Notifications System
-
-- [ ] Separate notifications for:
-  - Shortlisted
-  - Rejected
-  - Accepted
-
----
-
 ## 🔹 Chat System Improvements
 
 - [ ] Chat should be allowed ONLY after acceptance
-- [ ] Chat UI:
-  - Right side → Sender
-  - Left side → Receiver
 
 ---
 
@@ -76,13 +38,6 @@ Whenever you complete any task from this list, you MUST:
 ## 🔹 Campaign Creation Issues
 
 - [ ] Category should be auto-selected based on influencer profile
-- [ ] Currently only max budget exists → improve/fix if needed
-
----
-
-## 🔹 Platform Support
-
-- [ ] Add **TikTok** as a platform (currently missing)
 
 ---
 
@@ -102,6 +57,18 @@ Example:
 - [x] Removed individual per-influencer **accept/reject/shortlist** actions (Done on: 22/03/2026)
 - [x] Added **checkbox selection system** for influencer rows (Done on: 22/03/2026)
 - [x] Added **global action buttons** for selected influencers (Done on: 22/03/2026)
+- [x] Influencer does not move to Deals until payment is completed (Done on: 02/04/2026)
+- [x] If payment is pending, the deal stays in the pending state only (Done on: 02/04/2026)
+- [x] Added **Pending Payment** tab (Done on: 02/04/2026)
+- [x] Accepted-but-unpaid collaborations show in **Pending Payment** (Done on: 02/04/2026)
+- [x] Pending payment collaborations are hidden from the **Accepted** list (Done on: 02/04/2026)
+- [x] Deals move automatically to **Deals** after payment is completed (Done on: 02/04/2026)
+- [x] Added separate notifications for **shortlisted**, **rejected**, and **accepted** applications (Done on: 02/04/2026)
+- [x] Chat messages align with sender on the right and receiver on the left (Done on: 02/04/2026)
+- [x] Campaign creation now supports **min and max budget** fields (Done on: 02/04/2026)
+- [x] Added **TikTok** as a platform (Done on: 02/04/2026)
+- [x] Payment is now mandatory during deal creation (Done on: 02/04/2026)
+- [x] Payment initiation after deal creation is disabled (Done on: 02/04/2026)
 
 ---
 
@@ -110,3 +77,5 @@ Example:
 - Payment flow is **critical (must not break logic)**
 - Selection system should be **bulk-based, not individual**
 - UI/UX should be **clean, minimal, and consistent**
+- Pending payment and deal separation are now enforced in the collaboration flow
+- Review-stage status exists, but the preview-link handoff still needs follow-up

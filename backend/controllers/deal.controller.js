@@ -5,6 +5,7 @@ const InfluencerProfile = require('../models/InfluencerProfile.model');
 const BrandProfile = require('../models/BrandProfile.model');
 const { createNotificationFromTemplate } = require('../services/notification.service');
 const trustScoreService = require('../services/trustScore.service');
+const paymentService = require('../services/payment.service');
 
 /**
  * Create deal from accepted application (Brand only)
@@ -70,6 +71,18 @@ exports.createDeal = async (req, res) => {
       paymentStatus: 'pending'
     });
 
+    let paymentOrder;
+    try {
+      // Mandatory rule: payment order must be initialized during deal creation.
+      paymentOrder = await paymentService.createOrder(deal, deal.agreedRate);
+    } catch (paymentErr) {
+      await Deal.findByIdAndDelete(deal._id);
+      return res.status(400).json({
+        success: false,
+        message: paymentErr.message || 'Payment initialization failed. Deal was not created.'
+      });
+    }
+
     await deal.populate('influencer', 'name email');
     await deal.populate('campaign', 'title');
 
@@ -85,8 +98,11 @@ exports.createDeal = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Deal created successfully',
-      data: deal
+      message: 'Deal created and payment initialized successfully',
+      data: {
+        deal,
+        paymentOrder
+      }
     });
   } catch (error) {
     console.error('Create deal error:', error);

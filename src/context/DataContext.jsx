@@ -351,7 +351,11 @@ export const DataProvider = ({ children }) => {
     try {
       const response = await dealService.createDeal(dealData);
       updateCache('deals', null);
-      return { success: true, data: response.data };
+      return {
+        success: response?.success !== false,
+        data: response?.data,
+        message: response?.message
+      };
     } catch (error) {
       console.error('Failed to create deal:', error);
       const errorMsg = error.response?.data?.message || 'Failed to create deal';

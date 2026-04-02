@@ -795,6 +795,60 @@ const Collaborations = () => {
     return fallback.toISOString().split('T')[0];
   };
 
+  const processDealPaymentAtCreation = async (deal, paymentOrder) => {
+    if (!razorpayLoaded) {
+      return { success: false, error: 'Payment gateway not loaded. Please refresh and try again.' };
+    }
+
+    if (!deal?._id || !paymentOrder?.orderId) {
+      return { success: false, error: 'Missing payment session for newly created deal.' };
+    }
+
+    setPaymentProcessing(true);
+
+    return new Promise((resolve) => {
+      paymentService.initiateRazorpayCheckout(
+        {
+          ...paymentOrder,
+          brandName: user?.name,
+          brandEmail: user?.email
+        },
+        async (response) => {
+          try {
+            const verifyResult = await paymentService.verifyPayment({
+              orderId: response.orderId,
+              paymentId: response.paymentId,
+              signature: response.signature,
+              dealId: deal._id
+            });
+
+            if (!verifyResult.success) {
+              resolve({ success: false, error: 'Payment verification failed.' });
+              return;
+            }
+
+            setDealPayments((prev) => ({
+              ...prev,
+              [deal._id]: { status: 'paid', ...(verifyResult.data || {}) }
+            }));
+
+            resolve({ success: true });
+          } catch (verifyErr) {
+            console.error('Payment verification error:', verifyErr);
+            resolve({ success: false, error: 'Payment verification failed.' });
+          } finally {
+            setPaymentProcessing(false);
+          }
+        },
+        (error) => {
+          console.error('Payment error:', error);
+          setPaymentProcessing(false);
+          resolve({ success: false, error: error?.message || 'Payment failed or was cancelled.' });
+        }
+      );
+    });
+  };
+
   const handleBulkCreateDeals = async () => {
     if (selectedApplications.length === 0) {
       toast.error('Select at least one influencer first');
@@ -815,22 +869,48 @@ const Collaborations = () => {
 
     setBulkProcessing(true);
     try {
-      const results = await Promise.all(
-        withValidRate.map((app) => createDeal({
+      let paidCount = 0;
+      let cancelledCount = 0;
+      let failedCount = 0;
+
+      for (const app of withValidRate) {
+        const createResult = await createDeal({
           applicationId: app._id,
           agreedRate: Number(app.proposedRate),
           deadline: resolveDealDeadline(app),
-        }))
-      );
+        });
 
-      const successCount = results.filter((r) => r.success).length;
-      if (successCount > 0) {
-        toast.success(`Created ${successCount} deal${successCount > 1 ? 's' : ''}. Moved to Pending Payment.`);
-        switchTab('pending_payment');
+        if (!createResult.success) {
+          failedCount += 1;
+          continue;
+        }
+
+        const createdDeal = createResult.data?.deal;
+        const paymentOrder = createResult.data?.paymentOrder;
+        const paymentResult = await processDealPaymentAtCreation(createdDeal, paymentOrder);
+
+        if (paymentResult.success) {
+          paidCount += 1;
+          continue;
+        }
+
+        if (createdDeal?._id) {
+          await updateDealStatus(createdDeal._id, { status: 'cancelled' });
+        }
+        cancelledCount += 1;
       }
 
-      if (successCount !== withValidRate.length) {
-        toast.error(`${withValidRate.length - successCount} deal(s) failed to create`);
+      if (paidCount > 0) {
+        toast.success(`Created and paid ${paidCount} deal${paidCount > 1 ? 's' : ''}.`);
+        switchTab('deals');
+      }
+
+      if (cancelledCount > 0) {
+        toast.error(`${cancelledCount} deal${cancelledCount > 1 ? 's were' : ' was'} cancelled because payment was not completed during creation.`);
+      }
+
+      if (failedCount > 0) {
+        toast.error(`${failedCount} deal${failedCount > 1 ? 's' : ''} failed to create.`);
       }
 
       await refreshBrandApplicationAndDealData();
@@ -1575,16 +1655,7 @@ const Collaborations = () => {
 
                 <td>
                   <div className="inf-action-btns brand-deal-actions">
-                    {needsPayment && (
-                      <button
-                        className="inf-act-btn inf-act-deal"
-                        onClick={() => handleInitiatePayment(deal)}
-                        disabled={paymentProcessing || !razorpayLoaded}
-                        title={!razorpayLoaded ? 'Payment gateway loading...' : 'Pay now'}
-                      >
-                        <CreditCard size={13} /> <span>Pay</span>
-                      </button>
-                    )}
+                    {needsPayment && <span className="inf-act-hint">Payment required during deal creation</span>}
 
                     {deal.status === 'pending_review' && (
                       <>
@@ -2069,9 +2140,23 @@ const Collaborations = () => {
         deadline: dealForm.deadline
       });
       if (result.success) {
-        toast.success('Deal created. Moved to Pending Payment.');
+        const createdDeal = result.data?.deal;
+        const paymentOrder = result.data?.paymentOrder;
+        const paymentResult = await processDealPaymentAtCreation(createdDeal, paymentOrder);
+
+        if (!paymentResult.success) {
+          if (createdDeal?._id) {
+            await updateDealStatus(createdDeal._id, { status: 'cancelled' });
+          }
+          toast.error(paymentResult.error || 'Payment was not completed. Deal was cancelled.');
+          setShowCreateDealModal(null);
+          await refreshBrandApplicationAndDealData();
+          return;
+        }
+
+        toast.success('Deal created and payment completed.');
         setShowCreateDealModal(null);
-        switchTab('pending_payment');
+        switchTab('deals');
         // Refresh deals and applications to keep a single-stage display.
         const dealsData = await fetchMyDeals(true);
         setMyDeals(dealsData || []);
@@ -2115,76 +2200,6 @@ const Collaborations = () => {
       toast.error('Failed to update deal');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  // Handle payment initiation (Brand only)
-  const handleInitiatePayment = async (deal) => {
-    if (!razorpayLoaded) {
-      toast.error('Payment gateway not loaded. Please refresh the page.');
-      return;
-    }
-
-    setPaymentProcessing(true);
-    try {
-      // Step 1: Create order
-      const orderResult = await paymentService.createPaymentOrder(deal._id, deal.agreedRate);
-      
-      if (!orderResult.success) {
-        throw new Error(orderResult.message || 'Failed to create payment order');
-      }
-
-      const orderData = orderResult.data;
-      
-      // Step 2: Initiate Razorpay checkout
-      paymentService.initiateRazorpayCheckout(
-        {
-          ...orderData,
-          brandName: user?.name,
-          brandEmail: user?.email
-        },
-        async (response) => {
-          // Payment successful - verify it
-          try {
-            const verifyResult = await paymentService.verifyPayment({
-              orderId: response.orderId,
-              paymentId: response.paymentId,
-              signature: response.signature,
-              dealId: deal._id
-            });
-
-            if (verifyResult.success) {
-              toast.success('Payment successful! Deal is now active.');
-              switchTab('deals');
-              // Refresh deals
-              const dealsData = await fetchMyDeals(true);
-              setMyDeals(dealsData || []);
-              // Update payment cache
-              setDealPayments(prev => ({
-                ...prev,
-                [deal._id]: { status: 'paid', ...verifyResult.data }
-              }));
-            } else {
-              toast.error('Payment verification failed. Please contact support.');
-            }
-          } catch (verifyErr) {
-            console.error('Payment verification error:', verifyErr);
-            toast.error('Payment verification failed. Please contact support.');
-          } finally {
-            setPaymentProcessing(false);
-          }
-        },
-        (error) => {
-          // Payment failed or cancelled
-          console.error('Payment error:', error);
-          toast.error(error.message || 'Payment failed');
-          setPaymentProcessing(false);
-        }
-      );
-    } catch (err) {
-      console.error('Payment initiation error:', err);
-      toast.error(err.message || 'Failed to initiate payment');
-      setPaymentProcessing(false);
     }
   };
 

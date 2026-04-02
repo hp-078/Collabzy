@@ -12,7 +12,7 @@ const Payment = require('../models/Payment.model');
  */
 exports.createOrder = async (req, res) => {
     try {
-        const { dealId, amount } = req.body;
+        const { dealId } = req.body;
         const userId = req.user._id;
         const userRole = req.user.role;
 
@@ -41,36 +41,12 @@ exports.createOrder = async (req, res) => {
             });
         }
 
-        // Check deal status - allow both active and pending_payment
-        if (deal.status !== 'active' && deal.status !== 'pending_payment') {
-            return res.status(400).json({
-                success: false,
-                message: `Cannot create payment for deal in status: ${deal.status}`
-            });
-        }
-
-        // Verify amount matches agreed rate
-        if (amount !== deal.agreedRate) {
-            return res.status(400).json({
-                success: false,
-                message: 'Payment amount must match agreed deal rate'
-            });
-        }
-
-        // Create order
-        const orderDetails = await paymentService.createOrder(deal, amount);
-
-        return res.status(201).json({
-            success: true,
-            message: 'Payment order created successfully',
-            data: {
-                orderId: orderDetails.orderId,
-                amount: orderDetails.amount,
-                currency: orderDetails.currency,
-                key: orderDetails.key,
-                payment: orderDetails.payment
-            }
+        // Payment must be initiated at deal creation time only.
+        return res.status(400).json({
+            success: false,
+            message: 'Pay-later is disabled. Payment must be initialized during deal creation.'
         });
+
     } catch (error) {
         console.error('Create order error:', error);
         return res.status(500).json({
