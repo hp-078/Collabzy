@@ -78,6 +78,13 @@ const dealSchema = new mongoose.Schema({
   brandNotes: { type: String, default: '' },
   influencerNotes: { type: String, default: '' },
 
+  // Review workflow links
+  previewLink: { type: String, default: '' },
+  previewSubmittedAt: { type: Date },
+  previewApprovedAt: { type: Date },
+  finalContentLink: { type: String, default: '' },
+  finalSubmittedAt: { type: Date },
+
   // Completion
   completedAt: { type: Date },
   cancelledAt: { type: Date }

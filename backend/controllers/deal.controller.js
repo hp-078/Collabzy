@@ -7,6 +7,22 @@ const { createNotificationFromTemplate } = require('../services/notification.ser
 const trustScoreService = require('../services/trustScore.service');
 const paymentService = require('../services/payment.service');
 
+const normalizeHttpUrl = (value) => {
+  if (!value || typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(withProtocol);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+    return parsed.toString();
+  } catch (error) {
+    return null;
+  }
+};
+
 /**
  * Create deal from accepted application (Brand only)
  * POST /api/deals
@@ -213,7 +229,7 @@ exports.getDealById = async (req, res) => {
  */
 exports.updateDealStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, previewLink, finalContentLink, requestRevision } = req.body;
     const validStatuses = ['active', 'in_progress', 'pending_review', 'completed', 'cancelled', 'disputed'];
 
     if (!status) {
@@ -248,6 +264,74 @@ exports.updateDealStatus = async (req, res) => {
         success: false,
         message: 'Not authorized'
       });
+    }
+
+    const userId = req.user._id.toString();
+    const isBrandUser = deal.brand.toString() === userId;
+    const isInfluencerUser = deal.influencer.toString() === userId;
+    const previousStatus = deal.status;
+
+    if (status === 'pending_review') {
+      if (!isInfluencerUser) {
+        return res.status(403).json({
+          success: false,
+          message: 'Only influencer can submit work for review'
+        });
+      }
+
+      const normalizedPreview = normalizeHttpUrl(previewLink);
+      if (!normalizedPreview) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid work preview link is required to submit for review'
+        });
+      }
+
+      deal.previewLink = normalizedPreview;
+      deal.previewSubmittedAt = new Date();
+      deal.previewApprovedAt = null;
+    }
+
+    if (status === 'in_progress' && previousStatus === 'pending_review') {
+      if (!isBrandUser) {
+        return res.status(403).json({
+          success: false,
+          message: 'Only brand can review submitted preview'
+        });
+      }
+
+      if (requestRevision) {
+        deal.previewApprovedAt = null;
+      } else {
+        deal.previewApprovedAt = new Date();
+      }
+    }
+
+    if (status === 'completed') {
+      if (!isInfluencerUser) {
+        return res.status(403).json({
+          success: false,
+          message: 'Only influencer can submit final posted content'
+        });
+      }
+
+      if (!deal.previewApprovedAt) {
+        return res.status(400).json({
+          success: false,
+          message: 'Brand approval on preview is required before final submission'
+        });
+      }
+
+      const normalizedFinal = normalizeHttpUrl(finalContentLink);
+      if (!normalizedFinal) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid final posted content link is required'
+        });
+      }
+
+      deal.finalContentLink = normalizedFinal;
+      deal.finalSubmittedAt = new Date();
     }
 
     deal.status = status;
@@ -307,11 +391,15 @@ exports.updateDealStatus = async (req, res) => {
         ? deal.influencer : deal.brand;
       const campaignData = await Campaign.findById(deal.campaign).select('title');
       const templateMap = {
+        'pending_review': 'CONTENT_SUBMITTED',
         'completed': 'DEAL_COMPLETED',
         'cancelled': 'DEAL_CANCELLED',
         'in_progress': 'DEAL_STARTED'
       };
-      const templateType = templateMap[status];
+      let templateType = templateMap[status];
+      if (status === 'in_progress' && previousStatus === 'pending_review' && requestRevision) {
+        templateType = 'REVISION_REQUESTED';
+      }
       if (templateType) {
         await createNotificationFromTemplate(otherParty, templateType, {
           campaignTitle: campaignData?.title || 'Campaign',

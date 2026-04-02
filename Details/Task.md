@@ -12,26 +12,7 @@ Whenever you complete any task from this list, you MUST:
 
 ---
 
-## 🔹 Instagram UI Fix
-
-- [ ] Remove unnecessary icon/element from top-right of Instagram section
-
----
-
-## 🔹 Deal & Workflow Improvements
-
-- [ ] Add "Submit for Review" flow:
-  - Influencer submits **work preview link**
-  - Brand can directly view preview
-- [ ] After brand approval:
-  - Influencer submits **final posted content link**
-- [ ] Enable direct preview access for brand
-
----
-
-## 🔹 Campaign Creation Issues
-
-- [ ] Category should be auto-selected based on influencer profile
+- No pending tasks.
 
 ---
 
@@ -64,6 +45,12 @@ Example:
 - [x] Payment initiation after deal creation is disabled (Done on: 02/04/2026)
 - [x] Chat is now allowed only after acceptance (Done on: 02/04/2026)
 - [x] Chat UI now shows sender on right and receiver on left (Done on: 02/04/2026)
+- [x] Removed unnecessary top-right element from Instagram section (Done on: 02/04/2026)
+- [x] Added Submit for Review with influencer work preview link submission (Done on: 02/04/2026)
+- [x] Brand can directly access and approve preview links (Done on: 02/04/2026)
+- [x] Added final posted content link submission after brand approval (Done on: 02/04/2026)
+- [x] Enabled direct preview/final content link access in workflow UI (Done on: 02/04/2026)
+- [x] Campaign category now auto-selects from user profile category/niche/industry when creating campaign (Done on: 02/04/2026)
 
 ---
 
@@ -73,4 +60,4 @@ Example:
 - Selection system should be **bulk-based, not individual**
 - UI/UX should be **clean, minimal, and consistent**
 - Pending payment and deal separation are now enforced in the collaboration flow
-- Review-stage status exists, but the preview-link handoff still needs follow-up
+- Review workflow now includes preview submission, brand approval/revision, and final content link submission

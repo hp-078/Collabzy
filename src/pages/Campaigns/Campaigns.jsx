@@ -8,7 +8,7 @@ import {
   TrendingUp, Star, Megaphone, Target
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { CATEGORY_OPTIONS } from '../../constants/categories';
+import { CATEGORY_OPTIONS, normalizeCategory } from '../../constants/categories';
 import './Campaigns.css';
 
 const PLATFORM_OPTIONS = ['YouTube', 'Instagram', 'TikTok', 'Multiple', 'Any'];
@@ -396,6 +396,42 @@ const Campaigns = () => {
     return `₹${min} - ${max}`;
   };
 
+  const deriveAutoCategory = () => {
+    const candidates = [];
+
+    if (Array.isArray(user?.niche)) candidates.push(...user.niche);
+    if (Array.isArray(user?.categories)) candidates.push(...user.categories);
+    if (typeof user?.category === 'string') candidates.push(user.category);
+    if (typeof user?.industry === 'string') candidates.push(user.industry);
+
+    for (const candidate of candidates) {
+      const normalized = normalizeCategory(candidate);
+      if (normalized) return normalized;
+    }
+
+    return null;
+  };
+
+  const handleOpenCreateModal = () => {
+    if (!form.category) {
+      const autoCategory = deriveAutoCategory();
+      if (autoCategory) {
+        setForm((prev) => ({
+          ...prev,
+          category: autoCategory,
+          eligibility: {
+            ...prev.eligibility,
+            requiredNiches: prev.eligibility.requiredNiches.length > 0
+              ? prev.eligibility.requiredNiches
+              : [autoCategory]
+          }
+        }));
+      }
+    }
+
+    setShowCreateModal(true);
+  };
+
   return (
     <div className="camp-page">
       <div className="camp-container">
@@ -406,7 +442,7 @@ const Campaigns = () => {
             <p>{isBrand ? 'Create and manage your influencer campaigns' : 'Find campaigns that match your profile'}</p>
           </div>
           {isBrand && (
-            <button className="camp-create-btn" onClick={() => setShowCreateModal(true)}>
+            <button className="camp-create-btn" onClick={handleOpenCreateModal}>
               <Plus size={18} /> Create Campaign
             </button>
           )}
@@ -613,6 +649,9 @@ const Campaigns = () => {
                     )}
 
                     <small className="camp-category-hint">Select one category. Type at least 2 letters to search.</small>
+                    {form.category && (
+                      <small className="camp-category-hint">Auto-selected from your profile. You can change it.</small>
+                    )}
                   </div>
                 </div>
                 <div className="camp-form-group">

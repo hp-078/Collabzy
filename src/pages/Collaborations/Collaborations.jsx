@@ -1659,16 +1659,26 @@ const Collaborations = () => {
 
                     {deal.status === 'pending_review' && (
                       <>
+                        {deal.previewLink && (
+                          <a
+                            className="inf-act-btn inf-act-view"
+                            href={deal.previewLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink size={13} /> <span>Preview</span>
+                          </a>
+                        )}
                         <button
                           className="inf-act-btn inf-act-accept"
-                          onClick={() => handleDealStatusChange(deal._id, 'completed')}
+                          onClick={() => handleDealStatusChange(deal._id, 'in_progress', { requestRevision: false })}
                           disabled={submitting}
                         >
-                          <CheckCircle size={13} /> <span>Approve</span>
+                          <CheckCircle size={13} /> <span>Approve Preview</span>
                         </button>
                         <button
                           className="inf-act-btn inf-act-shortlist"
-                          onClick={() => handleDealStatusChange(deal._id, 'in_progress')}
+                          onClick={() => handleDealStatusChange(deal._id, 'in_progress', { requestRevision: true })}
                           disabled={submitting}
                         >
                           <Upload size={13} /> <span>Revision</span>
@@ -1687,15 +1697,27 @@ const Collaborations = () => {
                     )}
 
                     {deal.status === 'completed' && (
-                      <button
-                        className="inf-act-btn inf-act-view"
-                        onClick={() => {
-                          setShowReviewModal(deal);
-                          setReviewForm({ rating: 5, title: '', content: '' });
-                        }}
-                      >
-                        <Star size={13} /> <span>Review</span>
-                      </button>
+                      <>
+                        {deal.finalContentLink && (
+                          <a
+                            className="inf-act-btn inf-act-view"
+                            href={deal.finalContentLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink size={13} /> <span>Final Link</span>
+                          </a>
+                        )}
+                        <button
+                          className="inf-act-btn inf-act-view"
+                          onClick={() => {
+                            setShowReviewModal(deal);
+                            setReviewForm({ rating: 5, title: '', content: '' });
+                          }}
+                        >
+                          <Star size={13} /> <span>Review</span>
+                        </button>
+                      </>
                     )}
 
                     <button className="inf-act-btn inf-act-msg" onClick={handleGoToMessages}>
@@ -2184,10 +2206,10 @@ const Collaborations = () => {
   };
 
   // Handle deal status update
-  const handleDealStatusChange = async (dealId, newStatus) => {
+  const handleDealStatusChange = async (dealId, newStatus, extraPayload = {}) => {
     setSubmitting(true);
     try {
-      const result = await updateDealStatus(dealId, { status: newStatus });
+      const result = await updateDealStatus(dealId, { status: newStatus, ...extraPayload });
       if (result.success) {
         toast.success(`Deal ${newStatus === 'completed' ? 'completed' : 'updated'} successfully!`);
         // Refresh deals
@@ -2201,6 +2223,32 @@ const Collaborations = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmitPreviewLink = async (deal) => {
+    const input = window.prompt('Enter work preview link for brand review:', deal.previewLink || '');
+    if (input === null) return;
+
+    const previewLink = normalizeUrl(input);
+    if (!previewLink) {
+      toast.error('Please enter a valid preview link');
+      return;
+    }
+
+    await handleDealStatusChange(deal._id, 'pending_review', { previewLink });
+  };
+
+  const handleSubmitFinalContentLink = async (deal) => {
+    const input = window.prompt('Enter final posted content link:', deal.finalContentLink || '');
+    if (input === null) return;
+
+    const finalContentLink = normalizeUrl(input);
+    if (!finalContentLink) {
+      toast.error('Please enter a valid final content link');
+      return;
+    }
+
+    await handleDealStatusChange(deal._id, 'completed', { finalContentLink });
   };
 
   // Handle release payment (Brand only, after deal completion)
@@ -2336,6 +2384,21 @@ const Collaborations = () => {
   const formatDate = (date) => {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const normalizeUrl = (value) => {
+    if (!value || typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+    try {
+      const parsed = new URL(withProtocol);
+      if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+      return parsed.toString();
+    } catch {
+      return null;
+    }
   };
 
   // Days until deadline
@@ -2654,6 +2717,26 @@ const Collaborations = () => {
                                 </div>
                               </div>
                             )}
+
+                            {(deal.previewLink || deal.finalContentLink) && (
+                              <div className="collab-deliverables" style={{ marginTop: '0.75rem' }}>
+                                <h4>Shared Links</h4>
+                                <div className="collab-deliverables-list">
+                                  {deal.previewLink && (
+                                    <a className="collab-deliverable" href={deal.previewLink} target="_blank" rel="noopener noreferrer">
+                                      <ExternalLink size={14} />
+                                      <span>Work Preview Link</span>
+                                    </a>
+                                  )}
+                                  {deal.finalContentLink && (
+                                    <a className="collab-deliverable collab-deliverable-approved" href={deal.finalContentLink} target="_blank" rel="noopener noreferrer">
+                                      <ExternalLink size={14} />
+                                      <span>Final Posted Content</span>
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           <div className="collab-footer">
@@ -2672,15 +2755,35 @@ const Collaborations = () => {
                               </div>
                             )}
 
-                            {(deal.status === 'active' || deal.status === 'in_progress') && (
+                            {(deal.status === 'active' || (deal.status === 'in_progress' && !deal.previewApprovedAt)) && (
                               <div className="collab-action-buttons">
                                 <button
                                   className="btn btn-primary btn-sm"
-                                  onClick={() => handleDealStatusChange(deal._id, 'pending_review')}
+                                  onClick={() => handleSubmitPreviewLink(deal)}
                                   disabled={submitting}
                                 >
                                   <Upload size={16} />
                                   Submit for Review
+                                </button>
+                              </div>
+                            )}
+
+                            {deal.status === 'pending_review' && (
+                              <div className="collab-completed-info" style={{ marginTop: '0.5rem' }}>
+                                <Clock size={18} />
+                                <span>Preview submitted. Waiting for brand approval.</span>
+                              </div>
+                            )}
+
+                            {deal.status === 'in_progress' && deal.previewApprovedAt && (
+                              <div className="collab-action-buttons">
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  onClick={() => handleSubmitFinalContentLink(deal)}
+                                  disabled={submitting}
+                                >
+                                  <ExternalLink size={16} />
+                                  Submit Final Content Link
                                 </button>
                               </div>
                             )}

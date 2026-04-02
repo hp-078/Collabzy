@@ -40,6 +40,121 @@ const toCategoryArray = (value) => {
   return [];
 };
 
+const pickNumber = (...values) => {
+  for (const value of values) {
+    if (value === null || value === undefined || value === '') {
+      continue;
+    }
+
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return 0;
+};
+
+const formatYouTubeStats = (raw = {}, previous = null) => {
+  const channel = raw.channel || raw.youtubeData || {};
+  const metrics = raw.metrics || raw.youtubeStats || {};
+
+  return {
+    channel: {
+      title: channel.title || channel.channelTitle || previous?.channel?.title || '',
+      subscriberCount: pickNumber(
+        channel.subscriberCount,
+        channel.subscribers,
+        raw.youtubeStats?.subscribers,
+        previous?.channel?.subscriberCount,
+      ),
+      viewCount: pickNumber(
+        channel.viewCount,
+        channel.totalViews,
+        channel.views,
+        raw.youtubeStats?.totalViews,
+        previous?.channel?.viewCount,
+      ),
+      videoCount: pickNumber(
+        channel.videoCount,
+        channel.videos,
+        raw.youtubeStats?.videoCount,
+        previous?.channel?.videoCount,
+      ),
+      thumbnail: channel.thumbnail || previous?.channel?.thumbnail || '',
+      channelId: channel.channelId || raw.youtubeChannelId || previous?.channel?.channelId || '',
+    },
+    metrics: {
+      engagementRate: pickNumber(
+        metrics.engagementRate,
+        raw.youtubeStats?.engagementRate,
+        previous?.metrics?.engagementRate,
+      ),
+      averageViews: pickNumber(
+        metrics.averageViews,
+        raw.youtubeStats?.averageViews,
+        previous?.metrics?.averageViews,
+      ),
+    },
+    recentVideos: raw.recentVideos || raw.youtubeData?.recentVideos || previous?.recentVideos || [],
+    fetchedAt: raw.fetchedAt || raw.youtubeData?.fetchedAt || raw.youtubeStats?.lastFetched || previous?.fetchedAt,
+    cached: Boolean(raw.cached),
+  };
+};
+
+const formatInstagramStats = (raw = {}, previous = null) => {
+  const profile = raw.profile || raw.instagramData || {};
+  const metrics = raw.metrics || raw.instagramStats || {};
+
+  return {
+    profile: {
+      username: profile.username || raw.instagramUsername || previous?.profile?.username || '',
+      name: profile.name || previous?.profile?.name || '',
+      biography: profile.biography || previous?.profile?.biography || '',
+      profilePicture: profile.profilePicture || profile.profile_picture_url || previous?.profile?.profilePicture || '',
+      followers: pickNumber(
+        profile.followers,
+        profile.followers_count,
+        raw.instagramStats?.followers,
+        previous?.profile?.followers,
+      ),
+      following: pickNumber(
+        profile.following,
+        profile.follows_count,
+        raw.instagramStats?.following,
+        previous?.profile?.following,
+      ),
+      posts: pickNumber(
+        profile.posts,
+        profile.media_count,
+        raw.instagramStats?.posts,
+        previous?.profile?.posts,
+      ),
+      isVerified: Boolean(profile.isVerified || previous?.profile?.isVerified),
+    },
+    metrics: {
+      engagementRate: pickNumber(
+        metrics.engagementRate,
+        raw.instagramStats?.engagementRate,
+        previous?.metrics?.engagementRate,
+      ),
+      averageLikes: pickNumber(
+        metrics.averageLikes,
+        raw.instagramStats?.averageLikes,
+        previous?.metrics?.averageLikes,
+      ),
+      averageComments: pickNumber(
+        metrics.averageComments,
+        raw.instagramStats?.averageComments,
+        previous?.metrics?.averageComments,
+      ),
+    },
+    recentPosts: raw.recentPosts || profile.recentMedia || raw.instagramData?.recentMedia || previous?.recentPosts || [],
+    fetchedAt: raw.fetchedAt || raw.instagramData?.fetchedAt || raw.instagramStats?.lastFetched || previous?.fetchedAt,
+    cached: Boolean(raw.cached),
+  };
+};
+
 const Profile = () => {
   const { user, updateUser, isInfluencer, isBrand } = useAuth();
   const { clearCache } = useData();
@@ -146,93 +261,46 @@ const Profile = () => {
 
             // Load cached YouTube stats if available (from DB fields)
             if (profileData.youtubeData || profileData.youtubeStats) {
-              const ytData = {
-                channel: {
-                  title: profileData.youtubeData?.title || '',
-                  subscriberCount: profileData.youtubeStats?.subscribers || 0,
-                  viewCount: profileData.youtubeStats?.totalViews || 0,
-                  videoCount: profileData.youtubeStats?.videoCount || 0,
-                  thumbnail: profileData.youtubeData?.thumbnail || '',
-                  channelId: profileData.youtubeChannelId || '',
-                },
-                metrics: {
-                  engagementRate: profileData.youtubeStats?.engagementRate || 0,
-                  averageViews: profileData.youtubeStats?.averageViews || 0,
-                },
-                recentVideos: profileData.youtubeData?.recentVideos || [],
-                fetchedAt: profileData.youtubeData?.fetchedAt || profileData.youtubeStats?.lastFetched,
-              };
-              setYoutubeStats(ytData);
+              setYoutubeStats(formatYouTubeStats(profileData));
             } else {
               // Fallback: try to reconstruct from platforms array
               const ytPlatform = (profileData.platforms || []).find(p => p.type === 'YouTube');
               if (ytPlatform?.stats) {
-                const ytData = {
+                setYoutubeStats(formatYouTubeStats({
                   channel: {
-                    title: ytPlatform.channelTitle || '',
-                    subscriberCount: ytPlatform.stats.subscribers || 0,
-                    viewCount: ytPlatform.stats.views || 0,
-                    videoCount: ytPlatform.stats.videos || 0,
-                    thumbnail: '',
-                    channelId: ytPlatform.channelId || '',
+                    channelTitle: ytPlatform.channelTitle,
+                    subscribers: ytPlatform.stats.subscribers,
+                    views: ytPlatform.stats.views,
+                    videos: ytPlatform.stats.videos,
+                    channelId: ytPlatform.channelId,
                   },
                   metrics: {
-                    engagementRate: ytPlatform.stats.engagementRate || 0,
-                    averageViews: 0,
+                    engagementRate: ytPlatform.stats.engagementRate,
                   },
-                  recentVideos: [],
                   fetchedAt: ytPlatform.lastFetched,
-                };
-                setYoutubeStats(ytData);
+                }));
               }
             }
 
             // Load cached Instagram stats if available (from DB fields)
             if (profileData.instagramData || profileData.instagramStats) {
-              const igData = {
-                profile: {
-                  username: profileData.instagramData?.username || profileData.instagramUsername || '',
-                  name: profileData.instagramData?.name || '',
-                  biography: profileData.instagramData?.biography || '',
-                  profilePicture: profileData.instagramData?.profilePicture || '',
-                  followers: profileData.instagramStats?.followers || 0,
-                  following: profileData.instagramStats?.following || 0,
-                  posts: profileData.instagramStats?.posts || 0,
-                  isVerified: profileData.instagramData?.isVerified || false,
-                },
-                metrics: {
-                  engagementRate: profileData.instagramStats?.engagementRate || 0,
-                  averageLikes: profileData.instagramStats?.averageLikes || 0,
-                  averageComments: profileData.instagramStats?.averageComments || 0,
-                },
-                recentPosts: profileData.instagramData?.recentMedia || [],
-                fetchedAt: profileData.instagramData?.fetchedAt || profileData.instagramStats?.lastFetched,
-              };
-              setInstagramStats(igData);
+              setInstagramStats(formatInstagramStats(profileData));
             } else {
               // Fallback: try to reconstruct from platforms array
               const igPlatform = (profileData.platforms || []).find(p => p.type === 'Instagram');
               if (igPlatform?.stats) {
-                const igData = {
+                setInstagramStats(formatInstagramStats({
                   profile: {
-                    username: igPlatform.username || '',
-                    name: '',
-                    biography: '',
-                    profilePicture: '',
-                    followers: igPlatform.stats.followers || 0,
-                    following: igPlatform.stats.following || 0,
-                    posts: igPlatform.stats.posts || 0,
-                    isVerified: false,
+                    username: igPlatform.username,
+                    followers: igPlatform.stats.followers,
+                    following: igPlatform.stats.following,
+                    posts: igPlatform.stats.posts,
                   },
                   metrics: {
-                    engagementRate: igPlatform.stats.engagementRate || 0,
-                    averageLikes: 0,
-                    averageComments: 0,
+                    engagementRate: igPlatform.stats.engagementRate,
                   },
-                  recentPosts: [],
                   fetchedAt: igPlatform.lastFetched,
-                };
-                setInstagramStats(igData);
+                }));
               }
             }
           }
@@ -495,26 +563,7 @@ const Profile = () => {
           }));
 
           // Populate instagramStats state so it shows immediately in Social Media Analytics
-          const formattedIgStats = {
-            profile: {
-              username: igData.profile?.username || '',
-              name: igData.profile?.name || '',
-              biography: igData.profile?.biography || '',
-              profilePicture: igData.profile?.profilePicture || '',
-              followers: igData.profile?.followers || 0,
-              following: igData.profile?.following || 0,
-              posts: igData.profile?.posts || 0,
-              isVerified: igData.profile?.isVerified || false,
-            },
-            metrics: {
-              engagementRate: igData.metrics?.engagementRate || 0,
-              averageLikes: igData.metrics?.averageLikes || 0,
-              averageComments: igData.metrics?.averageComments || 0,
-            },
-            recentPosts: igData.recentPosts || [],
-            fetchedAt: new Date(),
-            cached: false,
-          };
+          const formattedIgStats = formatInstagramStats({ ...igData, fetchedAt: new Date(), cached: false }, instagramStats);
           setInstagramStats(formattedIgStats);
 
           // Persist to DB via influencer service so data survives reload
@@ -575,23 +624,7 @@ const Profile = () => {
         }));
 
         // Populate youtubeStats state so it shows immediately in Social Media Analytics
-        const formattedYtStats = {
-          channel: {
-            title: ytData.channel?.title || '',
-            subscriberCount: ytData.channel?.subscriberCount || 0,
-            viewCount: ytData.channel?.viewCount || 0,
-            videoCount: ytData.channel?.videoCount || 0,
-            thumbnail: ytData.channel?.thumbnail || '',
-            channelId: ytData.channel?.channelId || '',
-          },
-          metrics: {
-            engagementRate: ytData.metrics?.engagementRate || 0,
-            averageViews: ytData.metrics?.averageViews || 0,
-          },
-          recentVideos: ytData.recentVideos || [],
-          fetchedAt: new Date(),
-          cached: false,
-        };
+        const formattedYtStats = formatYouTubeStats({ ...ytData, fetchedAt: new Date(), cached: false }, youtubeStats);
         setYoutubeStats(formattedYtStats);
 
         // Persist to DB via influencer service so data survives reload
@@ -657,23 +690,11 @@ const Profile = () => {
         const ytData = response.data;
 
         // Update the stats state with fetched data
-        const formattedData = {
-          channel: {
-            title: ytData.channel?.title || '',
-            subscriberCount: ytData.channel?.subscriberCount || 0,
-            viewCount: ytData.channel?.viewCount || 0,
-            videoCount: ytData.channel?.videoCount || 0,
-            thumbnail: ytData.channel?.thumbnail || '',
-            channelId: ytData.channel?.channelId || '',
-          },
-          metrics: {
-            engagementRate: ytData.metrics?.engagementRate || 0,
-            averageViews: ytData.metrics?.averageViews || 0,
-          },
-          recentVideos: ytData.recentVideos || [],
+        const formattedData = formatYouTubeStats({
+          ...ytData,
           fetchedAt: new Date(),
           cached: response.cached || false,
-        };
+        }, youtubeStats);
         
         setYoutubeStats(formattedData);
         
@@ -705,23 +726,7 @@ const Profile = () => {
         const ytData = response.data;
         
         // Update the stats state with refreshed data
-        const formattedData = {
-          channel: {
-            title: ytData.channel?.title || '',
-            subscriberCount: ytData.channel?.subscriberCount || 0,
-            viewCount: ytData.channel?.viewCount || 0,
-            videoCount: ytData.channel?.videoCount || 0,
-            thumbnail: ytData.channel?.thumbnail || '',
-            channelId: ytData.channel?.channelId || '',
-          },
-          metrics: {
-            engagementRate: ytData.metrics?.engagementRate || 0,
-            averageViews: ytData.metrics?.averageViews || 0,
-          },
-          recentVideos: ytData.recentVideos || [],
-          fetchedAt: new Date(),
-          cached: false,
-        };
+        const formattedData = formatYouTubeStats({ ...ytData, fetchedAt: new Date(), cached: false }, youtubeStats);
         
         setYoutubeStats(formattedData);
         
@@ -765,26 +770,11 @@ const Profile = () => {
         const igData = response.data;
 
         // Update the stats state with fetched data
-        const formattedData = {
-          profile: {
-            username: igData.profile?.username || '',
-            name: igData.profile?.name || '',
-            biography: igData.profile?.biography || '',
-            profilePicture: igData.profile?.profilePicture || '',
-            followers: igData.profile?.followers || 0,
-            following: igData.profile?.following || 0,
-            posts: igData.profile?.posts || 0,
-            isVerified: igData.profile?.isVerified || false,
-          },
-          metrics: {
-            engagementRate: igData.metrics?.engagementRate || 0,
-            averageLikes: igData.metrics?.averageLikes || 0,
-            averageComments: igData.metrics?.averageComments || 0,
-          },
-          recentPosts: igData.recentPosts || [],
+        const formattedData = formatInstagramStats({
+          ...igData,
           fetchedAt: new Date(),
           cached: response.cached || false,
-        };
+        }, instagramStats);
         
         setInstagramStats(formattedData);
         
@@ -821,26 +811,7 @@ const Profile = () => {
         const igData = response.data;
         
         // Update the stats state with refreshed data
-        const formattedData = {
-          profile: {
-            username: igData.profile?.username || '',
-            name: igData.profile?.name || '',
-            biography: igData.profile?.biography || '',
-            profilePicture: igData.profile?.profilePicture || '',
-            followers: igData.profile?.followers || 0,
-            following: igData.profile?.following || 0,
-            posts: igData.profile?.posts || 0,
-            isVerified: igData.profile?.isVerified || false,
-          },
-          metrics: {
-            engagementRate: igData.metrics?.engagementRate || 0,
-            averageLikes: igData.metrics?.averageLikes || 0,
-            averageComments: igData.metrics?.averageComments || 0,
-          },
-          recentPosts: igData.recentPosts || [],
-          fetchedAt: new Date(),
-          cached: false,
-        };
+        const formattedData = formatInstagramStats({ ...igData, fetchedAt: new Date(), cached: false }, instagramStats);
         
         setInstagramStats(formattedData);
         
@@ -1356,24 +1327,6 @@ const Profile = () => {
                           <Instagram size={24} style={{ color: '#E4405F' }} />
                           <h3>Instagram</h3>
                         </div>
-                        <button
-                          type="button"
-                          onClick={instagramStats ? handleRefreshInstagramData : handleFetchInstagramData}
-                          disabled={fetchingInstagram}
-                          className="btn btn-outline btn-sm"
-                        >
-                          {fetchingInstagram ? (
-                            <>
-                              <Loader size={16} className="animate-spin" />
-                              {instagramStats ? 'Refreshing...' : 'Fetching...'}
-                            </>
-                          ) : (
-                            <>
-                              <RefreshCw size={16} />
-                              {instagramStats ? 'Refresh Stats' : 'Fetch Stats'}
-                            </>
-                          )}
-                        </button>
                       </div>
 
                       {instagramStats ? (
@@ -1422,6 +1375,24 @@ const Profile = () => {
                           <p className="prof-empty-hint">Click "Fetch Stats" to load your Instagram analytics</p>
                         </div>
                       )}
+
+                      <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={instagramStats ? handleRefreshInstagramData : handleFetchInstagramData}
+                          disabled={fetchingInstagram}
+                          className="btn btn-outline btn-sm"
+                        >
+                          {fetchingInstagram ? (
+                            <>
+                              <Loader size={16} className="animate-spin" />
+                              {instagramStats ? 'Refreshing...' : 'Fetching...'}
+                            </>
+                          ) : (
+                            <>{instagramStats ? 'Refresh Stats' : 'Fetch Stats'}</>
+                          )}
+                        </button>
+                      </div>
                     </div>
                     )}
                   </div>
