@@ -463,8 +463,15 @@ export const DataProvider = ({ children }) => {
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Failed to send application message:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to send message';
-      return { success: false, error: errorMsg };
+      const responseData = error.response?.data || {};
+      const errorMsg = responseData.message || 'Failed to send message';
+      return {
+        success: false,
+        error: errorMsg,
+        warning: !!responseData.warning,
+        code: responseData.code || null,
+        details: responseData.details || null,
+      };
     }
   };
 

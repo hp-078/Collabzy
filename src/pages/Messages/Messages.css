@@ -275,6 +275,19 @@
   border: none;
 }
 
+.msg-message-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.msg-message-row.msg-own {
+  align-items: flex-end;
+}
+
+.msg-message-row.msg-other {
+  align-items: flex-start;
+}
+
 .msg-message {
   display: flex;
   max-width: 70%;

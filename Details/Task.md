@@ -12,12 +12,6 @@ Whenever you complete any task from this list, you MUST:
 
 ---
 
-## 🔹 Chat System Improvements
-
-- [ ] Chat should be allowed ONLY after acceptance
-
----
-
 ## 🔹 Instagram UI Fix
 
 - [ ] Remove unnecessary icon/element from top-right of Instagram section
@@ -64,11 +58,12 @@ Example:
 - [x] Pending payment collaborations are hidden from the **Accepted** list (Done on: 02/04/2026)
 - [x] Deals move automatically to **Deals** after payment is completed (Done on: 02/04/2026)
 - [x] Added separate notifications for **shortlisted**, **rejected**, and **accepted** applications (Done on: 02/04/2026)
-- [x] Chat messages align with sender on the right and receiver on the left (Done on: 02/04/2026)
 - [x] Campaign creation now supports **min and max budget** fields (Done on: 02/04/2026)
 - [x] Added **TikTok** as a platform (Done on: 02/04/2026)
 - [x] Payment is now mandatory during deal creation (Done on: 02/04/2026)
 - [x] Payment initiation after deal creation is disabled (Done on: 02/04/2026)
+- [x] Chat is now allowed only after acceptance (Done on: 02/04/2026)
+- [x] Chat UI now shows sender on right and receiver on left (Done on: 02/04/2026)
 
 ---
 

@@ -183,8 +183,11 @@ const Messages = () => {
         return [...prev, result.data];
       });
     } else {
-      // Show error message
-      alert(`❌ Failed to send message!\n\n${result.error || 'Backend server may not be running'}\n\n✅ Solution:\n1. Open a new terminal\n2. Run: cd backend\n3. Run: npm run dev\n\nThen try sending the message again.`);
+      if (result.warning) {
+        alert(result.error || 'Warning: Message not sent due to restricted personal details.');
+      } else {
+        alert(`❌ Failed to send message!\n\n${result.error || 'Backend server may not be running'}\n\n✅ Solution:\n1. Open a new terminal\n2. Run: cd backend\n3. Run: npm run dev\n\nThen try sending the message again.`);
+      }
       // Restore the message
       setNewMessage(content);
     }
@@ -362,7 +365,7 @@ const Messages = () => {
                       formatDate(msgTime) !== formatDate(chatMessages[index - 1].createdAt || chatMessages[index - 1].timestamp);
                     
                     return (
-                      <div key={msg._id || index}>
+                      <div key={msg._id || index} className={`msg-message-row ${isOwn ? 'msg-own' : 'msg-other'}`}>
                         {showDate && (
                           <div className="msg-message-date">
                             {formatDate(msgTime)}

@@ -75,6 +75,32 @@ class MessageFilterService {
     }
 
     /**
+     * Build a clear end-user warning message for blocked content.
+     * @param {Object} violation
+     * @returns {string}
+     */
+    buildUserWarning(violation = {}) {
+        const typeLabelMap = {
+            phone: 'phone number',
+            email: 'email address',
+            url: 'external link',
+            social_handle: 'social handle',
+            messaging_app: 'external app reference',
+            keyword: 'personal contact request'
+        };
+
+        const detectedType = typeLabelMap[violation.type] || 'personal detail';
+        const detectedPattern = violation.detectedPattern || detectedType;
+
+        return [
+            'Warning: Message not sent.',
+            `Reason: Your message appears to contain a blocked ${detectedType} (${detectedPattern}).`,
+            'To protect both users, personal contact sharing is not allowed in chat.',
+            'What you can do: discuss deliverables, timeline, pricing, and campaign details here on Collabzy.'
+        ].join('\n');
+    }
+
+    /**
      * Check if message contains restricted content
      * @param {string} message - Message content to check
      * @returns {Object} - { isViolation: boolean, reason: string, type: string }
@@ -86,8 +112,18 @@ class MessageFilterService {
 
         const lowerMessage = message.toLowerCase();
 
+        if (this.checkObfuscation(message)) {
+            return {
+                isViolation: true,
+                reason: 'Obfuscated personal contact details are not allowed',
+                type: 'phone',
+                detectedPattern: 'obfuscated contact details'
+            };
+        }
+
         // Check phone numbers
         for (const pattern of this.patterns.phone) {
+            pattern.lastIndex = 0;
             if (pattern.test(message)) {
                 return {
                     isViolation: true,
@@ -100,6 +136,7 @@ class MessageFilterService {
 
         // Check email addresses
         for (const pattern of this.patterns.email) {
+            pattern.lastIndex = 0;
             if (pattern.test(message)) {
                 return {
                     isViolation: true,
@@ -112,6 +149,7 @@ class MessageFilterService {
 
         // Check URLs
         for (const pattern of this.patterns.url) {
+            pattern.lastIndex = 0;
             if (pattern.test(message)) {
                 return {
                     isViolation: true,
@@ -124,6 +162,7 @@ class MessageFilterService {
 
         // Check social media handles
         for (const pattern of this.patterns.socialHandles) {
+            pattern.lastIndex = 0;
             const matches = message.match(pattern);
             if (matches && matches.length > 0) {
                 // Allow @mentions in context of collaboration (e.g., "I post tech reviews @myhandle")
@@ -149,6 +188,7 @@ class MessageFilterService {
 
         // Check messaging app keywords
         for (const pattern of this.patterns.messagingApps) {
+            pattern.lastIndex = 0;
             if (pattern.test(message)) {
                 return {
                     isViolation: true,

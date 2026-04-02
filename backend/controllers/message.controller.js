@@ -5,6 +5,7 @@ const Deal = require('../models/Deal.model');
 const User = require('../models/User.model');
 const { emitToConversation, emitToUser } = require('../config/socket');
 const { createNotification } = require('../services/notification.service');
+const messageFilterService = require('../services/messageFilter.service');
 
 /**
  * Send a message in application/collaboration context
@@ -20,6 +21,28 @@ exports.sendApplicationMessage = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Message content is required'
+      });
+    }
+
+    const sanitizedContent = messageFilterService.sanitizeMessage(content);
+    if (!sanitizedContent) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message content is required'
+      });
+    }
+
+    const filterResult = messageFilterService.checkMessage(sanitizedContent);
+    if (filterResult.isViolation) {
+      return res.status(400).json({
+        success: false,
+        warning: true,
+        code: 'PERSONAL_DETAILS_BLOCKED',
+        message: messageFilterService.buildUserWarning(filterResult),
+        details: {
+          type: filterResult.type,
+          pattern: filterResult.detectedPattern
+        }
       });
     }
 
@@ -46,6 +69,13 @@ exports.sendApplicationMessage = async (req, res) => {
       });
     }
 
+    if (application.status !== 'accepted') {
+      return res.status(403).json({
+        success: false,
+        message: 'Chat is available only after application acceptance'
+      });
+    }
+
     // Determine receiver
     const receiverId = senderId.toString() === brandId ? influencerId : brandId;
 
@@ -63,7 +93,7 @@ exports.sendApplicationMessage = async (req, res) => {
       conversationId,
       sender: senderId,
       receiver: receiverId,
-      content,
+      content: sanitizedContent,
       type: type || 'text',
       attachments: attachments || []
     });
@@ -150,6 +180,13 @@ exports.getApplicationMessages = async (req, res) => {
       });
     }
 
+    if (application.status !== 'accepted') {
+      return res.status(403).json({
+        success: false,
+        message: 'Chat is available only after application acceptance'
+      });
+    }
+
     const conversationId = `app_${applicationId}`;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -206,7 +243,7 @@ exports.getMyCollaborations = async (req, res) => {
       
       applications = await Application.find({
         campaign: { $in: campaignIds },
-        status: { $in: ['shortlisted', 'accepted'] }
+        status: 'accepted'
       })
         .populate('campaign', 'title brand')
         .populate('influencer', 'name avatar')
@@ -214,7 +251,7 @@ exports.getMyCollaborations = async (req, res) => {
     } else {
       applications = await Application.find({
         influencer: userId,
-        status: { $in: ['shortlisted', 'accepted'] }
+        status: 'accepted'
       })
         .populate({
           path: 'campaign',
@@ -318,6 +355,28 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
+    const sanitizedContent = messageFilterService.sanitizeMessage(content);
+    if (!sanitizedContent) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message content is required'
+      });
+    }
+
+    const filterResult = messageFilterService.checkMessage(sanitizedContent);
+    if (filterResult.isViolation) {
+      return res.status(400).json({
+        success: false,
+        warning: true,
+        code: 'PERSONAL_DETAILS_BLOCKED',
+        message: messageFilterService.buildUserWarning(filterResult),
+        details: {
+          type: filterResult.type,
+          pattern: filterResult.detectedPattern
+        }
+      });
+    }
+
     // Verify receiver exists
     const receiver = await User.findById(receiverId);
     if (!receiver) {
@@ -335,7 +394,7 @@ exports.sendMessage = async (req, res) => {
       conversationId,
       sender: senderId,
       receiver: receiverId,
-      content,
+      content: sanitizedContent,
       type: type || 'text',
       attachments: attachments || []
     });
