@@ -1,0 +1,192 @@
+/* OTPVerification.css */
+
+.otp-input-group {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.otp-inputs {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.otp-input {
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  text-align: center;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  background: white;
+  color: #667eea;
+  font-family: 'Courier New', monospace;
+}
+
+.otp-input:focus {
+  border-color: #667eea;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.otp-input:hover {
+  border-color: #667eea;
+}
+
+.otp-input.disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.otp-input::placeholder {
+  color: #bbb;
+  font-size: 28px;
+}
+
+/* Timer Section */
+.otp-timer-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fff8f0 0%, #fff5e6 100%);
+  border: 1px solid #ffe0b2;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.otp-timer-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #f57c00;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.otp-timer-info strong {
+  color: #e65100;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.otp-resend-btn {
+  padding: 0.5rem 1rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.otp-resend-btn:hover:not(:disabled) {
+  background: #5a6fd8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.otp-resend-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.otp-resend-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .otp-inputs {
+    gap: 0.5rem;
+  }
+
+  .otp-input {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+
+  .otp-timer-section {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .otp-resend-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .otp-inputs {
+    gap: 0.4rem;
+  }
+
+  .otp-input {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .otp-input::placeholder {
+    font-size: 24px;
+  }
+}
+
+/* Animation for errors */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+}
+
+.otp-inputs.error {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Loading spinner */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Success state animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-form {
+  animation: slideIn 0.5s ease-out;
+}
