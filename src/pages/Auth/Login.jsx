@@ -155,7 +155,7 @@ const Login = () => {
               <div className="input-group">
                 <div className="auth-label-row">
                   <label htmlFor="password">Password</label>
-                  <a href="#" className="auth-forgot-link" onClick={(e) => e.preventDefault()}>Forgot password?</a>
+                  <Link to="/forgot-password" className="auth-forgot-link">Forgot password?</Link>
                 </div>
                 <div className="auth-input-wrapper">
                   <Lock size={20} className="auth-input-icon" />

@@ -13,6 +13,9 @@ import Footer from './components/common/Footer';
 import Home from './pages/Home/Home';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
+import OTPVerification from './pages/Auth/OTPVerification';
+import ForgotPassword from './pages/Auth/ForgotPassword';
+import ResetPassword from './pages/Auth/ResetPassword';
 import Influencers from './pages/Influencers/Influencers';
 import InfluencerDetail from './pages/InfluencerDetail/InfluencerDetail';
 import Dashboard from './pages/Dashboard/Dashboard';
@@ -69,6 +72,9 @@ function AppRoutes() {
       <Route path="/" element={<Layout><Home /></Layout>} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-otp" element={<OTPVerification />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/influencers" element={<Layout><Influencers /></Layout>} />
       <Route path="/influencer/:id" element={<Layout><InfluencerDetail /></Layout>} />
 

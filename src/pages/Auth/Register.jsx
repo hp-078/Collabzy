@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, Mail, Lock, User, Building, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import authService from '../../services/auth.service';
 import './Auth.css';
 
 const Register = () => {
@@ -20,7 +21,7 @@ const Register = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const { register, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -109,31 +110,30 @@ const Register = () => {
       };
 
       // Add role-specific fields
-      // Backend now accepts both 'name' (for influencers) and 'companyName' (for brands)
       if (formData.role === 'influencer') {
         registerData.name = formData.name.trim();
       } else if (formData.role === 'brand') {
         registerData.companyName = formData.name.trim();
       }
 
-      const result = await register(registerData);
+      // Call the new OTP registration endpoint
+      const result = await authService.registerSendOTP(registerData);
 
       if (result && result.success) {
-        const userName = formData.role === 'brand' 
-          ? formData.name 
-          : (result.user?.name || formData.name || 'there');
+        toast.success('✅ OTP sent! Check your email to verify.');
         
-        toast.success(`Welcome to Collabzy, ${userName}!`);
-        
-        // Small delay for better UX
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 500);
+        // Navigate to OTP verification page with email and name
+        navigate('/verify-otp', {
+          state: {
+            email: formData.email,
+            name: formData.name,
+          }
+        });
       } else {
         // Handle specific backend errors
-        const errorMsg = result?.error || 'Registration failed. Please try again.';
+        const errorMsg = result?.message || 'Failed to send OTP. Please try again.';
         
-        console.error('❌ Registration failed:', errorMsg);
+        console.error('❌ OTP registration failed:', errorMsg);
         
         // Check for specific error types
         if (errorMsg.toLowerCase().includes('email') && errorMsg.toLowerCase().includes('exist')) {
@@ -142,6 +142,9 @@ const Register = () => {
         } else if (errorMsg.toLowerCase().includes('email') && errorMsg.toLowerCase().includes('already')) {
           setFieldErrors({ email: 'This email is already registered' });
           setError('This email is already registered. Please use a different email or try logging in.');
+        } else if (errorMsg.toLowerCase().includes('already')) {
+          setFieldErrors({ email: 'OTP already sent to this email. Please check your inbox.' });
+          setError('OTP already sent to this email. Please check your inbox.');
         } else if (errorMsg.toLowerCase().includes('email') && errorMsg.toLowerCase().includes('invalid')) {
           setFieldErrors({ email: 'Invalid email address' });
           setError('Invalid email address. Please check and try again.');
@@ -171,26 +174,13 @@ const Register = () => {
         
         if (statusCode === 400) {
           errorMsg = backendMsg || 'Invalid registration data. Please check your information.';
-          
-          // Parse backend validation errors if available
-          if (err.response.data?.errors) {
-            const backendErrors = {};
-            err.response.data.errors.forEach(e => {
-              backendErrors[e.field] = e.message;
-            });
-            setFieldErrors(backendErrors);
-          }
-        } else if (statusCode === 409 || statusCode === 400) {
-          if (backendMsg.toLowerCase().includes('email')) {
-            errorMsg = 'Email already exists. Please use a different email or try logging in.';
-            setFieldErrors({ email: 'This email is already registered' });
-          } else {
-            errorMsg = backendMsg;
-          }
+        } else if (statusCode === 409) {
+          errorMsg = backendMsg || 'Email already registered.';
+          setFieldErrors({ email: 'This email is already registered' });
         } else if (statusCode === 500) {
           errorMsg = 'Server error. Please try again later.';
-        } else if (backendMsg) {
-          errorMsg = backendMsg;
+        } else {
+          errorMsg = backendMsg || 'Registration failed. Please try again.';
         }
       } else if (err.message) {
         errorMsg = err.message;
@@ -205,17 +195,12 @@ const Register = () => {
 
   return (
     <div className="auth-page">
-          {/* Animated Particles */}
-          <div className="auth-particles">
-              <div className="auth-particle"></div>
-              <div className="auth-particle"></div>
-              <div className="auth-particle"></div>
-              <div className="auth-particle"></div>
-              <div className="auth-particle"></div>
-              <div className="auth-particle"></div>
-              <div className="auth-particle"></div>
-              <div className="auth-particle"></div>
-          </div>
+      {/* Animated Particles */}
+      <div className="auth-particles">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="auth-particle"></div>
+        ))}
+      </div>
 
       <div className="auth-container">
         <div className="auth-left">

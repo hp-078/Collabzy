@@ -73,7 +73,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Import routes
-const authRoutes = require('./routes/auth.routes');
+const authRoutesOTP = require('./routes/auth.routes.otp');
 const influencerRoutes = require('./routes/influencer.routes');
 const brandRoutes = require('./routes/brand.routes');
 const campaignRoutes = require('./routes/campaign.routes');
@@ -88,7 +88,7 @@ const paymentRoutes = require('./routes/payment.routes');
 const adminRoutes = require('./routes/admin.routes');
 
 // Mount routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutesOTP);
 app.use('/api/influencer', influencerRoutes);
 app.use('/api/brand', brandRoutes);
 app.use('/api/campaigns', campaignRoutes);

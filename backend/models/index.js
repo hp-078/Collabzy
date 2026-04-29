@@ -1,5 +1,7 @@
 // Export all models
 const User = require('./User.model');
+const PendingUser = require('./PendingUser.model');
+const ForgotPasswordRequest = require('./ForgotPasswordRequest.model');
 const InfluencerProfile = require('./InfluencerProfile.model');
 const BrandProfile = require('./BrandProfile.model');
 const Campaign = require('./Campaign.model');
@@ -11,6 +13,8 @@ const Review = require('./Review.model');
 
 module.exports = {
   User,
+  PendingUser,
+  ForgotPasswordRequest,
   InfluencerProfile,
   BrandProfile,
   Campaign,

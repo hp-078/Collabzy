@@ -37,12 +37,26 @@ const userSchema = new mongoose.Schema({
   },
   lastLogin: {
     type: Date
+  },
+  emailVerified: {
+    type: Boolean,
+    default: false
+  },
+  otp: {
+    type: String,
+    select: false
+  },
+  otpExpiry: {
+    type: Date,
+    select: false
   }
 }, {
   timestamps: true,
   toJSON: {
     transform(doc, ret) {
       delete ret.password;
+      delete ret.otp;
+      delete ret.otpExpiry;
       delete ret.__v;
       return ret;
     }
