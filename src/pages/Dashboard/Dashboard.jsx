@@ -215,7 +215,6 @@ const Dashboard = () => {
           <section className="dash-panel" style={{ marginBottom: '1.2rem' }}>
             <div className="dash-panel-head">
               <h3>Wallet Snapshot</h3>
-              <Link to="/wallets">Open wallet</Link>
             </div>
             <div className="dash-wallet-note">
               Your current wallet balance is {formatCurrency(walletAmount)}. Released campaign payments will appear here once the admin completes the transfer.

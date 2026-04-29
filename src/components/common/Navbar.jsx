@@ -254,9 +254,7 @@ const Navbar = () => {
               <div className="nav-inner">
                   {/* Logo */}
                   <Link to="/" className="nav-logo" onClick={closeMenu}>
-                      <span className="nav-logo-icon">
-                          <Sparkles size={20} />
-                      </span>
+                      <img src="/logo.png" alt="Collabzy Logo" className="nav-logo-image" style={{ height: '48px', width: 'auto', marginRight: '12px', transform: 'scale(1.4)', transformOrigin: 'left center' }} />
                       <span className="nav-logo-text">Collabzy</span>
                   </Link>
 

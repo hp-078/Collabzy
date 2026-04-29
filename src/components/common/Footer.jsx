@@ -19,9 +19,7 @@ const Footer = () => {
                   <div className="footer-grid">
                       <div className="footer-brand">
                           <Link to="/" className="footer-logo">
-                              <span className="footer-logo-icon">
-                                  <Sparkles size={18} />
-                              </span>
+                              <img src="/logo.png" alt="Collabzy Logo" className="footer-logo-image" style={{ height: '48px', width: 'auto', marginRight: '12px', transform: 'scale(1.4)', transformOrigin: 'left center' }} />
                               <span className="footer-logo-text">Collabzy</span>
                           </Link>
                           <p className="footer-description">
