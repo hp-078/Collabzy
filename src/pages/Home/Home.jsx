@@ -181,9 +181,7 @@ const Home = () => {
         <div className="home-hero-container">
           <div className="home-hero-content" data-animate>
             <div className="home-hero-logo-area">
-              <div className="home-hero-logo-icon">
-                <Sparkles size={24} />
-              </div>
+              <img src="/logo.png" alt="Collabzy Logo" style={{ height: '64px', width: 'auto', marginRight: '16px', transform: 'scale(1.4)', transformOrigin: 'left center' }} />
               <span className="home-hero-brand">Collabzy</span>
             </div>
 

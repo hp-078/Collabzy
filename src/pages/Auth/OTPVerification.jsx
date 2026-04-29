@@ -159,7 +159,7 @@ const OTPVerification = () => {
         <div className="auth-left">
           <div className="auth-left-content">
             <div className="auth-logo">
-              <span className="auth-logo-icon">C</span>
+              <img src="/logo.png" alt="Collabzy Logo" style={{ height: '56px', width: 'auto', marginRight: '16px', transform: 'scale(1.4)', transformOrigin: 'left center' }} />
             </div>
             <h1 className="auth-welcome">Verify Your Email</h1>
             <p className="auth-tagline">

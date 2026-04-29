@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   ArrowRight, CheckCircle, Clock, IndianRupee, Loader,
   RefreshCw, TimerReset, Wallet2, AlertTriangle, Shield,
-  TrendingUp, XCircle
+  TrendingUp, XCircle, Search
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import paymentService from '../../services/payment.service';
@@ -315,6 +315,68 @@ export default function WalletsPage() {
   };
 
   const [activeTab, setActiveTab] = useState('escrow');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('all');
+
+  const filterAndGroupItems = (items, dateFieldAccessor) => {
+    const search = searchTerm.toLowerCase();
+    const filtered = items.filter(payment => {
+      const deal = payment.dealId || {};
+      const brandName = (payment.brandId?.name || payment.brandId?.email || '').toLowerCase();
+      const influencerName = (payment.influencerId?.name || payment.influencerId?.email || '').toLowerCase();
+      const campaignTitle = (deal?.campaign?.title || payment.campaignId?.title || '').toLowerCase();
+
+      return !searchTerm || brandName.includes(search) || influencerName.includes(search) || campaignTitle.includes(search);
+    });
+
+    const groups = {};
+    filtered.forEach(payment => {
+      const deal = payment.dealId || {};
+      const dateVal = dateFieldAccessor(payment, deal);
+      let monthStr = 'Unknown';
+      if (dateVal) {
+        const d = new Date(dateVal);
+        monthStr = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+      }
+
+      if (selectedMonth !== 'all' && monthStr !== selectedMonth) return;
+
+      if (!groups[monthStr]) groups[monthStr] = [];
+      groups[monthStr].push(payment);
+    });
+
+    // Sort months descending
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === 'Unknown') return 1;
+      if (b === 'Unknown') return -1;
+      return new Date(b) - new Date(a);
+    });
+
+    return { groups, sortedKeys };
+  };
+
+  const availableMonths = useMemo(() => {
+    const months = new Set();
+    const addMonths = (items, dateFieldAccessor) => {
+      items.forEach(payment => {
+        const deal = payment.dealId || {};
+        const dateVal = dateFieldAccessor(payment, deal);
+        if (dateVal) {
+          const d = new Date(dateVal);
+          months.add(d.toLocaleString('default', { month: 'long', year: 'numeric' }));
+        }
+      });
+    };
+    if (activeTab === 'escrow') addMonths(overview.pendingPayments, (p, d) => d.paidAt || p.updatedAt);
+    if (activeTab === 'completed') addMonths(overview.completedPayments, (p, d) => d.completedAt || p.releasedAt || p.paidAt || p.updatedAt);
+    return Array.from(months).sort((a, b) => new Date(b) - new Date(a));
+  }, [overview, activeTab]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchTerm('');
+    setSelectedMonth('all');
+  };
 
   const ov = overview.overview;
 
@@ -420,26 +482,58 @@ export default function WalletsPage() {
           )}
           <button
             className={`collab-tab ${activeTab === 'escrow' ? 'active' : ''}`}
-            onClick={() => setActiveTab('escrow')}
+            onClick={() => handleTabChange('escrow')}
           >
             In Escrow <span className="tab-badge">{ov.escrow - ov.readyToRelease}</span>
           </button>
           <button
             className={`collab-tab ${activeTab === 'completed' ? 'active' : ''}`}
-            onClick={() => setActiveTab('completed')}
+            onClick={() => handleTabChange('completed')}
           >
             Completed
           </button>
           {overview.refundedPayments.length > 0 && (
             <button
               className={`collab-tab ${activeTab === 'refunded' ? 'active' : ''}`}
-              onClick={() => setActiveTab('refunded')}
+              onClick={() => handleTabChange('refunded')}
             >
               Refunded
             </button>
           )}
         </div>
 
+        {/* Filters Bar (for Escrow and Completed) */}
+        {(activeTab === 'escrow' || activeTab === 'completed') && (
+          <div className="collab-filters-bar">
+            <div className="collab-search-box">
+              <Search size={18} />
+              <input
+                type="text"
+                placeholder="Search by campaign, brand, or influencer..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="collab-filter-tabs">
+              <button
+                className={`collab-filter-tab ${selectedMonth === 'all' ? 'collab-active' : ''}`}
+                onClick={() => setSelectedMonth('all')}
+              >
+                All Months
+              </button>
+              {availableMonths.map(month => (
+                <button
+                  key={month}
+                  className={`collab-filter-tab ${selectedMonth === month ? 'collab-active' : ''}`}
+                  onClick={() => setSelectedMonth(month)}
+                >
+                  {month}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Tab Content */}
         <div className="wallet-tab-content">
           {activeTab === 'ready' && ov.readyToRelease > 0 && (
@@ -476,35 +570,65 @@ export default function WalletsPage() {
             </section>
           )}
 
-          {activeTab === 'escrow' && (
-            <section className="wallet-panel">
-              <SectionHeader
-                title="In Escrow — Deals In Progress"
-                count={ov.escrow - ov.readyToRelease}
-                hint="Funds held in admin escrow while influencer completes the deal."
-              />
-              <WalletCardList
-                items={overview.pendingPayments}
-                emptyLabel="No active escrow payments."
-                onReleased={handleReleased}
-                showReleaseButton={false}
-              />
-            </section>
-          )}
+          {activeTab === 'escrow' && (() => {
+            const { groups, sortedKeys } = filterAndGroupItems(overview.pendingPayments, (p, d) => d.paidAt || p.updatedAt);
+            return (
+              <section className="wallet-panel">
+                <SectionHeader
+                  title="In Escrow — Deals In Progress"
+                  count={ov.escrow - ov.readyToRelease}
+                  hint="Funds held in admin escrow while influencer completes the deal."
+                />
+                {sortedKeys.length === 0 ? (
+                   <div className="wallet-empty">
+                     <Wallet2 size={28} />
+                     <p>No active escrow payments match your filters.</p>
+                   </div>
+                ) : (
+                  sortedKeys.map(month => (
+                    <div key={month} className="wallet-month-group">
+                      <h4 className="wallet-month-header">{month}</h4>
+                      <WalletCardList
+                        items={groups[month]}
+                        emptyLabel=""
+                        onReleased={handleReleased}
+                        showReleaseButton={false}
+                      />
+                    </div>
+                  ))
+                )}
+              </section>
+            );
+          })()}
 
-          {activeTab === 'completed' && (
-            <section className="wallet-panel">
-              <SectionHeader
-                title="Completed Payments"
-                count={ov.completed}
-                hint="Payments successfully released to influencer wallets."
-              />
-              <WalletTableList
-                items={overview.completedPayments}
-                emptyLabel="No completed payments yet."
-              />
-            </section>
-          )}
+          {activeTab === 'completed' && (() => {
+            const { groups, sortedKeys } = filterAndGroupItems(overview.completedPayments, (p, d) => d.completedAt || p.releasedAt || p.paidAt || p.updatedAt);
+            return (
+              <section className="wallet-panel">
+                <SectionHeader
+                  title="Completed Payments"
+                  count={ov.completed}
+                  hint="Payments successfully released to influencer wallets."
+                />
+                {sortedKeys.length === 0 ? (
+                   <div className="wallet-empty">
+                     <Wallet2 size={28} />
+                     <p>No completed payments match your filters.</p>
+                   </div>
+                ) : (
+                  sortedKeys.map(month => (
+                    <div key={month} className="wallet-month-group">
+                      <h4 className="wallet-month-header">{month}</h4>
+                      <WalletTableList
+                        items={groups[month]}
+                        emptyLabel=""
+                      />
+                    </div>
+                  ))
+                )}
+              </section>
+            );
+          })()}
 
           {activeTab === 'refunded' && overview.refundedPayments.length > 0 && (
             <section className="wallet-panel">
