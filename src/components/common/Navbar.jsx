@@ -473,22 +473,35 @@ const Navbar = () => {
                                           </div>
                                       </div>
                     <div className="nav-dropdown-divider"></div>
-                    <Link 
-                      to="/dashboard" 
-                      className="nav-dropdown-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                                          <LayoutDashboard size={16} />
-                      <span>Dashboard</span>
-                    </Link>
-                    <Link 
-                      to="/analytics" 
-                      className="nav-dropdown-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      <BarChart3 size={16} />
-                      <span>Analytics</span>
-                    </Link>
+                    {!isAdmin && (
+                      <Link 
+                        to="/dashboard" 
+                        className="nav-dropdown-item"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <LayoutDashboard size={16} />
+                        <span>Dashboard</span>
+                      </Link>
+                    )}
+                    {isAdmin ? (
+                      <Link
+                        to="/admin"
+                        className="nav-dropdown-item"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <Shield size={16} />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                    ) : (
+                      <Link 
+                        to="/analytics" 
+                        className="nav-dropdown-item"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <BarChart3 size={16} />
+                        <span>Analytics</span>
+                      </Link>
+                    )}
                     <Link 
                       to="/profile" 
                       className="nav-dropdown-item"
@@ -497,16 +510,7 @@ const Navbar = () => {
                       <Settings size={16} />
                       <span>Settings</span>
                     </Link>
-                    {isAdmin && (
-                      <Link 
-                        to="/admin" 
-                        className="nav-dropdown-item"
-                        onClick={() => setShowDropdown(false)}
-                      >
-                        <Shield size={16} />
-                        <span>Admin Panel</span>
-                      </Link>
-                    )}
+                    {/* Admin Panel removed from profile dropdown per UX request */}
                     <div className="nav-dropdown-divider"></div>
                     <button className="nav-dropdown-item nav-logout" onClick={handleLogout}>
                       <LogOut size={16} />

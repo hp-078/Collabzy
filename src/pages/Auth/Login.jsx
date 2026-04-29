@@ -14,14 +14,14 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate(isAdmin ? '/admin' : '/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isAdmin, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -59,7 +59,7 @@ const Login = () => {
       
       if (result && result.success) {
         toast.success(`Welcome back, ${result.user.name}!`);
-        navigate('/dashboard');
+        navigate(result.user?.role === 'admin' ? '/admin' : '/dashboard');
       } else {
         const errorMsg = result?.error || 'Invalid email or password';
         setError(errorMsg);
