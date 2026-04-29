@@ -15,6 +15,7 @@ import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import Influencers from './pages/Influencers/Influencers';
 import InfluencerDetail from './pages/InfluencerDetail/InfluencerDetail';
+import BrandDetail from './pages/BrandDetail/BrandDetail';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Collaborations from './pages/Collaborations/Collaborations';
 import Messages from './pages/Messages/Messages';
@@ -23,6 +24,7 @@ import Campaigns from './pages/Campaigns/Campaigns';
 import CampaignDetail from './pages/CampaignDetail/CampaignDetail';
 import Analytics from './pages/Analytics/Analytics';
 import AdminPanel from './pages/Admin/AdminPanel';
+import Brands from './pages/Brands/Brands';
 
 import './App.css';
 
@@ -71,6 +73,7 @@ function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/influencers" element={<Layout><Influencers /></Layout>} />
       <Route path="/influencer/:id" element={<Layout><InfluencerDetail /></Layout>} />
+      <Route path="/brand/:id" element={<Layout><BrandDetail /></Layout>} />
 
       {/* Protected Routes */}
       <Route path="/dashboard" element={
@@ -111,6 +114,11 @@ function AppRoutes() {
       <Route path="/admin" element={
         <ProtectedRoute>
           <Layout><AdminPanel /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/brands" element={
+        <ProtectedRoute>
+          <Layout><Brands /></Layout>
         </ProtectedRoute>
       } />
 

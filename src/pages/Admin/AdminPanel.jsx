@@ -37,10 +37,14 @@ const AdminPanel = () => {
         fetchInfluencers({}, true),
         fetchCampaigns({}, true),
       ]);
-      setAllInfluencers(infls || []);
-      setAllCampaigns(camps || []);
+      // Ensure data is array and filter out admin users from influencers
+      const influencersData = Array.isArray(infls) ? infls.filter(inf => inf.user?.role !== 'admin') : [];
+      setAllInfluencers(influencersData);
+      setAllCampaigns(Array.isArray(camps) ? camps : []);
     } catch (err) {
       console.error('Admin load error:', err);
+      setAllInfluencers([]);
+      setAllCampaigns([]);
     }
     setLoading(false);
   };
@@ -50,7 +54,16 @@ const AdminPanel = () => {
   const totalCampaigns = allCampaigns.length;
   const activeCampaigns = allCampaigns.filter(c => c.status === 'active').length;
   const completedCampaigns = allCampaigns.filter(c => c.status === 'completed').length;
-  const totalBudget = allCampaigns.reduce((sum, c) => sum + (c.budget || 0), 0);
+  const totalBudget = allCampaigns.reduce((sum, c) => {
+    if (c && c.budget) {
+      if (typeof c.budget === 'object' && c.budget.max !== undefined) {
+        return sum + c.budget.max;
+      } else if (typeof c.budget === 'number') {
+        return sum + c.budget;
+      }
+    }
+    return sum;
+  }, 0);
   const avgBudget = totalCampaigns > 0 ? Math.round(totalBudget / totalCampaigns) : 0;
   const verifiedInfluencers = allInfluencers.filter(i => i.isVerified).length;
   const totalFollowers = allInfluencers.reduce((sum, i) => sum + (i.totalFollowers || 0), 0);
@@ -58,8 +71,11 @@ const AdminPanel = () => {
   // Category distribution
   const categoryMap = {};
   allCampaigns.forEach(c => {
-    const cat = c.category || 'Other';
-    categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+    if (c && c.category) {
+      categoryMap[c.category] = (categoryMap[c.category] || 0) + 1;
+    } else {
+      categoryMap['Other'] = (categoryMap['Other'] || 0) + 1;
+    }
   });
   const topCategories = Object.entries(categoryMap)
     .sort((a, b) => b[1] - a[1])
@@ -69,15 +85,20 @@ const AdminPanel = () => {
   const platformMap = {};
   allInfluencers.forEach(i => {
     (i.platforms || []).forEach(p => {
-      platformMap[p] = (platformMap[p] || 0) + 1;
+      const platformName = typeof p === 'object' ? (p.type || p.name || 'Unknown') : p;
+      platformMap[platformName] = (platformMap[platformName] || 0) + 1;
     });
   });
 
   // Filter
-  const filteredInfluencers = allInfluencers.filter(i =>
-    (i.user?.name || i.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (i.niche || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredInfluencers = allInfluencers.filter(i => {
+    // Exclude admin users
+    if (i.user?.role === 'admin') return false;
+    
+    const name = (i.user?.name || i.name || '').toLowerCase();
+    const nicheStr = (Array.isArray(i.niche) ? i.niche.join(' ') : i.niche || '').toLowerCase();
+    return name.includes(searchQuery.toLowerCase()) || nicheStr.includes(searchQuery.toLowerCase());
+  });
 
   const filteredCampaigns = allCampaigns.filter(c =>
     (c.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -228,7 +249,7 @@ const AdminPanel = () => {
               <div className="admin-recent-list">
                 {allCampaigns.slice(0, 5).map((camp, i) => (
                   <div key={camp._id || i} className="admin-recent-item">
-                    <div className={`admin-recent-icon admin-icon-${camp.status}`}>
+                    <div className={`admin-recent-icon admin-icon-${camp.status || 'draft'}`}>
                       {camp.status === 'active' ? <CheckCircle size={16} /> :
                        camp.status === 'completed' ? <Award size={16} /> :
                        <Clock size={16} />}
@@ -236,10 +257,23 @@ const AdminPanel = () => {
                     <div className="admin-recent-info">
                       <p className="admin-recent-title">{camp.title}</p>
                       <p className="admin-recent-sub">
-                        {camp.brandProfile?.companyName || 'Brand'} &bull; {camp.category || 'General'} &bull; ₹{camp.budget || 0}
+                        <span
+                          className="admin-recent-brand"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/brand/${camp.brandProfile?._id || camp.brand}`); }}
+                          style={{ textDecoration: 'underline', cursor: 'pointer' }}
+                        >
+                          {camp.brandProfile?.companyName || 'Brand'}
+                        </span>
+                        &nbsp;&bull;&nbsp;{camp.category || 'General'} &bull; 
+                        {camp.budget && typeof camp.budget === 'object' && camp.budget.max !== undefined
+                          ? ` ₹${(camp.budget.max || 0).toLocaleString()}`
+                          : camp.budget && typeof camp.budget === 'number'
+                          ? ` ₹${camp.budget.toLocaleString()}`
+                          : ' ₹0'
+                        }
                       </p>
                     </div>
-                    <span className={`admin-status-badge admin-badge-${camp.status}`}>{camp.status}</span>
+                    <span className={`admin-status-badge admin-badge-${camp.status || 'draft'}`}>{camp.status || 'draft'}</span>
                   </div>
                 ))}
                 {allCampaigns.length === 0 && (
@@ -298,7 +332,14 @@ const AdminPanel = () => {
                           </div>
                         </div>
                       </td>
-                      <td><span className="admin-niche-tag">{inf.niche || 'N/A'}</span></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          {Array.isArray(inf.niche) && inf.niche.length > 0 
+                            ? inf.niche.slice(0, 2).map((n, idx) => <span key={idx} className="admin-niche-tag">{n}</span>)
+                            : <span className="admin-niche-tag">N/A</span>
+                          }
+                        </div>
+                      </td>
                       <td className="admin-num">{formatNumber(inf.totalFollowers || 0)}</td>
                       <td>
                         <div className="admin-rating-cell">
@@ -309,7 +350,9 @@ const AdminPanel = () => {
                       <td>
                         <div className="admin-platforms-cell">
                           {(inf.platforms || []).slice(0, 3).map((p, idx) => (
-                            <span key={idx} className="admin-platform-tag">{p}</span>
+                            <span key={idx} className="admin-platform-tag">
+                              {typeof p === 'object' ? (p.type || p.name || 'Unknown') : p}
+                            </span>
                           ))}
                         </div>
                       </td>
@@ -366,13 +409,28 @@ const AdminPanel = () => {
                         <p className="admin-campaign-title">{camp.title}</p>
                         <p className="admin-campaign-sub">{camp.platformType || 'Any platform'}</p>
                       </td>
-                      <td>{camp.brandProfile?.companyName || 'N/A'}</td>
-                      <td><span className="admin-niche-tag">{camp.category || 'General'}</span></td>
-                      <td className="admin-num">₹{(camp.budget || 0).toLocaleString()}</td>
-                      <td className="admin-num">{camp.applicationCount || 0}</td>
                       <td>
-                        <span className={`admin-status-badge admin-badge-${camp.status}`}>
-                          {camp.status}
+                        <span
+                          className="admin-brand-link"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/brand/${camp.brandProfile?._id || camp.brand}`); }}
+                          style={{ color: '#2b6cb0', textDecoration: 'underline', cursor: 'pointer' }}
+                        >
+                          {camp.brandProfile?.companyName || 'N/A'}
+                        </span>
+                      </td>
+                      <td><span className="admin-niche-tag">{camp.category || 'General'}</span></td>
+                      <td className="admin-num">
+                        {camp.budget && typeof camp.budget === 'object' && camp.budget.min !== undefined
+                          ? `₹${(camp.budget.min || 0).toLocaleString()} - ₹${(camp.budget.max || 0).toLocaleString()}`
+                          : camp.budget && typeof camp.budget === 'number'
+                          ? `₹${camp.budget.toLocaleString()}`
+                          : '₹0'
+                        }
+                      </td>
+                      <td className="admin-num">{camp.totalApplications || camp.applicationCount || 0}</td>
+                      <td>
+                        <span className={`admin-status-badge admin-badge-${camp.status || 'draft'}`}>
+                          {camp.status || 'draft'}
                         </span>
                       </td>
                     </tr>

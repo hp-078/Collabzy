@@ -95,7 +95,6 @@ const brandProfileSchema = new mongoose.Schema({
 });
 
 // Indexes
-brandProfileSchema.index({ user: 1 });
 brandProfileSchema.index({ industry: 1 });
 brandProfileSchema.index({ 'companyName': 'text', 'description': 'text' });
 

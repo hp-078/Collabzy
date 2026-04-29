@@ -296,48 +296,87 @@ const Navbar = () => {
                           )}
                           {isAuthenticated && (
                               <>
-                                  <Link 
-                                      to="/dashboard"
-                                      className={`nav-pill ${isActive('/dashboard') ? 'nav-active' : ''}`}
-                                      onClick={closeMenu}
-                                  >
-                                      <LayoutDashboard size={16} />
-                                      <span>Dashboard</span>
-                                  </Link>
-                                  <Link 
-                                      to="/campaigns"
-                                      className={`nav-pill ${isActive('/campaigns') ? 'nav-active' : ''}`}
-                                      onClick={closeMenu}
-                                  >
-                                      <Megaphone size={16} />
-                                      <span>Campaigns</span>
-                                  </Link>
-                                  <Link 
-                                      to="/collaborations"
-                                      className={`nav-pill ${isActive('/collaborations') ? 'nav-active' : ''}`}
-                                      onClick={closeMenu}
-                                  >
-                                      <Briefcase size={16} />
-                                      <span>Collaborations</span>
-                                  </Link>
-                                  {isBrand && (
-                                      <Link 
-                                          to="/influencers"
-                                          className={`nav-pill ${isActive('/influencers') ? 'nav-active' : ''}`}
-                                          onClick={closeMenu}
-                                      >
-                                          <Users size={16} />
-                                          <span>Influencers</span>
-                                      </Link>
+                                  {isAdmin ? (
+                                      <>
+                                          <Link 
+                                              to="/admin"
+                                              className={`nav-pill ${isActive('/admin') ? 'nav-active' : ''}`}
+                                              onClick={closeMenu}
+                                          >
+                                              <LayoutDashboard size={16} />
+                                              <span>Dashboard</span>
+                                          </Link>
+                                          <Link 
+                                              to="/campaigns"
+                                              className={`nav-pill ${isActive('/campaigns') ? 'nav-active' : ''}`}
+                                              onClick={closeMenu}
+                                          >
+                                              <Megaphone size={16} />
+                                              <span>Campaigns</span>
+                                          </Link>
+                                          <Link 
+                                              to="/influencers"
+                                              className={`nav-pill ${isActive('/influencers') ? 'nav-active' : ''}`}
+                                              onClick={closeMenu}
+                                          >
+                                              <Users size={16} />
+                                              <span>Influencers</span>
+                                          </Link>
+                                          <Link 
+                                              to="/brands"
+                                              className={`nav-pill ${isActive('/brands') ? 'nav-active' : ''}`}
+                                              onClick={closeMenu}
+                                          >
+                                              <Briefcase size={16} />
+                                              <span>Brands</span>
+                                          </Link>
+                                      </>
+                                  ) : (
+                                      <>
+                                          <Link 
+                                              to="/dashboard"
+                                              className={`nav-pill ${isActive('/dashboard') ? 'nav-active' : ''}`}
+                                              onClick={closeMenu}
+                                          >
+                                              <LayoutDashboard size={16} />
+                                              <span>Dashboard</span>
+                                          </Link>
+                                          <Link 
+                                              to="/campaigns"
+                                              className={`nav-pill ${isActive('/campaigns') ? 'nav-active' : ''}`}
+                                              onClick={closeMenu}
+                                          >
+                                              <Megaphone size={16} />
+                                              <span>Campaigns</span>
+                                          </Link>
+                                          <Link 
+                                              to="/collaborations"
+                                              className={`nav-pill ${isActive('/collaborations') ? 'nav-active' : ''}`}
+                                              onClick={closeMenu}
+                                          >
+                                              <Briefcase size={16} />
+                                              <span>Collaborations</span>
+                                          </Link>
+                                          {isBrand && (
+                                              <Link 
+                                                  to="/influencers"
+                                                  className={`nav-pill ${isActive('/influencers') ? 'nav-active' : ''}`}
+                                                  onClick={closeMenu}
+                                              >
+                                                  <Users size={16} />
+                                                  <span>Influencers</span>
+                                              </Link>
+                                          )}
+                                          <Link 
+                                              to="/analytics"
+                                              className={`nav-pill ${isActive('/analytics') ? 'nav-active' : ''}`}
+                                              onClick={closeMenu}
+                                          >
+                                              <BarChart3 size={16} />
+                                              <span>Analytics</span>
+                                          </Link>
+                                      </>
                                   )}
-                                  <Link 
-                                      to="/analytics"
-                                      className={`nav-pill ${isActive('/analytics') ? 'nav-active' : ''}`}
-                                      onClick={closeMenu}
-                                  >
-                                      <BarChart3 size={16} />
-                                      <span>Analytics</span>
-                                  </Link>
                               </>
                           )}
                       </div>
@@ -522,46 +561,85 @@ const Navbar = () => {
                   </Link>
                   {isAuthenticated && (
                       <>
-                          <Link
-                              to="/dashboard"
-                              className={`nav-mobile-item ${isActive('/dashboard') ? 'nav-active' : ''}`}
-                              onClick={closeMenu}
-                          >
-                              <LayoutDashboard size={20} />
-                              <span>Dashboard</span>
-                          </Link>
-                          <Link
-                              to="/campaigns"
-                              className={`nav-mobile-item ${isActive('/campaigns') ? 'nav-active' : ''}`}
-                              onClick={closeMenu}
-                          >
-                              <Megaphone size={20} />
-                              <span>Campaigns</span>
-                          </Link>
-                          <Link
-                              to="/collaborations"
-                              className={`nav-mobile-item ${isActive('/collaborations') ? 'nav-active' : ''}`}
-                              onClick={closeMenu}
-                          >
-                              <Briefcase size={20} />
-                              <span>Collaborations</span>
-                          </Link>
-                          <Link
-                              to="/messages"
-                              className={`nav-mobile-item ${isActive('/messages') ? 'nav-active' : ''}`}
-                              onClick={closeMenu}
-                          >
-                              <MessageSquare size={20} />
-                              <span>Messages</span>
-                          </Link>
-                          <Link
-                              to="/analytics"
-                              className={`nav-mobile-item ${isActive('/analytics') ? 'nav-active' : ''}`}
-                              onClick={closeMenu}
-                          >
-                              <BarChart3 size={20} />
-                              <span>Analytics</span>
-                          </Link>
+                          {isAdmin ? (
+                              <>
+                                  <Link
+                                      to="/admin"
+                                      className={`nav-mobile-item ${isActive('/admin') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <LayoutDashboard size={20} />
+                                      <span>Dashboard</span>
+                                  </Link>
+                                  <Link
+                                      to="/campaigns"
+                                      className={`nav-mobile-item ${isActive('/campaigns') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <Megaphone size={20} />
+                                      <span>Campaigns</span>
+                                  </Link>
+                                  <Link
+                                      to="/influencers"
+                                      className={`nav-mobile-item ${isActive('/influencers') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <Users size={20} />
+                                      <span>Influencers</span>
+                                  </Link>
+                                  <Link
+                                      to="/brands"
+                                      className={`nav-mobile-item ${isActive('/brands') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <Briefcase size={20} />
+                                      <span>Brands</span>
+                                  </Link>
+                              </>
+                          ) : (
+                              <>
+                                  <Link
+                                      to="/dashboard"
+                                      className={`nav-mobile-item ${isActive('/dashboard') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <LayoutDashboard size={20} />
+                                      <span>Dashboard</span>
+                                  </Link>
+                                  <Link
+                                      to="/campaigns"
+                                      className={`nav-mobile-item ${isActive('/campaigns') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <Megaphone size={20} />
+                                      <span>Campaigns</span>
+                                  </Link>
+                                  <Link
+                                      to="/collaborations"
+                                      className={`nav-mobile-item ${isActive('/collaborations') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <Briefcase size={20} />
+                                      <span>Collaborations</span>
+                                  </Link>
+                                  <Link
+                                      to="/messages"
+                                      className={`nav-mobile-item ${isActive('/messages') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <MessageSquare size={20} />
+                                      <span>Messages</span>
+                                  </Link>
+                                  <Link
+                                      to="/analytics"
+                                      className={`nav-mobile-item ${isActive('/analytics') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <BarChart3 size={20} />
+                                      <span>Analytics</span>
+                                  </Link>
+                              </>
+                          )}
                       </>
                   )}
               </div>

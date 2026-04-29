@@ -236,7 +236,6 @@ influencerProfileSchema.methods.updateCombinedStats = function () {
 };
 
 // Indexes
-influencerProfileSchema.index({ user: 1 });
 influencerProfileSchema.index({ niche: 1 });
 influencerProfileSchema.index({ platformType: 1 });
 influencerProfileSchema.index({ totalFollowers: -1 });

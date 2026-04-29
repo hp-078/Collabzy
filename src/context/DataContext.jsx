@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from 'react';
 import { useAuth } from './AuthContext';
 import influencerService from '../services/influencer.service';
+import brandService from '../services/brand.service';
 import campaignService from '../services/campaign.service';
 import applicationService from '../services/application.service';
 import messageService from '../services/message.service';
@@ -20,6 +21,7 @@ export const useData = () => {
 export const DataProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
   const [influencers, setInfluencers] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [applications, setApplications] = useState([]);
   const [deals, setDeals] = useState([]);
@@ -28,6 +30,7 @@ export const DataProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [cache, setCache] = useState({
     influencers: { data: null, timestamp: null },
+    brands: { data: null, timestamp: null },
     campaigns: { data: null, timestamp: null },
     applications: { data: null, timestamp: null },
     deals: { data: null, timestamp: null },
@@ -42,6 +45,31 @@ export const DataProvider = ({ children }) => {
     const cached = cache[cacheKey];
     if (!cached.data || !cached.timestamp) return false;
     return Date.now() - cached.timestamp < CACHE_DURATION;
+  };
+
+  // Fetch brands
+  const fetchBrands = async (filters = {}, forceRefresh = false) => {
+    if (!forceRefresh && isCacheValid('brands')) {
+      setBrands(cache.brands.data);
+      return cache.brands.data;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await brandService.listBrands(filters);
+      // brandService.listBrands returns the server payload { success, data, pagination }
+      const data = (response && response.data) ? response.data : (Array.isArray(response) ? response : []);
+      setBrands(data);
+      updateCache('brands', data);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch brands:', error);
+      setError('Failed to load brands');
+      return [];
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Update cache
@@ -210,6 +238,23 @@ export const DataProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to fetch influencer:', error);
       setError('Failed to load influencer profile');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get single brand
+  const getBrandById = async (brandId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await brandService.getProfileById(brandId);
+      // brandService.getProfileById returns payload { success, data }
+      return response?.data || null;
+    } catch (error) {
+      console.error('Failed to fetch brand:', error);
+      setError('Failed to load brand profile');
       return null;
     } finally {
       setLoading(false);
@@ -516,6 +561,7 @@ export const DataProvider = ({ children }) => {
   const value = {
     // State
     influencers,
+    brands,
     campaigns,
     applications,
     deals,
@@ -525,6 +571,7 @@ export const DataProvider = ({ children }) => {
 
     // Fetch functions
     fetchInfluencers,
+    fetchBrands,
     fetchCampaigns,
     fetchMyCampaigns,
     fetchEligibleCampaigns,
@@ -537,6 +584,7 @@ export const DataProvider = ({ children }) => {
     // Get single item
     getCampaignById,
     getInfluencerById,
+    getBrandById,
     getApplicationMessages,
     getReviewsForUser,
 
