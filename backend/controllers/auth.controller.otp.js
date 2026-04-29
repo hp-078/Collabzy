@@ -433,13 +433,21 @@ exports.login = async (req, res) => {
  */
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
+    const user = req.user;
 
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
+    }
+
+    // Get profile data
+    let profile = null;
+    if (user.role === 'influencer') {
+      profile = await InfluencerProfile.findOne({ user: user._id });
+    } else if (user.role === 'brand') {
+      profile = await BrandProfile.findOne({ user: user._id });
     }
 
     res.status(200).json({
@@ -451,7 +459,9 @@ exports.getMe = async (req, res) => {
         role: user.role,
         avatar: user.avatar,
         emailVerified: user.emailVerified,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        hasProfile: !!profile,
+        profile: profile || null
       }
     });
   } catch (error) {
@@ -479,7 +489,7 @@ exports.updatePassword = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.userId).select('+password');
+    const user = await User.findById(req.user._id).select('+password');
 
     if (!user) {
       return res.status(404).json({
