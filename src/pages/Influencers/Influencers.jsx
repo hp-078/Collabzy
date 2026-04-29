@@ -220,7 +220,9 @@ const Influencers = () => {
                       )}
                     </div>
                     <span className="inf-handle-line">
-                      @{influencer.instagramData?.username || influencer.instagramUsername || influencer.name?.split(' ')[0]?.toLowerCase()}
+                      @{influencer.platformType === 'YouTube' 
+                          ? (influencer.youtubeData?.customUrl?.replace(/^@/, '') || influencer.youtubeData?.title || influencer.name?.split(' ')[0]?.toLowerCase())
+                          : (influencer.instagramData?.username || influencer.instagramUsername || influencer.name?.split(' ')[0]?.toLowerCase())}
                     </span>
                   </div>
 
@@ -231,18 +233,30 @@ const Influencers = () => {
                   {/* Stats Row - Posts | Followers | Following */}
                   <div className="inf-row-stats">
                     <div className="inf-row-stat">
-                      <strong>{influencer.instagramStats?.posts ?? influencer.instagramData?.recentMedia?.length ?? 0}</strong>
-                      <span>Posts</span>
+                      <strong>
+                        {influencer.platformType === 'YouTube' 
+                            ? (influencer.youtubeStats?.videoCount ?? 0)
+                            : (influencer.instagramStats?.posts ?? influencer.instagramData?.recentMedia?.length ?? 0)}
+                      </strong>
+                      <span>{influencer.platformType === 'YouTube' ? 'Videos' : 'Posts'}</span>
                     </div>
                     <div className="inf-stat-divider"></div>
                     <div className="inf-row-stat">
-                      <strong>{formatFollowers(influencer.instagramStats?.followers ?? influencer.totalFollowers)}</strong>
-                      <span>Followers</span>
+                      <strong>
+                        {formatFollowers(influencer.platformType === 'YouTube' 
+                            ? (influencer.youtubeStats?.subscribers ?? influencer.totalFollowers)
+                            : (influencer.instagramStats?.followers ?? influencer.totalFollowers))}
+                      </strong>
+                      <span>{influencer.platformType === 'YouTube' ? 'Subscribers' : 'Followers'}</span>
                     </div>
                     <div className="inf-stat-divider"></div>
                     <div className="inf-row-stat">
-                      <strong>{influencer.instagramStats?.following ?? '-'}</strong>
-                      <span>Following</span>
+                      <strong>
+                        {influencer.platformType === 'YouTube'
+                            ? (influencer.youtubeStats?.totalViews ? formatFollowers(influencer.youtubeStats.totalViews) : '-')
+                            : (influencer.instagramStats?.following ?? '-')}
+                      </strong>
+                      <span>{influencer.platformType === 'YouTube' ? 'Total Views' : 'Following'}</span>
                     </div>
                   </div>
 

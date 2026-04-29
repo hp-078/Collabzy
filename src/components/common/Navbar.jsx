@@ -39,6 +39,7 @@ const Navbar = () => {
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
   const notifRef = useRef(null);
+  const profileRef = useRef(null);
     const { user, logout, isAuthenticated, isInfluencer, isBrand, isAdmin } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -138,6 +139,9 @@ const Navbar = () => {
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setShowNotifications(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setShowDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -451,6 +455,7 @@ const Navbar = () => {
                                   </div>
                                 )}
                               </div>
+              <div ref={profileRef} className="nav-profile-wrapper">
                 <div 
                                   className="nav-user-avatar-container"
                   onClick={() => setShowDropdown(!showDropdown)}
@@ -526,6 +531,7 @@ const Navbar = () => {
                     </button>
                   </div>
                 )}
+              </div>
               </div>
             ) : (
                               <div className="nav-auth-actions">

@@ -117,6 +117,12 @@ const InfluencerDetail = () => {
   const ig = influencer.instagramStats || {};
   const ytData = influencer.youtubeData || {};
   const igData = influencer.instagramData || {};
+  
+  const isYouTube = influencer.platformType === 'YouTube' || influencer.platformType === 'Multiple';
+  const isInstagram = influencer.platformType === 'Instagram' || (!isYouTube) || influencer.platformType === 'Multiple'; // default to IG if not YT
+  
+  const displayYtSubs = yt.subscribers || (influencer.platformType === 'YouTube' ? influencer.totalFollowers : 0);
+  const displayIgFollowers = ig.followers || (influencer.platformType === 'Instagram' ? influencer.totalFollowers : 0);
   const recentVideos = ytData.recentVideos || [];
   const recentMedia = igData.recentMedia || [];
   const services = influencer.services || [];
@@ -232,16 +238,46 @@ const InfluencerDetail = () => {
 
             {/* Top Stats Bar */}
             <div className="idet-stats-bar">
-              <div className={`idet-stat-pill ${ig.followers > 0 ? (ig.followers > yt.subscribers ? 'idet-stat-highlight-ig' : '') : 'idet-stat-zero'}`}>
-                <div className="idet-stat-pill-val">{formatCount(ig.followers)}</div>
-                <div className="idet-stat-pill-lbl">Instagram Followers</div>
-                <div className="idet-stat-pill-icon idet-ig-icon"><Instagram size={20} /></div>
-              </div>
-              <div className={`idet-stat-pill idet-stat-pill-yt ${yt.subscribers > 0 ? 'idet-stat-highlight' : 'idet-stat-zero'}`}>
-                <div className="idet-stat-pill-val">{formatCount(yt.subscribers)}</div>
-                <div className="idet-stat-pill-lbl">YouTube Subscribers</div>
-                <div className="idet-stat-pill-icon idet-yt-icon"><Youtube size={20} /></div>
-              </div>
+              {influencer.platformType === 'YouTube' ? (
+                <>
+                  <div className="idet-stat-pill">
+                    <div className="idet-stat-pill-val">{formatCount(yt.averageViews || yt.totalViews || 0)}</div>
+                    <div className="idet-stat-pill-lbl">Average Views</div>
+                    <div className="idet-stat-pill-icon idet-yt-icon" style={{ opacity: 0.7 }}><Eye size={20} /></div>
+                  </div>
+                  <div className="idet-stat-pill idet-stat-pill-yt idet-stat-highlight">
+                    <div className="idet-stat-pill-val">{formatCount(displayYtSubs)}</div>
+                    <div className="idet-stat-pill-lbl">YouTube Subscribers</div>
+                    <div className="idet-stat-pill-icon idet-yt-icon"><Youtube size={20} /></div>
+                  </div>
+                </>
+              ) : influencer.platformType === 'Instagram' ? (
+                <>
+                  <div className="idet-stat-pill idet-stat-highlight-ig">
+                    <div className="idet-stat-pill-val">{formatCount(displayIgFollowers)}</div>
+                    <div className="idet-stat-pill-lbl">Instagram Followers</div>
+                    <div className="idet-stat-pill-icon idet-ig-icon"><Instagram size={20} /></div>
+                  </div>
+                  <div className="idet-stat-pill">
+                    <div className="idet-stat-pill-val">{formatCount(ig.averageLikes || 0)}</div>
+                    <div className="idet-stat-pill-lbl">Average Likes</div>
+                    <div className="idet-stat-pill-icon idet-ig-icon" style={{ opacity: 0.7 }}><Heart size={20} /></div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={`idet-stat-pill ${displayIgFollowers >= displayYtSubs ? 'idet-stat-highlight-ig' : 'idet-stat-zero'}`}>
+                    <div className="idet-stat-pill-val">{formatCount(displayIgFollowers)}</div>
+                    <div className="idet-stat-pill-lbl">Instagram Followers</div>
+                    <div className="idet-stat-pill-icon idet-ig-icon"><Instagram size={20} /></div>
+                  </div>
+                  <div className={`idet-stat-pill idet-stat-pill-yt ${displayYtSubs >= displayIgFollowers ? 'idet-stat-highlight' : 'idet-stat-zero'}`}>
+                    <div className="idet-stat-pill-val">{formatCount(displayYtSubs)}</div>
+                    <div className="idet-stat-pill-lbl">YouTube Subscribers</div>
+                    <div className="idet-stat-pill-icon idet-yt-icon"><Youtube size={20} /></div>
+                  </div>
+                </>
+              )}
               <div className="idet-stat-pill">
                 <div className="idet-stat-pill-val">{influencer.campaignsCompleted || 0}</div>
                 <div className="idet-stat-pill-lbl">Projects Completed</div>
@@ -250,7 +286,7 @@ const InfluencerDetail = () => {
             </div>
 
             {/* YouTube Channel Info */}
-            {yt.subscribers > 0 && (
+            {(displayYtSubs > 0 || isYouTube) && (
               <section className="idet-channel-info">
                 <div className="idet-channel-avatar">
                   {ytData.thumbnail ? (
@@ -266,7 +302,7 @@ const InfluencerDetail = () => {
                   </div>
                   <div className="idet-channel-counts">
                     <span>{yt.videoCount || 0} videos</span>
-                    <span>{formatCount(yt.subscribers)} subscribers</span>
+                    <span>{formatCount(displayYtSubs)} subscribers</span>
                   </div>
                   <div className="idet-channel-name">{ytData.title || influencer.name}</div>
                   <div className="idet-channel-category">{niches[0] || 'Creator'}</div>
@@ -275,7 +311,7 @@ const InfluencerDetail = () => {
             )}
 
             {/* Instagram Channel Info */}
-            {ig.followers > 0 && (
+            {(displayIgFollowers > 0 || isInstagram) && (
               <section className="idet-channel-info idet-channel-ig">
                 <div className="idet-channel-avatar">
                   {igData.profilePicture ? (
@@ -291,7 +327,7 @@ const InfluencerDetail = () => {
                   </div>
                   <div className="idet-channel-counts">
                     <span>{ig.posts || 0} posts</span>
-                    <span>{formatCount(ig.followers)} followers</span>
+                    <span>{formatCount(displayIgFollowers)} followers</span>
                   </div>
                   <div className="idet-channel-name">{igData.name || influencer.name}</div>
                   <div className="idet-channel-category">{niches[0] || 'Creator'}</div>
