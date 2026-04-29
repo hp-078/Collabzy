@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
+import api from '../../services/api';
 import {
   ArrowRight,
   Briefcase,
@@ -36,6 +37,7 @@ const Dashboard = () => {
 
   const [localLoading, setLocalLoading] = useState(true);
   const [myCampaigns, setMyCampaigns] = useState([]);
+  const [walletAmount, setWalletAmount] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -44,6 +46,13 @@ const Dashboard = () => {
         if (isInfluencer) {
           await fetchMyApplications();
           await fetchMyDeals();
+          try {
+            const walletResponse = await api.get('/wallets/me');
+            setWalletAmount(walletResponse?.data?.data?.balance || 0);
+          } catch (walletErr) {
+            console.error('Dashboard wallet load error:', walletErr);
+            setWalletAmount(0);
+          }
         }
         if (isBrand) {
           const data = await fetchMyCampaigns();
@@ -96,10 +105,10 @@ const Dashboard = () => {
 
   const metrics = isInfluencer
     ? [
+        { label: 'Wallet Balance', value: formatCurrency(walletAmount), icon: IndianRupee },
         { label: 'Active Deals', value: activeDeals.length, icon: Briefcase },
         { label: 'Pending Applications', value: pendingApps.length, icon: Clock },
-        { label: 'Completed Deals', value: completedDeals.length, icon: CheckCircle },
-        { label: 'Total Earnings', value: formatCurrency(totalEarnings), icon: IndianRupee }
+        { label: 'Completed Deals', value: completedDeals.length, icon: CheckCircle }
       ]
     : isBrand
       ? [
@@ -201,6 +210,18 @@ const Dashboard = () => {
             </article>
           ))}
         </section>
+
+        {isInfluencer ? (
+          <section className="dash-panel" style={{ marginBottom: '1.2rem' }}>
+            <div className="dash-panel-head">
+              <h3>Wallet Snapshot</h3>
+              <Link to="/wallets">Open wallet</Link>
+            </div>
+            <div className="dash-wallet-note">
+              Your current wallet balance is {formatCurrency(walletAmount)}. Released campaign payments will appear here once the admin completes the transfer.
+            </div>
+          </section>
+        ) : null}
 
         <section className="dash-grid">
           <div className="dash-panel">

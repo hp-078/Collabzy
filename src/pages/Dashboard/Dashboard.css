@@ -118,6 +118,11 @@
   margin-bottom: 1.2rem;
 }
 
+.dash-metric-card:first-child {
+  background: linear-gradient(135deg, #fff7ee, #ffffff);
+  border: 1px solid rgba(255, 181, 186, 0.18);
+}
+
 .dash-metric-card {
   background: #fff;
   border-radius: 16px;
@@ -180,6 +185,16 @@
   font-size: 0.92rem;
   font-family: var(--body-font);
   font-weight: 700;
+}
+
+.dash-wallet-note {
+  background: linear-gradient(135deg, var(--pastel-cream), #ffffff);
+  border: 1px solid rgba(255, 181, 186, 0.18);
+  border-radius: 14px;
+  padding: 1rem 1.05rem;
+  color: var(--dark-text);
+  font-family: var(--body-font);
+  line-height: 1.6;
 }
 
 .dash-list {

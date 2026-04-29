@@ -115,10 +115,8 @@ const paymentSchema = new mongoose.Schema({
 });
 
 // Indexes
-paymentSchema.index({ dealId: 1 });
 paymentSchema.index({ brandId: 1, paymentStatus: 1 });
 paymentSchema.index({ influencerId: 1, paymentStatus: 1 });
-paymentSchema.index({ razorpayOrderId: 1 });
 paymentSchema.index({ paymentStatus: 1, createdAt: -1 });
 
 // Virtual for net platform revenue

@@ -12,6 +12,8 @@ import Footer from './components/common/Footer';
 // Pages
 import Home from './pages/Home/Home';
 import Login from './pages/Auth/Login';
+import WalletsPage from './pages/Admin/WalletsPage';
+import WalletView from './components/Wallet/WalletView';
 import Register from './pages/Auth/Register';
 import OTPVerification from './pages/Auth/OTPVerification';
 import ForgotPassword from './pages/Auth/ForgotPassword';
@@ -73,6 +75,7 @@ function AppRoutes() {
       {/* Public Routes */}
       <Route path="/" element={<Layout><Home /></Layout>} />
       <Route path="/login" element={<Login />} />
+      <Route path="/wallets" element={<WalletView />} />
       <Route path="/register" element={<Register />} />
       <Route path="/verify-otp" element={<OTPVerification />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -120,6 +123,11 @@ function AppRoutes() {
       <Route path="/admin" element={
         <ProtectedRoute>
           <Layout><AdminPanel /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/wallets" element={
+        <ProtectedRoute>
+          <Layout><WalletsPage /></Layout>
         </ProtectedRoute>
       } />
       <Route path="/brands" element={

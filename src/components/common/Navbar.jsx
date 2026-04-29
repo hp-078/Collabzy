@@ -23,7 +23,8 @@ import {
     BarChart3,
     Shield,
     Sun,
-    Moon
+    Moon,
+    Wallet
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -330,6 +331,14 @@ const Navbar = () => {
                                               <Briefcase size={16} />
                                               <span>Brands</span>
                                           </Link>
+                                          <Link 
+                                              to="/admin/wallets"
+                                              className={`nav-pill ${isActive('/admin/wallets') ? 'nav-active' : ''}`}
+                                              onClick={closeMenu}
+                                          >
+                                              <Wallet size={16} />
+                                              <span>Wallets</span>
+                                          </Link>
                                       </>
                                   ) : (
                                       <>
@@ -598,6 +607,14 @@ const Navbar = () => {
                                   >
                                       <Briefcase size={20} />
                                       <span>Brands</span>
+                                  </Link>
+                                  <Link
+                                      to="/admin/wallets"
+                                      className={`nav-mobile-item ${isActive('/admin/wallets') ? 'nav-active' : ''}`}
+                                      onClick={closeMenu}
+                                  >
+                                      <Wallet size={20} />
+                                      <span>Wallets</span>
                                   </Link>
                               </>
                           ) : (

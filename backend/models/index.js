@@ -10,6 +10,8 @@ const Deal = require('./Deal.model');
 const Message = require('./Message.model');
 const Notification = require('./Notification.model');
 const Review = require('./Review.model');
+const Wallet = require('./Wallet.model');
+const PaymentTransaction = require('./PaymentTransaction.model');
 
 module.exports = {
   User,
@@ -23,4 +25,6 @@ module.exports = {
   Message,
   Notification,
   Review
+  ,Wallet,
+  PaymentTransaction
 };
