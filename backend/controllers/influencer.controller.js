@@ -136,8 +136,13 @@ exports.updateProfile = async (req, res) => {
             profile.youtubeData = {
               ...profile.youtubeData?.toObject?.() || {},
               title: ytPlatform.channelTitle,
+              thumbnail: ytPlatform.thumbnail || profile.youtubeData?.thumbnail,
               fetchedAt: ytPlatform.lastFetched ? new Date(ytPlatform.lastFetched) : new Date(),
             };
+          }
+          // Update avatar with YouTube thumbnail if not already set
+          if (!profile.avatar && ytPlatform.thumbnail) {
+            profile.avatar = ytPlatform.thumbnail;
           }
           if (ytPlatform.channelId) {
             profile.youtubeChannelId = ytPlatform.channelId;
@@ -430,9 +435,18 @@ exports.fetchYouTubeProfile = async (req, res) => {
 
     // Fetch fresh data from YouTube API
     const youtubeService = require('../services/youtube.service');
+    console.log('🎥 Fetching YouTube profile for URL:', youtubeUrl);
     const result = await youtubeService.fetchCompleteProfile(youtubeUrl);
 
+    console.log('🎥 YouTube fetch result:', {
+      success: result.success,
+      hasChannel: !!result.data?.channel,
+      thumbnail: result.data?.channel?.thumbnail,
+      error: result.error
+    });
+
     if (!result.success) {
+      console.error('❌ YouTube API error:', result.error);
       return res.status(400).json({
         success: false,
         message: result.error,
@@ -465,6 +479,11 @@ exports.fetchYouTubeProfile = async (req, res) => {
       recentVideos: result.data.recentVideos,
       fetchedAt: new Date()
     };
+
+    // Update avatar with YouTube thumbnail if avatar is not already set
+    if (!profile.avatar && result.data.channel.thumbnail) {
+      profile.avatar = result.data.channel.thumbnail;
+    }
 
     // Update combined stats
     profile.updateCombinedStats();

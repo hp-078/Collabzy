@@ -1,0 +1,63 @@
+/* Avatar Component Styles */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--clay-radius, 12px);
+  overflow: hidden;
+  background-color: var(--gray-100, #f3f4f6);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Size variants */
+.avatar-xs {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.avatar-sm {
+  width: 48px;
+  height: 48px;
+  font-size: 14px;
+}
+
+.avatar-md {
+  width: 64px;
+  height: 64px;
+  font-size: 16px;
+}
+
+.avatar-lg {
+  width: 96px;
+  height: 96px;
+  font-size: 20px;
+}
+
+.avatar-xl {
+  width: 128px;
+  height: 128px;
+  font-size: 28px;
+}
+
+/* Image inside avatar */
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Placeholder fallback */
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-300, #e0e7ff) 0%, var(--primary-100, #f0f4ff) 100%);
+  color: var(--primary-600, #4f46e5);
+  font-weight: bold;
+}

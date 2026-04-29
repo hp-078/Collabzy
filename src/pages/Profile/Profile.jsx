@@ -5,6 +5,7 @@ import influencerService from '../../services/influencer.service';
 import brandService from '../../services/brand.service';
 import youtubeService from '../../services/youtube.service';
 import instagramService from '../../services/instagram.service';
+import Avatar from '../../components/common/Avatar';
 import { CATEGORY_OPTIONS, normalizeCategoryList } from '../../constants/categories';
 import toast from 'react-hot-toast';
 import {
@@ -180,7 +181,12 @@ const Profile = () => {
 
           // Load cached YouTube stats
           if (data.youtubeData || data.youtubeStats) {
-            setYoutubeStats(formatYouTubeStats(data));
+            const formattedYT = formatYouTubeStats(data);
+            setYoutubeStats(formattedYT);
+            // Use YouTube thumbnail as avatar fallback if avatar not set
+            if (!data.avatar && formattedYT.channel?.thumbnail) {
+              setPreviewImage(formattedYT.channel.thumbnail);
+            }
           } else {
             const ytPlatform = (data.platforms || []).find((p) => p.type === 'YouTube');
             if (ytPlatform?.stats) {
@@ -602,6 +608,12 @@ const Profile = () => {
       if (response.success && response.data) {
         const formatted = formatYouTubeStats({ ...response.data, fetchedAt: new Date(), cached: response.cached || false }, youtubeStats);
         setYoutubeStats(formatted);
+        
+        // Update previewImage with YouTube thumbnail if available
+        if (formatted.channel?.thumbnail && !previewImage) {
+          setPreviewImage(formatted.channel.thumbnail);
+        }
+        
         clearCache();
         const msg = response.cached
           ? `📦 YouTube data from cache\n📊 ${formatted.channel.subscriberCount?.toLocaleString()} subscribers`
@@ -622,6 +634,12 @@ const Profile = () => {
       if (response.success && response.data) {
         const formatted = formatYouTubeStats({ ...response.data, fetchedAt: new Date(), cached: false }, youtubeStats);
         setYoutubeStats(formatted);
+        
+        // Update previewImage with YouTube thumbnail if available
+        if (formatted.channel?.thumbnail && !previewImage) {
+          setPreviewImage(formatted.channel.thumbnail);
+        }
+        
         clearCache();
         toast.success(`🔄 YouTube refreshed!\n📊 ${formatted.channel.subscriberCount?.toLocaleString()} subscribers`, { duration: 5000 });
       }
@@ -761,11 +779,14 @@ const Profile = () => {
             {/* ── Avatar Section ─────────────────────────────────────────── */}
             <div className="prof-section prof-avatar-section">
               <div className="prof-avatar-wrapper">
-                {previewImage ? (
-                  <img src={previewImage} alt={user.name} className="prof-avatar" />
-                ) : (
-                  <div className="prof-avatar-placeholder">{user?.name?.charAt(0) || 'U'}</div>
-                )}
+                <Avatar
+                  src={previewImage}
+                  alt={user?.name}
+                  name={user?.name}
+                  size="lg"
+                  className="prof-avatar"
+                  onError={() => console.warn('Profile avatar failed to load')}
+                />
                 <button
                   type="button"
                   className="prof-avatar-upload"

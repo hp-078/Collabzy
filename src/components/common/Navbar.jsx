@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import notificationService from '../../services/notification.service';
 import messageService from '../../services/message.service';
 import socketService from '../../services/socket.service';
+import Avatar from './Avatar';
 import { 
   Menu, 
   X, 
@@ -447,26 +448,26 @@ const Navbar = () => {
                                   className="nav-user-avatar-container"
                   onClick={() => setShowDropdown(!showDropdown)}
                 >
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt={user.name} className="nav-user-avatar" />
-                  ) : (
-                    <div className="nav-user-avatar-placeholder">
-                      {user?.name?.charAt(0) || 'U'}
-                    </div>
-                  )}
+                  <Avatar
+                    src={user?.avatar}
+                    alt={user?.name}
+                    name={user?.name}
+                    size="md"
+                    className="nav-user-avatar"
+                  />
                                   <div className="nav-avatar-ring"></div>
                 </div>
 
                 {showDropdown && (
                   <div className="nav-dropdown-menu">
                     <div className="nav-dropdown-header">
-                                          {user?.avatar ? (
-                                            <img src={user.avatar} alt={user.name} className="nav-dropdown-avatar-img" />
-                                          ) : (
-                                            <div className="nav-dropdown-avatar">
-                                              {user?.name?.charAt(0) || 'U'}
-                                            </div>
-                                          )}
+                      <Avatar
+                        src={user?.avatar}
+                        alt={user?.name}
+                        name={user?.name}
+                        size="sm"
+                        className="nav-dropdown-avatar-img"
+                      />
                                           <div className="nav-dropdown-info">
                                               <span className="nav-dropdown-name">{user?.name}</span>
                                               <span className="nav-dropdown-role">{user?.role}</span>

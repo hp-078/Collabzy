@@ -11,6 +11,12 @@ class YouTubeService {
     this.apiKey = process.env.YOUTUBE_API_KEY;
     this.baseURL = 'https://www.googleapis.com/youtube/v3';
     this.quotaUsed = 0; // Track quota usage (reset daily)
+    
+    if (!this.apiKey) {
+      console.warn('⚠️  WARNING: YOUTUBE_API_KEY is not configured in environment variables');
+    } else {
+      console.log('✅ YouTube API Key is configured');
+    }
   }
 
   /**
@@ -114,6 +120,28 @@ class YouTubeService {
    * Fetch channel statistics and information
    * Cost: 1 quota unit
    */
+  /**
+   * Validate that a thumbnail URL is valid and accessible
+   * Returns true if URL appears to be valid
+   */
+  validateThumbnailUrl(url) {
+    if (!url) return false;
+    try {
+      new URL(url); // Will throw if invalid
+      // Check if it's a known CDN URL format
+      const validDomains = [
+        'yt3.ggpht.com',
+        'lh3.googleusercontent.com',
+        'yt3.googleusercontent.com'
+      ];
+      const hostname = new URL(url).hostname;
+      return validDomains.some(domain => hostname.includes(domain));
+    } catch (error) {
+      console.warn(`⚠️ Invalid thumbnail URL: ${url}`);
+      return false;
+    }
+  }
+
   async getChannelStats(channelId) {
     try {
       const response = await axios.get(`${this.baseURL}/channels`, {
@@ -134,12 +162,24 @@ class YouTubeService {
       const snippet = channel.snippet;
       const statistics = channel.statistics;
 
+      const thumbnailUrl = snippet.thumbnails.high?.url || snippet.thumbnails.default?.url;
+
+      console.log('🎥 YouTube API Channel Response:', {
+        channelId: channel.id,
+        title: snippet.title,
+        thumbnails: snippet.thumbnails,
+        highThumbnail: snippet.thumbnails.high?.url,
+        defaultThumbnail: snippet.thumbnails.default?.url,
+        selectedThumbnail: thumbnailUrl,
+        isValidUrl: thumbnailUrl ? this.validateThumbnailUrl(thumbnailUrl) : false
+      });
+
       return {
         channelId: channel.id,
         title: snippet.title,
         description: snippet.description,
         customUrl: snippet.customUrl || null,
-        thumbnail: snippet.thumbnails.high?.url || snippet.thumbnails.default.url,
+        thumbnail: thumbnailUrl,
         subscriberCount: parseInt(statistics.subscriberCount) || 0,
         videoCount: parseInt(statistics.videoCount) || 0,
         viewCount: parseInt(statistics.viewCount) || 0,
@@ -246,17 +286,24 @@ class YouTubeService {
    */
   async fetchCompleteProfile(youtubeUrl) {
     try {
+      console.log('🎥 fetchCompleteProfile called with URL:', youtubeUrl);
+      console.log('🎥 API Key available:', !!this.apiKey);
+      
       // Step 1: Parse URL and get identifier
       const identifier = this.parseYouTubeURL(youtubeUrl);
+      console.log('🎥 Parsed identifier:', identifier);
 
       // Step 2: Resolve to channel ID
       const channelId = await this.resolveChannelId(identifier);
+      console.log('🎥 Resolved channel ID:', channelId);
 
       // Step 3: Get channel statistics
       const channelStats = await this.getChannelStats(channelId);
+      console.log('🎥 Channel stats fetched:', { title: channelStats.title, thumbnail: !!channelStats.thumbnail });
 
       // Step 4: Get recent videos
       const recentVideos = await this.getRecentVideos(channelId, 10);
+      console.log('🎥 Recent videos fetched:', recentVideos.length);
 
       // Step 5: Calculate engagement metrics
       const engagementRate = this.calculateEngagementRate(recentVideos);
@@ -275,6 +322,7 @@ class YouTubeService {
         },
       };
     } catch (error) {
+      console.error('❌ fetchCompleteProfile error:', error.message);
       return {
         success: false,
         error: error.message,

@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Loader
 } from 'lucide-react';
+import Avatar from '../../components/common/Avatar';
 import './Influencers.css';
 
 const platformIcons = {
@@ -190,22 +191,18 @@ const Influencers = () => {
             >
               <div className="inf-card-left">
                 <div className="inf-avatar-wrapper">
-                  {influencer.avatar ? (
-                    <img
-                      src={influencer.avatar}
-                      alt={influencer.name}
-                      className="inf-avatar"
-                    />
-                  ) : (
-                    <div className="inf-avatar-placeholder">
-                      {influencer.name?.charAt(0) || 'I'}
-                    </div>
-                  )}
-                  {influencer.isVerified && (
-                    <span className="inf-verified-badge">
-                      <CheckCircle size={14} />
-                    </span>
-                  )}
+                <Avatar
+                  src={influencer.avatar}
+                  alt={influencer.name}
+                  name={influencer.name}
+                  size="md"
+                  className="inf-avatar"
+                />
+                {influencer.isVerified && (
+                  <span className="inf-verified-badge">
+                    <CheckCircle size={14} />
+                  </span>
+                )}
                 </div>
                 <div className="inf-platform-badge">
                   {platformIcons[influencer.platformType] || influencer.platformType}
