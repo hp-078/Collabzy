@@ -183,16 +183,16 @@ const Influencers = () => {
         {/* Influencer Grid */}
         <div className="inf-grid">
           {filteredInfluencers.map((influencer) => (
-            <Link 
-              key={influencer._id} 
+            <Link
+              key={influencer._id}
               to={`/influencer/${influencer._id}`}
               className="inf-card"
             >
-              <div className="inf-card-header">
+              <div className="inf-card-left">
                 <div className="inf-avatar-wrapper">
                   {influencer.avatar ? (
-                    <img 
-                      src={influencer.avatar} 
+                    <img
+                      src={influencer.avatar}
                       alt={influencer.name}
                       className="inf-avatar"
                     />
@@ -203,7 +203,7 @@ const Influencers = () => {
                   )}
                   {influencer.isVerified && (
                     <span className="inf-verified-badge">
-                      <CheckCircle size={16} />
+                      <CheckCircle size={14} />
                     </span>
                   )}
                 </div>
@@ -211,67 +211,43 @@ const Influencers = () => {
                   {platformIcons[influencer.platformType] || influencer.platformType}
                 </div>
               </div>
-              
-              <div className="inf-card-body">
-                <h3 className="inf-name">{influencer.name}</h3>
-                <p className="inf-niche">
-                  {Array.isArray(influencer.niche) ? influencer.niche.join(', ') : influencer.niche || 'No niche specified'}
-                </p>
-                
-                {influencer.location && (
-                  <div className="inf-location">
-                    <MapPin size={14} />
-                    <span>{influencer.location}</span>
-                  </div>
-                )}
 
-                {/* Social Media Handles */}
-                <div className="inf-social-handles">
-                  {influencer.instagramUsername && (
-                    <span className="inf-handle">
-                      <Instagram size={12} />
-                      @{influencer.instagramUsername}
-                    </span>
-                  )}
-                  {influencer.youtubeUrl && (
-                    <span className="inf-handle">
-                      <Youtube size={12} />
-                      YouTube
-                    </span>
-                  )}
+              <div className="inf-card-right">
+                <div className="inf-title-row">
+                  <h3 className="inf-name">{influencer.name}</h3>
+                  <span className="inf-handle-line">
+                    @{influencer.instagramData?.username || influencer.instagramUsername || influencer.name?.split(' ')[0]}
+                  </span>
                 </div>
 
                 {influencer.bio && (
-                  <p className="inf-description">
-                    {influencer.bio.slice(0, 100)}
-                    {influencer.bio.length > 100 ? '...' : ''}
-                  </p>
+                  <p className="inf-description small">{influencer.bio.slice(0, 120)}{influencer.bio.length > 120 ? '...' : ''}</p>
                 )}
 
-                <div className="inf-stats">
-                  <div className="inf-stat">
-                    <Users size={16} />
-                    <span>{formatFollowers(influencer.totalFollowers)}</span>
+                <div className="inf-row-stats">
+                  <div className="inf-row-stat">
+                    <strong>{influencer.instagramStats?.posts ?? influencer.instagramData?.recentMedia?.length ?? 0}</strong>
+                    <span>posts</span>
                   </div>
-                  <div className="inf-stat">
-                    <TrendingUp size={16} />
-                    <span>{influencer.averageEngagementRate?.toFixed(1) || '0'}%</span>
+                  <div className="inf-row-stat">
+                    <strong>{formatFollowers(influencer.instagramStats?.followers ?? influencer.totalFollowers)}</strong>
+                    <span>followers</span>
                   </div>
-                  <div className="inf-stat inf-trust-score">
-                    <Star size={16} fill="currentColor" />
-                    <span>{influencer.trustScore || 50}</span>
+                  <div className="inf-row-stat">
+                    <strong>{influencer.instagramStats?.following ?? '-'}</strong>
+                    <span>following</span>
                   </div>
                 </div>
 
-                {influencer.services && influencer.services.length > 0 && (
-                  <div className="inf-price-range">
-                    Starting from <strong>₹{Math.min(...influencer.services.map(s => s.price)).toLocaleString()}</strong>
-                  </div>
-                )}
-              </div>
+                <div className="inf-meta-row">
+                  {influencer.location && <span className="inf-meta-item"><MapPin size={12} /> {influencer.location}</span>}
+                  {influencer.averageEngagementRate != null && <span className="inf-meta-item"><TrendingUp size={12} /> {influencer.averageEngagementRate?.toFixed(1)}%</span>}
+                  <span className="inf-meta-item">Trust: {influencer.trustScore ?? 50}</span>
+                </div>
 
-              <div className="inf-card-footer">
-                <span className="inf-view-profile">View Profile →</span>
+                <div className="inf-card-footer">
+                  <span className="inf-view-profile">View Profile →</span>
+                </div>
               </div>
             </Link>
           ))}

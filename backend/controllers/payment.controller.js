@@ -139,11 +139,24 @@ exports.getPaymentByDeal = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Payment not found' });
     }
 
-    return res.json({ success: true, data: payment });
-  } catch (error) {
-    console.error('Get payment error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch payment' });
-  }
+        // Include public Razorpay key and basic order info so frontend can initiate checkout
+        return res.json({
+            success: true,
+            data: {
+                payment,
+                orderId: payment.razorpayOrderId,
+                amount: payment.totalAmount,
+                currency: payment.currency,
+                key: process.env.RAZORPAY_KEY_ID || null
+            }
+        });
+    } catch (error) {
+        console.error('Get payment error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch payment'
+        });
+    }
 };
 
 /**
