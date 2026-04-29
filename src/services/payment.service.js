@@ -18,8 +18,18 @@ const paymentService = {
     return response.data;
   },
 
+  createBulkPaymentOrder: async (dealIds) => {
+    const response = await api.post('/payments/create-bulk-order', { dealIds });
+    return response.data;
+  },
+
   verifyPayment: async (paymentData) => {
     const response = await api.post('/payments/verify', paymentData);
+    return response.data;
+  },
+
+  verifyBulkPayment: async (paymentData) => {
+    const response = await api.post('/payments/verify-bulk', paymentData);
     return response.data;
   },
 

@@ -93,6 +93,47 @@ class PaymentService {
     }
   }
 
+  async createBulkOrder({ deals, payments, brandId }) {
+    try {
+      this.ensureConfigured();
+
+      if (!Array.isArray(deals) || deals.length === 0) {
+        throw new Error('At least one deal is required for bulk payment');
+      }
+
+      const totalAmount = payments.reduce((sum, payment) => sum + Number(payment.totalAmount || 0), 0);
+      if (totalAmount <= 0) {
+        throw new Error('Invalid total amount for bulk payment');
+      }
+
+      const razorpayAmount = Math.round(totalAmount * 100);
+      const orderOptions = {
+        amount: razorpayAmount,
+        currency: 'INR',
+        receipt: `bulk_${Date.now()}`,
+        notes: {
+          type: 'bulk_pending_payment',
+          brandId: brandId.toString(),
+          dealIds: deals.map((deal) => deal._id.toString()).join(',')
+        }
+      };
+
+      const razorpayOrder = await this.razorpay.orders.create(orderOptions);
+
+      return {
+        orderId: razorpayOrder.id,
+        amount: totalAmount,
+        currency: 'INR',
+        key: process.env.RAZORPAY_KEY_ID,
+        dealCount: deals.length,
+        dealIds: deals.map((deal) => deal._id.toString())
+      };
+    } catch (error) {
+      console.error('Create bulk order error:', error);
+      throw new Error(error.message || 'Failed to create bulk payment order');
+    }
+  }
+
   verifyPaymentSignature(orderId, paymentId, signature) {
     try {
       this.ensureConfigured();
@@ -239,6 +280,94 @@ class PaymentService {
     } catch (error) {
       await session.abortTransaction();
       console.error('verifyAndEscrow error:', error);
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+
+  async verifyAndEscrowBulk({ orderId, paymentId, signature, dealIds, brandId }) {
+    const isValid = this.verifyPaymentSignature(orderId, paymentId, signature);
+    if (!isValid) {
+      throw new Error('Invalid payment signature');
+    }
+
+    if (!Array.isArray(dealIds) || dealIds.length === 0) {
+      throw new Error('At least one deal is required');
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const deals = await Deal.find({ _id: { $in: dealIds } }).session(session);
+      if (deals.length !== dealIds.length) {
+        throw new Error('One or more selected deals were not found');
+      }
+
+      const payments = await Payment.find({ dealId: { $in: dealIds } }).session(session);
+      const paymentByDealId = new Map(payments.map((payment) => [String(payment.dealId), payment]));
+
+      const processed = [];
+
+      for (const deal of deals) {
+        if (deal.brand.toString() !== brandId.toString()) {
+          throw new Error('Not authorized to pay one or more selected deals');
+        }
+
+        if (deal.status !== 'pending_payment') {
+          throw new Error('All selected deals must be in pending payment stage');
+        }
+
+        const payment = paymentByDealId.get(String(deal._id));
+        if (!payment) {
+          throw new Error('Payment record not found for one or more selected deals');
+        }
+
+        if (payment.paymentStatus !== 'pending') {
+          throw new Error(`Cannot process payment with status: ${payment.paymentStatus}`);
+        }
+
+        payment.razorpayPaymentId = paymentId;
+        payment.razorpaySignature = signature;
+
+        await this._recordPaymentStatus(payment, 'paid', 'Bulk Razorpay payment received', session);
+
+        const transaction = await this.createEscrowTransaction({
+          brandId: payment.brandId,
+          influencerId: payment.influencerId,
+          campaignId: payment.campaignId,
+          applicationId: payment.applicationId,
+          dealId: payment.dealId,
+          amount: payment.totalAmount,
+          paymentId: payment._id,
+          externalRef: orderId
+        }, session);
+
+        await this._recordPaymentStatus(payment, 'escrow', 'Bulk funds held in escrow until deal completion', session);
+
+        deal.status = 'active';
+        deal.paymentStatus = 'paid';
+        deal.paidAt = new Date();
+        await deal.save({ session });
+
+        processed.push({
+          dealId: String(deal._id),
+          paymentId: String(payment._id),
+          transactionId: String(transaction._id)
+        });
+      }
+
+      await session.commitTransaction();
+      return {
+        orderId,
+        paymentId,
+        processedCount: processed.length,
+        processed
+      };
+    } catch (error) {
+      await session.abortTransaction();
+      console.error('verifyAndEscrowBulk error:', error);
       throw error;
     } finally {
       session.endSession();

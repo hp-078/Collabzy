@@ -70,6 +70,54 @@ exports.createOrder = async (req, res) => {
   }
 };
 
+exports.createBulkOrder = async (req, res) => {
+  try {
+    const { dealIds } = req.body;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    if (!Array.isArray(dealIds) || dealIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'At least one deal ID is required' });
+    }
+
+    if (userRole !== 'brand') {
+      return res.status(403).json({ success: false, message: 'Only brands can create bulk payment orders' });
+    }
+
+    const uniqueDealIds = [...new Set(dealIds.map((id) => String(id)))];
+    const deals = await Deal.find({ _id: { $in: uniqueDealIds } });
+
+    if (deals.length !== uniqueDealIds.length) {
+      return res.status(404).json({ success: false, message: 'One or more deals not found' });
+    }
+
+    for (const deal of deals) {
+      if (deal.brand.toString() !== userId.toString()) {
+        return res.status(403).json({ success: false, message: 'Not authorized for one or more selected deals' });
+      }
+      if (deal.status !== 'pending_payment') {
+        return res.status(400).json({ success: false, message: 'All selected deals must be pending payment' });
+      }
+    }
+
+    const payments = await Promise.all(uniqueDealIds.map((dealId) => paymentService.getPaymentByDeal(dealId)));
+
+    if (payments.some((payment) => !payment)) {
+      return res.status(404).json({ success: false, message: 'Payment record not found for one or more selected deals' });
+    }
+
+    if (payments.some((payment) => payment.paymentStatus !== 'pending')) {
+      return res.status(400).json({ success: false, message: 'All selected payments must be in pending status' });
+    }
+
+    const order = await paymentService.createBulkOrder({ deals, payments, brandId: userId });
+    return res.json({ success: true, message: 'Bulk payment order created', data: order });
+  } catch (error) {
+    console.error('Create bulk order error:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Failed to create bulk payment order' });
+  }
+};
+
 exports.verifyPayment = async (req, res) => {
   try {
     const { orderId, paymentId, signature, dealId } = req.body;
@@ -112,6 +160,51 @@ exports.verifyPayment = async (req, res) => {
   } catch (error) {
     console.error('Verify payment error:', error);
     return res.status(400).json({ success: false, message: error.message || 'Payment verification failed' });
+  }
+};
+
+exports.verifyBulkPayment = async (req, res) => {
+  try {
+    const { orderId, paymentId, signature, dealIds } = req.body;
+    const userId = req.user._id;
+
+    if (!orderId || !paymentId || !signature || !Array.isArray(dealIds) || dealIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'Order ID, payment ID, signature, and deal IDs are required' });
+    }
+
+    const result = await paymentService.verifyAndEscrowBulk({
+      orderId,
+      paymentId,
+      signature,
+      dealIds: [...new Set(dealIds.map((id) => String(id)))],
+      brandId: userId
+    });
+
+    try {
+      const processedDealIds = result?.processed?.map((item) => item.dealId) || [];
+      const processedDeals = await Deal.find({ _id: { $in: processedDealIds } }).populate('campaign', 'title');
+
+      await Promise.all(processedDeals.map((deal) => createNotificationFromTemplate(
+        deal.influencer,
+        'DEAL_STARTED',
+        {
+          campaignTitle: deal.campaign?.title || 'Campaign',
+          dealId: deal._id
+        },
+        { relatedId: deal._id, relatedType: 'deal' }
+      )));
+    } catch (notifErr) {
+      console.error('Bulk notification error (non-fatal):', notifErr);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Bulk payment verified and held in escrow',
+      data: result
+    });
+  } catch (error) {
+    console.error('Verify bulk payment error:', error);
+    return res.status(400).json({ success: false, message: error.message || 'Bulk payment verification failed' });
   }
 };
 

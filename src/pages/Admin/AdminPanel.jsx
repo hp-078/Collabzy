@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
@@ -15,7 +15,8 @@ const AdminPanel = () => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [influencerSearchQuery, setInfluencerSearchQuery] = useState('');
+  const [campaignSearchQuery, setCampaignSearchQuery] = useState('');
   const [allInfluencers, setAllInfluencers] = useState([]);
   const [allCampaigns, setAllCampaigns] = useState([]);
 
@@ -68,16 +69,20 @@ const AdminPanel = () => {
   });
   const topCategories = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]).slice(0, 6);
 
-  const filteredInfluencers = allInfluencers.filter(i => {
-    const name = (i.user?.name || i.name || '').toLowerCase();
-    const nicheStr = (Array.isArray(i.niche) ? i.niche.join(' ') : i.niche || '').toLowerCase();
-    return name.includes(searchQuery.toLowerCase()) || nicheStr.includes(searchQuery.toLowerCase());
-  });
+  const filteredInfluencers = useMemo(() => {
+    return allInfluencers.filter(i => {
+      const name = (i.user?.name || i.name || '').toLowerCase();
+      const nicheStr = (Array.isArray(i.niche) ? i.niche.join(' ') : i.niche || '').toLowerCase();
+      return name.includes(influencerSearchQuery.toLowerCase()) || nicheStr.includes(influencerSearchQuery.toLowerCase());
+    });
+  }, [allInfluencers, influencerSearchQuery]);
 
-  const filteredCampaigns = allCampaigns.filter(c =>
-    (c.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.category || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCampaigns = useMemo(() => {
+    return allCampaigns.filter(c =>
+      (c.title || '').toLowerCase().includes(campaignSearchQuery.toLowerCase()) ||
+      (c.category || '').toLowerCase().includes(campaignSearchQuery.toLowerCase())
+    );
+  }, [allCampaigns, campaignSearchQuery]);
 
   if (!isAdmin) return null;
 
@@ -212,8 +217,8 @@ const AdminPanel = () => {
                 <input
                   type="text"
                   placeholder="Search influencers by name or niche..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={influencerSearchQuery}
+                  onChange={(e) => setInfluencerSearchQuery(e.target.value)}
                 />
               </div>
               <span className="admin-result-count">{filteredInfluencers.length} influencers</span>
@@ -289,8 +294,8 @@ const AdminPanel = () => {
                 <input
                   type="text"
                   placeholder="Search campaigns by title or category..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={campaignSearchQuery}
+                  onChange={(e) => setCampaignSearchQuery(e.target.value)}
                 />
               </div>
               <span className="admin-result-count">{filteredCampaigns.length} campaigns</span>

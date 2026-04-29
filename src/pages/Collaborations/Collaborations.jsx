@@ -87,6 +87,10 @@ const Collaborations = () => {
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [dealPayments, setDealPayments] = useState({}); // Cache payment status by deal ID
+  const [pendingPaymentViewMode, setPendingPaymentViewMode] = useState('campaign'); // 'campaign' | 'table'
+  const [expandedPendingPaymentGroups, setExpandedPendingPaymentGroups] = useState({});
+  const [selectedPendingPaymentDealIds, setSelectedPendingPaymentDealIds] = useState([]);
+  const [bulkPaymentProcessing, setBulkPaymentProcessing] = useState(false);
 
   // === Brand-specific state ===
   const [viewMode, setViewMode] = useState('campaign'); // 'campaign' | 'table'
@@ -400,6 +404,16 @@ const Collaborations = () => {
     [myDeals]
   );
 
+  const pendingPaymentSelectedDeals = useMemo(
+    () => pendingPaymentDeals.filter((deal) => selectedPendingPaymentDealIds.includes(deal._id)),
+    [pendingPaymentDeals, selectedPendingPaymentDealIds]
+  );
+
+  const pendingPaymentSelectedIdsSet = useMemo(
+    () => new Set(selectedPendingPaymentDealIds),
+    [selectedPendingPaymentDealIds]
+  );
+
   const nonPendingPaymentDeals = useMemo(
     () => myDeals.filter((deal) => !isDealPendingPayment(deal)),
     [myDeals]
@@ -565,6 +579,43 @@ const Collaborations = () => {
 
     return Object.values(groups).sort((a, b) => a.label.localeCompare(b.label));
   }, [filteredBrandDeals]);
+
+  const groupedPendingPaymentDeals = useMemo(() => {
+    const groups = {};
+
+    pendingPaymentDeals.forEach((deal) => {
+      const campaignId = getCampaignIdFromDeal(deal);
+      const groupKey = campaignId || 'direct-outreach';
+      const campaignData = isCampaignObject(deal.campaign) ? deal.campaign : null;
+
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
+          groupKey,
+          campaignId: campaignId || null,
+          campaign: campaignData,
+          isDirect: !campaignId,
+          label: campaignData?.title || (!campaignId ? 'Direct Outreach Deals' : getDealCampaignTitle(deal)),
+          deals: [],
+        };
+      }
+
+      if (!groups[groupKey].campaign && campaignData) {
+        groups[groupKey].campaign = campaignData;
+        groups[groupKey].label = campaignData.title || groups[groupKey].label;
+      }
+
+      groups[groupKey].deals.push(deal);
+    });
+
+    return Object.values(groups).sort((a, b) => a.label.localeCompare(b.label));
+  }, [pendingPaymentDeals]);
+
+  useEffect(() => {
+    setSelectedPendingPaymentDealIds((prev) => {
+      const validIds = new Set(pendingPaymentDeals.map((deal) => deal._id));
+      return prev.filter((id) => validIds.has(id));
+    });
+  }, [pendingPaymentDeals]);
 
   const activeDealFiltersCount = useMemo(() => {
     let count = 0;
@@ -853,7 +904,9 @@ const Collaborations = () => {
   };
 
   // Handle payment for pending payment deals
-  const handlePendingPaymentDealPayment = async (deal) => {
+  const handlePendingPaymentDealPayment = async (deal, options = {}) => {
+    const { switchToDeals = true, showSuccessToast = true } = options;
+
     if (!deal?._id || !deal?.paymentId) {
       toast.error('Invalid deal or missing payment information');
       return;
@@ -865,6 +918,7 @@ const Collaborations = () => {
     }
 
     setPaymentProcessing(true);
+    setPendingPaymentDealForPayment(deal);
 
     try {
       // Fetch the payment details to get the Razorpay order ID
@@ -906,25 +960,33 @@ const Collaborations = () => {
               });
 
               if (!verifyResult.success) {
-                toast.error('Payment verification failed.');
+                if (showSuccessToast) {
+                  toast.error('Payment verification failed.');
+                }
                 resolve({ success: false });
                 return;
               }
 
-              toast.success('Payment completed successfully! Deal is now active.');
+              if (showSuccessToast) {
+                toast.success('Payment completed successfully! Deal is now active.');
+              }
               setPendingPaymentDealForPayment(null);
               
               // Refresh deals
               const dealsData = await fetchMyDeals(true);
               setMyDeals(dealsData || []);
               
-              // Switch to deals tab
-              switchTab('deals');
+              // Switch to deals tab only for direct UI payments.
+              if (switchToDeals) {
+                switchTab('deals');
+              }
               
               resolve({ success: true });
             } catch (verifyErr) {
               console.error('Payment verification error:', verifyErr);
-              toast.error('Payment verification failed.');
+              if (showSuccessToast) {
+                toast.error('Payment verification failed.');
+              }
               resolve({ success: false });
             } finally {
               setPaymentProcessing(false);
@@ -942,6 +1004,87 @@ const Collaborations = () => {
       console.error('Error initiating payment:', error);
       toast.error('Failed to initiate payment');
       setPaymentProcessing(false);
+      setPendingPaymentDealForPayment(null);
+    }
+  };
+
+  const handleBulkPendingPaymentDealPayment = async () => {
+    if (pendingPaymentSelectedDeals.length === 0) {
+      toast.error('Select at least one pending payment deal');
+      return;
+    }
+
+    if (!razorpayLoaded) {
+      toast.error('Payment gateway not loaded. Please refresh and try again.');
+      return;
+    }
+
+    const selectedDealIds = pendingPaymentSelectedDeals.map((deal) => deal?._id).filter(Boolean);
+    if (selectedDealIds.length === 0) {
+      toast.error('Selected deals are invalid for payment.');
+      return;
+    }
+
+    setBulkPaymentProcessing(true);
+    setPaymentProcessing(true);
+    try {
+      const orderResponse = await paymentService.createBulkPaymentOrder(selectedDealIds);
+      if (!orderResponse?.success || !orderResponse?.data?.orderId) {
+        toast.error(orderResponse?.message || 'Failed to create combined payment order.');
+        return;
+      }
+
+      const { orderId, amount, currency, key } = orderResponse.data;
+
+      await new Promise((resolve) => {
+        paymentService.initiateRazorpayCheckout(
+          {
+            orderId,
+            amount,
+            currency: currency || 'INR',
+            key,
+            brandName: user?.name,
+            brandEmail: user?.email
+          },
+          async (response) => {
+            try {
+              const verifyResult = await paymentService.verifyBulkPayment({
+                orderId: response.orderId,
+                paymentId: response.paymentId,
+                signature: response.signature,
+                dealIds: selectedDealIds
+              });
+
+              if (!verifyResult?.success) {
+                toast.error(verifyResult?.message || 'Combined payment verification failed.');
+                resolve(false);
+                return;
+              }
+
+              const processedCount = verifyResult?.data?.processedCount || selectedDealIds.length;
+              toast.success(`One payment completed for ${processedCount} deal${processedCount > 1 ? 's' : ''}.`);
+              setSelectedPendingPaymentDealIds((prev) => prev.filter((id) => !selectedDealIds.includes(id)));
+
+              const dealsData = await fetchMyDeals(true);
+              setMyDeals(dealsData || []);
+              switchTab('deals');
+              resolve(true);
+            } catch (verifyErr) {
+              console.error('Bulk payment verification error:', verifyErr);
+              toast.error(verifyErr?.response?.data?.message || 'Combined payment verification failed.');
+              resolve(false);
+            }
+          },
+          (error) => {
+            console.error('Bulk payment error:', error);
+            toast.error(error?.message || 'Payment failed or was cancelled.');
+            resolve(false);
+          }
+        );
+      });
+    } finally {
+      setPaymentProcessing(false);
+      setBulkPaymentProcessing(false);
     }
   };
 
@@ -1007,6 +1150,31 @@ const Collaborations = () => {
       ...prev,
       [campaignId]: !prev[campaignId],
     }));
+  };
+
+  const togglePendingPaymentGroupExpanded = (groupKey) => {
+    setExpandedPendingPaymentGroups(prev => ({
+      ...prev,
+      [groupKey]: !prev[groupKey],
+    }));
+  };
+
+  const togglePendingPaymentDealSelection = (dealId) => {
+    setSelectedPendingPaymentDealIds((prev) => (
+      prev.includes(dealId)
+        ? prev.filter((id) => id !== dealId)
+        : [...prev, dealId]
+    ));
+  };
+
+  const toggleSelectAllPendingPaymentDealsInList = (dealList, checked) => {
+    const ids = dealList.map((deal) => deal._id);
+    setSelectedPendingPaymentDealIds((prev) => {
+      if (checked) {
+        return Array.from(new Set([...prev, ...ids]));
+      }
+      return prev.filter((id) => !ids.includes(id));
+    });
   };
 
   const formatFollowers = (n) => {
@@ -1656,172 +1824,204 @@ const Collaborations = () => {
     </div>
   );
 
-  const renderBrandDealsTable = (dealList, showCampaignCol = false) => (
-    <div className="brand-inf-table-scroll">
-      <table className="brand-inf-table brand-deal-table">
-        <thead>
-          <tr>
-            <th>Influencer</th>
-            {showCampaignCol && <th>Campaign</th>}
-            <th>Status</th>
-            <th>Payment</th>
-            <th>Rate</th>
-            <th>Deadline</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {dealList.map(deal => {
-            const paymentStatus = getDealPaymentStatus(deal);
-            const needsPayment = (deal.status === 'pending_payment' || deal.status === 'active') && (!deal.paymentId || paymentStatus === 'pending');
-            const canRelease = deal.status === 'completed' && paymentStatus === 'escrow';
-            const daysLeft = getDaysUntil(deal.deadline);
-            const isDirect = !getCampaignIdFromDeal(deal);
+  const renderBrandDealsTable = (dealList, showCampaignCol = false, selectionConfig = {}) => {
+    const {
+      selectable = false,
+      selectedIdsSet = new Set(),
+      onToggleSelection = null,
+      onToggleSelectAll = null,
+      selectAllTitle = 'Select all in this list',
+      selectionTitle = 'Select deal',
+    } = selectionConfig;
 
-            return (
-              <tr key={deal._id} className={`deal-row deal-row-${deal.status}`}>
-                <td>
-                  <div className="inf-name-cell">
-                    <div className="inf-avatar inf-avatar-default">
-                      <span>{(deal.influencer?.name || 'I').charAt(0).toUpperCase()}</span>
-                    </div>
-                    <div className="inf-name-info">
-                      <span className="inf-name">{deal.influencer?.name || 'Influencer'}</span>
-                      {deal.influencer?.email && <span className="inf-location">{deal.influencer.email}</span>}
-                    </div>
-                  </div>
-                </td>
+    return (
+      <div className="brand-inf-table-scroll">
+        <table className="brand-inf-table brand-deal-table">
+          <thead>
+            <tr>
+              {selectable && (
+                <th className="th-select">
+                  <input
+                    type="checkbox"
+                    className="brand-select-checkbox"
+                    checked={dealList.length > 0 && dealList.every((deal) => selectedIdsSet.has(deal._id))}
+                    onChange={(e) => onToggleSelectAll?.(dealList, e.target.checked)}
+                    title={selectAllTitle}
+                  />
+                </th>
+              )}
+              <th>Influencer</th>
+              {showCampaignCol && <th>Campaign</th>}
+              <th>Status</th>
+              <th>Payment</th>
+              <th>Rate</th>
+              <th>Deadline</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dealList.map(deal => {
+              const paymentStatus = getDealPaymentStatus(deal);
+              const needsPayment = (deal.status === 'pending_payment' || deal.status === 'active') && (!deal.paymentId || paymentStatus === 'pending');
+              const canRelease = deal.status === 'completed' && paymentStatus === 'escrow';
+              const daysLeft = getDaysUntil(deal.deadline);
+              const isDirect = !getCampaignIdFromDeal(deal);
 
-                {showCampaignCol && (
+              return (
+                <tr key={deal._id} className={`deal-row deal-row-${deal.status}`}>
+                  {selectable && (
+                    <td className="td-select" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className="brand-select-checkbox"
+                        checked={selectedIdsSet.has(deal._id)}
+                        onChange={() => onToggleSelection?.(deal._id)}
+                        title={selectionTitle}
+                      />
+                    </td>
+                  )}
+
                   <td>
-                    <span className={`inf-campaign-tag ${isDirect ? 'direct' : ''}`}>
-                      {isDirect ? 'Direct Outreach' : getDealCampaignTitle(deal)}
+                    <div className="inf-name-cell">
+                      <div className="inf-avatar inf-avatar-default">
+                        <span>{(deal.influencer?.name || 'I').charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div className="inf-name-info">
+                        <span className="inf-name">{deal.influencer?.name || 'Influencer'}</span>
+                        {deal.influencer?.email && <span className="inf-location">{deal.influencer.email}</span>}
+                      </div>
+                    </div>
+                  </td>
+
+                  {showCampaignCol && (
+                    <td>
+                      <span className={`inf-campaign-tag ${isDirect ? 'direct' : ''}`}>
+                        {isDirect ? 'Direct Outreach' : getDealCampaignTitle(deal)}
+                      </span>
+                    </td>
+                  )}
+
+                  <td>
+                    <span className={`collab-status-badge collab-deal-status-${deal.status}`}>
+                      {getDealStatusIcon(deal.status)}
+                      {deal.status.replace('_', ' ')}
                     </span>
                   </td>
-                )}
 
-                <td>
-                  <span className={`collab-status-badge collab-deal-status-${deal.status}`}>
-                    {getDealStatusIcon(deal.status)}
-                    {deal.status.replace('_', ' ')}
-                  </span>
-                </td>
+                  <td>
+                    <span className={`brand-payment-chip brand-payment-${paymentStatus}`}>
+                      {paymentStatus.replace('_', ' ')}
+                    </span>
+                  </td>
 
-                <td>
-                  <span className={`brand-payment-chip brand-payment-${paymentStatus}`}>
-                    {paymentStatus.replace('_', ' ')}
-                  </span>
-                </td>
+                  <td>
+                    <span className="inf-rate">₹{(deal.agreedRate || 0).toLocaleString()}</span>
+                  </td>
 
-                <td>
-                  <span className="inf-rate">₹{(deal.agreedRate || 0).toLocaleString()}</span>
-                </td>
+                  <td>
+                    <div className={`brand-deal-deadline ${daysLeft !== null && daysLeft < 0 ? 'overdue' : ''}`}>
+                      <span>{formatDate(deal.deadline)}</span>
+                      {daysLeft !== null && (
+                        <small>
+                          {daysLeft > 0 ? `${daysLeft}d left` : daysLeft === 0 ? 'Today' : 'Overdue'}
+                        </small>
+                      )}
+                    </div>
+                  </td>
 
-                <td>
-                  <div className={`brand-deal-deadline ${daysLeft !== null && daysLeft < 0 ? 'overdue' : ''}`}>
-                    <span>{formatDate(deal.deadline)}</span>
-                    {daysLeft !== null && (
-                      <small>
-                        {daysLeft > 0 ? `${daysLeft}d left` : daysLeft === 0 ? 'Today' : 'Overdue'}
-                      </small>
-                    )}
-                  </div>
-                </td>
+                  <td>
+                    <span className="inf-date">{formatDate(deal.createdAt)}</span>
+                  </td>
 
-                <td>
-                  <span className="inf-date">{formatDate(deal.createdAt)}</span>
-                </td>
-
-                <td>
-                  <div className="inf-action-btns brand-deal-actions">
-                    {needsPayment && (
-                      <>
+                  <td>
+                    <div className="inf-action-btns brand-deal-actions">
+                      {needsPayment && (
                         <button
                           className="inf-act-btn inf-act-accept"
                           onClick={() => handlePendingPaymentDealPayment(deal)}
-                          disabled={paymentProcessing}
+                          disabled={paymentProcessing || bulkPaymentProcessing}
                         >
                           <CreditCard size={13} /> <span>{paymentProcessing ? 'Processing...' : 'Make Payment'}</span>
                         </button>
-                      </>
-                    )}
+                      )}
 
-                    {deal.status === 'pending_review' && (
-                      <>
-                        {deal.previewLink && (
-                          <a
-                            className="inf-act-btn inf-act-view"
-                            href={deal.previewLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                      {deal.status === 'pending_review' && (
+                        <>
+                          {deal.previewLink && (
+                            <a
+                              className="inf-act-btn inf-act-view"
+                              href={deal.previewLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink size={13} /> <span>Preview</span>
+                            </a>
+                          )}
+                          <button
+                            className="inf-act-btn inf-act-accept"
+                            onClick={() => handleDealStatusChange(deal._id, 'in_progress', { requestRevision: false })}
+                            disabled={submitting}
                           >
-                            <ExternalLink size={13} /> <span>Preview</span>
-                          </a>
-                        )}
+                            <CheckCircle size={13} /> <span>Approve Preview</span>
+                          </button>
+                          <button
+                            className="inf-act-btn inf-act-shortlist"
+                            onClick={() => handleDealStatusChange(deal._id, 'in_progress', { requestRevision: true })}
+                            disabled={submitting}
+                          >
+                            <Upload size={13} /> <span>Revision</span>
+                          </button>
+                        </>
+                      )}
+
+                      {canRelease && (
                         <button
                           className="inf-act-btn inf-act-accept"
-                          onClick={() => handleDealStatusChange(deal._id, 'in_progress', { requestRevision: false })}
+                          onClick={() => handleReleasePayment(deal._id)}
                           disabled={submitting}
                         >
-                          <CheckCircle size={13} /> <span>Approve Preview</span>
+                          <IndianRupee size={13} /> <span>Release</span>
                         </button>
-                        <button
-                          className="inf-act-btn inf-act-shortlist"
-                          onClick={() => handleDealStatusChange(deal._id, 'in_progress', { requestRevision: true })}
-                          disabled={submitting}
-                        >
-                          <Upload size={13} /> <span>Revision</span>
-                        </button>
-                      </>
-                    )}
+                      )}
 
-                    {canRelease && (
-                      <button
-                        className="inf-act-btn inf-act-accept"
-                        onClick={() => handleReleasePayment(deal._id)}
-                        disabled={submitting}
-                      >
-                        <IndianRupee size={13} /> <span>Release</span>
-                      </button>
-                    )}
-
-                    {deal.status === 'completed' && (
-                      <>
-                        {deal.finalContentLink && (
-                          <a
+                      {deal.status === 'completed' && (
+                        <>
+                          {deal.finalContentLink && (
+                            <a
+                              className="inf-act-btn inf-act-view"
+                              href={deal.finalContentLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink size={13} /> <span>Final Link</span>
+                            </a>
+                          )}
+                          <button
                             className="inf-act-btn inf-act-view"
-                            href={deal.finalContentLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            onClick={() => {
+                              setShowReviewModal(deal);
+                              setReviewForm({ rating: 5, title: '', content: '' });
+                            }}
                           >
-                            <ExternalLink size={13} /> <span>Final Link</span>
-                          </a>
-                        )}
-                        <button
-                          className="inf-act-btn inf-act-view"
-                          onClick={() => {
-                            setShowReviewModal(deal);
-                            setReviewForm({ rating: 5, title: '', content: '' });
-                          }}
-                        >
-                          <Star size={13} /> <span>Review</span>
-                        </button>
-                      </>
-                    )}
+                            <Star size={13} /> <span>Review</span>
+                          </button>
+                        </>
+                      )}
 
-                    <button className="inf-act-btn inf-act-msg" onClick={handleGoToMessages}>
-                      <MessageSquare size={13} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
+                      <button className="inf-act-btn inf-act-msg" onClick={handleGoToMessages}>
+                        <MessageSquare size={13} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   const renderBrandDealsView = () => (
     <>
@@ -2151,22 +2351,143 @@ const Collaborations = () => {
     if (isBrand) {
       return (
         <>
+          <div className="brand-apps-topbar">
+            <div className="brand-stat-pills">
+              <button className="brand-stat-pill brand-stat-pending active">
+                Pending Payment
+                <span className="brand-stat-cnt">{pendingPaymentDeals.length}</span>
+              </button>
+            </div>
+
+            <div className="brand-view-toggle">
+              <button
+                className={`brand-view-btn ${pendingPaymentViewMode === 'campaign' ? 'active' : ''}`}
+                onClick={() => setPendingPaymentViewMode('campaign')}
+                title="Group by campaign"
+              >
+                <LayoutGrid size={15} /> Campaign
+              </button>
+              <button
+                className={`brand-view-btn ${pendingPaymentViewMode === 'table' ? 'active' : ''}`}
+                onClick={() => setPendingPaymentViewMode('table')}
+                title="Flat table view"
+              >
+                <List size={15} /> Table
+              </button>
+            </div>
+          </div>
+
           <div className="brand-results-bar">
             <span>
               Pending payment collaborations: <strong>{pendingPaymentDeals.length}</strong>
             </span>
           </div>
-          <div className="brand-flat-table-wrap brand-flat-deals-wrap">
-            {pendingPaymentDeals.length > 0
-              ? renderBrandDealsTable(pendingPaymentDeals, true)
-              : (
+
+          {pendingPaymentDeals.length > 0 && (
+            <div className="brand-bulk-actions-bar">
+              <div className="brand-bulk-left">
+                <span className="brand-bulk-count">
+                  <strong>{pendingPaymentSelectedDeals.length}</strong> selected
+                </span>
+                {pendingPaymentSelectedDeals.length > 0 && (
+                  <button className="brand-bulk-clear" onClick={() => setSelectedPendingPaymentDealIds([])}>
+                    Clear Selection
+                  </button>
+                )}
+              </div>
+              <div className="brand-bulk-actions">
+                <button
+                  className="inf-act-btn inf-act-accept"
+                  onClick={handleBulkPendingPaymentDealPayment}
+                  disabled={bulkPaymentProcessing || paymentProcessing || pendingPaymentSelectedDeals.length === 0}
+                >
+                  <CreditCard size={13} /> <span>{bulkPaymentProcessing ? 'Processing...' : 'Make Payment Selected'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {pendingPaymentViewMode === 'campaign' && (
+            <div className="brand-campaign-groups brand-deal-groups">
+              {groupedPendingPaymentDeals.length > 0 ? (
+                groupedPendingPaymentDeals.map((group) => {
+                  const isOpen = expandedPendingPaymentGroups[group.groupKey] ?? false;
+                  const selectedCount = group.deals.filter((deal) => pendingPaymentSelectedIdsSet.has(deal._id)).length;
+
+                  return (
+                    <div key={group.groupKey} className="brand-campaign-group brand-deal-group">
+                      <div
+                        className={`brand-cg-header brand-dg-header ${isOpen ? 'open' : ''}`}
+                        onClick={() => togglePendingPaymentGroupExpanded(group.groupKey)}
+                      >
+                        <div className="brand-cg-left">
+                          <div className={`brand-cg-icon ${group.isDirect ? 'direct' : ''}`}>
+                            {group.isDirect ? <MessageSquare size={17} /> : <Briefcase size={17} />}
+                          </div>
+                          <div className="brand-cg-info">
+                            <h3 className="brand-cg-title">{group.label}</h3>
+                            <div className="brand-cg-meta">
+                              <span className="brand-cg-tag">{group.isDirect ? 'Direct Outreach' : 'Campaign Payment'}</span>
+                              {group.campaign?.platformType && <span className="brand-cg-tag">{group.campaign.platformType}</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="brand-cg-right">
+                          <div className="brand-cg-counts">
+                            <span className="brand-cg-count total">{group.deals.length} total</span>
+                            {selectedCount > 0 && <span className="brand-cg-count pending">{selectedCount} selected</span>}
+                          </div>
+                          <button className="brand-cg-toggle" onClick={(e) => { e.stopPropagation(); togglePendingPaymentGroupExpanded(group.groupKey); }}>
+                            {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {isOpen && (
+                        <div className="brand-cg-body">
+                          {renderBrandDealsTable(group.deals, true, {
+                            selectable: true,
+                            selectedIdsSet: pendingPaymentSelectedIdsSet,
+                            onToggleSelection: togglePendingPaymentDealSelection,
+                            onToggleSelectAll: toggleSelectAllPendingPaymentDealsInList,
+                            selectAllTitle: 'Select all deals in this campaign',
+                            selectionTitle: 'Select deal for payment',
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
                 <div className="collab-empty-state">
                   <CreditCard size={48} />
                   <h3>No pending payments</h3>
                   <p>Newly confirmed deals will appear here until payment is completed.</p>
                 </div>
               )}
-          </div>
+            </div>
+          )}
+
+          {pendingPaymentViewMode === 'table' && (
+            <div className="brand-flat-table-wrap brand-flat-deals-wrap">
+              {pendingPaymentDeals.length > 0
+                ? renderBrandDealsTable(pendingPaymentDeals, true, {
+                  selectable: true,
+                  selectedIdsSet: pendingPaymentSelectedIdsSet,
+                  onToggleSelection: togglePendingPaymentDealSelection,
+                  onToggleSelectAll: toggleSelectAllPendingPaymentDealsInList,
+                  selectAllTitle: 'Select all pending payment deals',
+                  selectionTitle: 'Select deal for payment',
+                })
+                : (
+                  <div className="collab-empty-state">
+                    <CreditCard size={48} />
+                    <h3>No pending payments</h3>
+                    <p>Newly confirmed deals will appear here until payment is completed.</p>
+                  </div>
+                )}
+            </div>
+          )}
         </>
       );
     }

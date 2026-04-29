@@ -12,7 +12,9 @@ router.post('/release', requireAuth, requireAdmin, paymentController.releaseEscr
 
 // Razorpay / Deal payment endpoints
 router.post('/create-order', requireAuth, requireBrand, paymentController.createOrder);
+router.post('/create-bulk-order', requireAuth, requireBrand, paymentController.createBulkOrder);
 router.post('/verify', requireAuth, requireBrand, paymentController.verifyPayment);
+router.post('/verify-bulk', requireAuth, requireBrand, paymentController.verifyBulkPayment);
 router.get('/deal/:dealId', requireAuth, paymentController.getPaymentByDeal);
 router.patch('/release/:dealId', requireAuth, paymentController.releasePayment);
 router.post('/refund/:dealId', requireAuth, requireAdmin, paymentController.refundPayment);
