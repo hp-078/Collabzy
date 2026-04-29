@@ -11,16 +11,19 @@ import {
   Instagram,
   Youtube,
   TrendingUp,
-  Loader
+  Loader,
+  ShieldCheck,
+  ArrowRight,
+  BadgeCheck
 } from 'lucide-react';
 import Avatar from '../../components/common/Avatar';
 import './Influencers.css';
 
 const platformIcons = {
-  Instagram: <Instagram size={16} />,
-  YouTube: <Youtube size={16} />,
+  Instagram: <Instagram size={18} />,
+  YouTube: <Youtube size={18} />,
   TikTok: <span className="tiktok-icon">📱</span>,
-  Multiple: <><Youtube size={14} /><Instagram size={14} /></>,
+  Multiple: <><Youtube size={16} /><Instagram size={16} /></>,
 };
 
 const formatFollowers = (count) => {
@@ -184,69 +187,105 @@ const Influencers = () => {
         {/* Influencer Grid */}
         <div className="inf-grid">
           {filteredInfluencers.map((influencer) => (
-            <Link
+            <div
               key={influencer._id}
-              to={`/influencer/${influencer._id}`}
               className="inf-card"
             >
-              <div className="inf-card-left">
-                <div className="inf-avatar-wrapper">
-                <Avatar
-                  src={influencer.avatar}
-                  alt={influencer.name}
-                  name={influencer.name}
-                  size="md"
-                  className="inf-avatar"
-                />
-                {influencer.isVerified && (
-                  <span className="inf-verified-badge">
-                    <CheckCircle size={14} />
-                  </span>
-                )}
+              <div className="inf-card-content-wrapper">
+                {/* Left Panel - Avatar & Platform */}
+                <div className="inf-card-left">
+                  <div className="inf-platform-badge">
+                    {platformIcons[influencer.platformType] || influencer.platformType}
+                  </div>
+                  <div className="inf-avatar-wrapper">
+                    <Avatar
+                      src={influencer.avatar}
+                      alt={influencer.name}
+                      name={influencer.name}
+                      size="sm"
+                      className="inf-avatar"
+                    />
+                  </div>
                 </div>
-                <div className="inf-platform-badge">
-                  {platformIcons[influencer.platformType] || influencer.platformType}
+
+                {/* Right Panel - Info */}
+                <div className="inf-card-right">
+                  <div className="inf-title-section">
+                    <div className="inf-name-row">
+                      <h3 className="inf-name">{influencer.name}</h3>
+                      {influencer.isVerified && (
+                        <span className="inf-verified-badge">
+                          <BadgeCheck size={22} fill="#FF6B8A" color="white" />
+                        </span>
+                      )}
+                    </div>
+                    <span className="inf-handle-line">
+                      @{influencer.instagramData?.username || influencer.instagramUsername || influencer.name?.split(' ')[0]?.toLowerCase()}
+                    </span>
+                  </div>
+
+                  {influencer.bio && (
+                    <p className="inf-bio">{influencer.bio.slice(0, 80)}{influencer.bio.length > 80 ? '...' : ''}</p>
+                  )}
+
+                  {/* Stats Row - Posts | Followers | Following */}
+                  <div className="inf-row-stats">
+                    <div className="inf-row-stat">
+                      <strong>{influencer.instagramStats?.posts ?? influencer.instagramData?.recentMedia?.length ?? 0}</strong>
+                      <span>Posts</span>
+                    </div>
+                    <div className="inf-stat-divider"></div>
+                    <div className="inf-row-stat">
+                      <strong>{formatFollowers(influencer.instagramStats?.followers ?? influencer.totalFollowers)}</strong>
+                      <span>Followers</span>
+                    </div>
+                    <div className="inf-stat-divider"></div>
+                    <div className="inf-row-stat">
+                      <strong>{influencer.instagramStats?.following ?? '-'}</strong>
+                      <span>Following</span>
+                    </div>
+                  </div>
+
+                  {/* Meta Row - Location, Growth, Trust */}
+                  <div className="inf-meta-row">
+                    {influencer.location && (
+                      <>
+                        <span className="inf-meta-item">
+                          <MapPin size={16} className="inf-meta-icon location" />
+                          <span>{influencer.location}</span>
+                        </span>
+                        {(influencer.averageEngagementRate != null || influencer.trustScore != null) && <div className="inf-meta-divider"></div>}
+                      </>
+                    )}
+                    {influencer.averageEngagementRate != null && (
+                      <>
+                        <span className="inf-meta-item">
+                          <TrendingUp size={16} className="inf-meta-icon growth" />
+                          <span className="inf-meta-value">{influencer.averageEngagementRate?.toFixed(1)}%</span>
+                          <span className="inf-meta-label">Growth</span>
+                        </span>
+                        {influencer.trustScore != null && <div className="inf-meta-divider"></div>}
+                      </>
+                    )}
+                    <span className="inf-meta-item">
+                      <ShieldCheck size={16} className="inf-meta-icon trust" />
+                      <span className="inf-meta-value">{influencer.trustScore ?? 50}</span>
+                      <span className="inf-meta-label">Trust Score</span>
+                    </span>
+                  </div>
+                  
+                  {/* Footer - View Profile Button */}
+                  <div className="inf-card-footer">
+                    <Link
+                      to={`/influencer/${influencer._id}`}
+                      className="inf-view-profile"
+                    >
+                      View Profile <ArrowRight size={18} />
+                    </Link>
+                  </div>
                 </div>
               </div>
-
-              <div className="inf-card-right">
-                <div className="inf-title-row">
-                  <h3 className="inf-name">{influencer.name}</h3>
-                  <span className="inf-handle-line">
-                    @{influencer.instagramData?.username || influencer.instagramUsername || influencer.name?.split(' ')[0]}
-                  </span>
-                </div>
-
-                {influencer.bio && (
-                  <p className="inf-description small">{influencer.bio.slice(0, 120)}{influencer.bio.length > 120 ? '...' : ''}</p>
-                )}
-
-                <div className="inf-row-stats">
-                  <div className="inf-row-stat">
-                    <strong>{influencer.instagramStats?.posts ?? influencer.instagramData?.recentMedia?.length ?? 0}</strong>
-                    <span>posts</span>
-                  </div>
-                  <div className="inf-row-stat">
-                    <strong>{formatFollowers(influencer.instagramStats?.followers ?? influencer.totalFollowers)}</strong>
-                    <span>followers</span>
-                  </div>
-                  <div className="inf-row-stat">
-                    <strong>{influencer.instagramStats?.following ?? '-'}</strong>
-                    <span>following</span>
-                  </div>
-                </div>
-
-                <div className="inf-meta-row">
-                  {influencer.location && <span className="inf-meta-item"><MapPin size={12} /> {influencer.location}</span>}
-                  {influencer.averageEngagementRate != null && <span className="inf-meta-item"><TrendingUp size={12} /> {influencer.averageEngagementRate?.toFixed(1)}%</span>}
-                  <span className="inf-meta-item">Trust: {influencer.trustScore ?? 50}</span>
-                </div>
-
-                <div className="inf-card-footer">
-                  <span className="inf-view-profile">View Profile →</span>
-                </div>
-              </div>
-            </Link>
+            </div>
           ))}
         </div>
 

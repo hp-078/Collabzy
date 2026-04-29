@@ -1760,7 +1760,7 @@
   cursor: pointer;
 }
 
-.inf-avatar {
+.brand-inf-table .inf-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -1795,7 +1795,7 @@
   min-width: 0;
 }
 
-.inf-name {
+.brand-inf-table .inf-name {
   font-weight: 700;
   color: var(--dark-text);
   white-space: nowrap;
@@ -1814,7 +1814,7 @@
 }
 
 /* Platform badges */
-.inf-platform-badge {
+.brand-inf-table .inf-platform-badge {
   display: inline-flex;
   align-items: center;
   padding: 0.22rem 0.6rem;
