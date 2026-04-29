@@ -158,8 +158,7 @@ class PaymentService {
     ], { session });
 
     const txDoc = tx[0];
-    // Full amount goes to admin escrow wallet
-    await walletService.creditWallet(adminId, amount, txDoc._id, session, `Escrow held for deal - awaiting completion`);
+    // Amount is held in escrow logic, no admin wallet transaction here
     return txDoc;
   }
 
@@ -268,11 +267,11 @@ class PaymentService {
     const influencerAmount = paymentDoc ? paymentDoc.influencerAmount : tx.amount;
     const platformFee = paymentDoc ? paymentDoc.platformFee : 0;
 
-    // Debit full escrow amount from admin wallet
-    await walletService.debitWallet(tx.admin, tx.amount, tx._id, session, `Escrow release - full amount debited`);
+    // Escrow split happens here directly
     // Credit influencer's share to influencer wallet
     await walletService.creditWallet(tx.to, influencerAmount, tx._id, session, `Payment received for completed deal`);
-    // Credit platform fee back to admin wallet
+    
+    // Credit platform fee as platform revenue to admin wallet
     if (platformFee > 0) {
       await walletService.creditWallet(tx.admin, platformFee, tx._id, session, `Platform fee (${paymentDoc?.platformFeePercentage || 10}%) retained`);
     }
@@ -357,8 +356,7 @@ class PaymentService {
         const adminId = await walletService.getAdminUserId();
         if (!adminId) throw new Error('Admin account not found');
 
-        // Check admin wallet has sufficient funds
-        await walletService.debitWallet(adminId, payment.totalAmount, payment._id, session, `Escrow fallback release for deal ${dealId}`);
+        // Credit influencer and admin (platform revenue) directly
         await walletService.creditWallet(payment.influencerId, payment.influencerAmount, payment._id, session, `Payment received for completed deal`);
         if (payment.platformFee > 0) {
           await walletService.creditWallet(adminId, payment.platformFee, payment._id, session, `Platform fee retained`);
@@ -409,9 +407,8 @@ class PaymentService {
       }).session(session);
 
       if (tx) {
-        // Debit from admin escrow wallet (return funds)
-        await walletService.debitWallet(tx.admin, tx.amount, tx._id, session, `Refund issued: ${reason}`);
         // NOTE: Actual Razorpay refund would happen via razorpay.payments.refund() in production
+        // No admin wallet debit is necessary because funds were not deposited into it during escrow.
         tx.status = 'refunded';
         tx.type = 'refund';
         await tx.save({ session });
