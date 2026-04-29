@@ -85,6 +85,7 @@ const reviewRoutes = require('./routes/review.routes');
 const youtubeRoutes = require('./routes/youtube.routes');
 const instagramRoutes = require('./routes/instagram.routes');
 const paymentRoutes = require('./routes/payment.routes');
+const walletRoutes = require('./routes/wallet.routes');
 const adminRoutes = require('./routes/admin.routes');
 
 // Mount routes
@@ -100,6 +101,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/youtube', youtubeRoutes);
 app.use('/api/instagram', instagramRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/wallets', walletRoutes);
 app.use('/api/admin', adminRoutes);
 
 // ===========================================

@@ -202,8 +202,9 @@ exports.getDealById = async (req, res) => {
     // Check authorization
     const isParty = deal.brand._id.toString() === req.user._id.toString() ||
       deal.influencer._id.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
 
-    if (!isParty) {
+    if (!isParty && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized'
@@ -384,6 +385,41 @@ exports.updateDealStatus = async (req, res) => {
     }
 
     await deal.save();
+
+    // ══════════════════════════════════════════════════════════════
+    // AUTO-RELEASE ESCROW when deal is COMPLETED
+    // Flow: admin escrow wallet → split →
+    //   influencer wallet (influencerAmount) +
+    //   admin wallet     (platformFee, retained)
+    // Non-blocking: deal is saved first; if release fails it is
+    // logged and admin can manually release from the Wallets page.
+    // ══════════════════════════════════════════════════════════════
+    if (status === 'completed') {
+      setImmediate(async () => {
+        try {
+          const releasedPayment = await paymentService.releasePayment(deal._id);
+          console.log(
+            `[AUTO-RELEASE] Deal ${deal._id}: ` +
+            `Rs.${releasedPayment?.influencerAmount} -> influencer | ` +
+            `Rs.${releasedPayment?.platformFee} -> platform`
+          );
+          // Notify influencer money is in wallet
+          try {
+            const campData = await Campaign.findById(deal.campaign).select('title');
+            await createNotificationFromTemplate(deal.influencer, 'PAYMENT_RELEASED', {
+              campaignTitle: campData?.title || 'Campaign',
+              amount: releasedPayment?.influencerAmount || deal.agreedRate,
+              dealId: deal._id,
+              releasedBy: 'System (Auto)'
+            }, { relatedId: deal._id, relatedType: 'deal' });
+          } catch (pNotifErr) {
+            console.error('Payment notification error (non-fatal):', pNotifErr.message);
+          }
+        } catch (payErr) {
+          console.warn(`[AUTO-RELEASE] Skipped for deal ${deal._id}: ${payErr.message}`);
+        }
+      });
+    }
 
     // Notify the other party about deal status change
     try {

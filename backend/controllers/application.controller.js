@@ -2,6 +2,7 @@ const Application = require('../models/Application.model');
 const Campaign = require('../models/Campaign.model');
 const InfluencerProfile = require('../models/InfluencerProfile.model');
 const { createNotificationFromTemplate } = require('../services/notification.service');
+const paymentService = require('../services/payment.service');
 
 /**
  * Submit application (Influencer only)
@@ -343,8 +344,30 @@ exports.updateApplicationStatus = async (req, res) => {
       });
     }
 
-    // Update status
+    // If moving to shortlisted, create escrow transaction first
     const previousStatus = application.status;
+    if (status === 'shortlisted' && previousStatus !== 'shortlisted') {
+      // determine amount (brand can optionally pass amount in body)
+      const amount = parseFloat(req.body.amount) || application.proposedRate || (campaign && campaign.budget && campaign.budget.min) || 0;
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ success: false, message: 'Escrow amount required to shortlist' });
+      }
+
+      try {
+        await paymentService.createEscrow({
+          brandId: req.user._id,
+          influencerId: application.influencer,
+          campaignId: campaign._id,
+          applicationId: application._id,
+          amount
+        });
+      } catch (err) {
+        console.error('Escrow creation failed:', err);
+        return res.status(500).json({ success: false, message: 'Failed to create escrow. Shortlist aborted.' });
+      }
+    }
+
+    // Update status
     application.status = status;
     application.brandResponse = {
       message: message || '',

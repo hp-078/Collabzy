@@ -173,6 +173,30 @@ const NOTIFICATION_TEMPLATES = {
     title: 'Trust Score Updated',
     getMessage: (data) => `Your trust score has been updated to ${data.trustScore}/100`,
     getLink: () => '/profile'
+  },
+
+  // Payment notifications
+  PAYMENT_RELEASED: {
+    title: '💰 Payment Received!',
+    getMessage: (data) => `₹${Number(data.amount || 0).toLocaleString('en-IN')} has been released to your wallet for the deal "${data.campaignTitle}". Released by ${data.releasedBy || 'Admin'}.`,
+    getLink: (data) => `/collaborations`
+  },
+  PAYMENT_REFUNDED: {
+    title: 'Payment Refunded',
+    getMessage: (data) => `₹${Number(data.amount || 0).toLocaleString('en-IN')} has been refunded for deal "${data.campaignTitle}". Reason: ${data.reason || 'N/A'}`,
+    getLink: (data) => `/collaborations`
+  },
+
+  // Account management
+  ACCOUNT_SUSPENDED: {
+    title: 'Account Suspended',
+    getMessage: (data) => `Your account has been suspended for ${data.duration || 'an indefinite period'}. Reason: ${data.reason || 'Policy violation'}`,
+    getLink: () => '/'
+  },
+  ACCOUNT_REACTIVATED: {
+    title: 'Account Reactivated ✓',
+    getMessage: () => 'Your account has been reactivated. Welcome back!',
+    getLink: () => '/dashboard'
   }
 };
 
@@ -198,7 +222,11 @@ const TYPE_MAP = {
   'review_response': 'review',
   'new_message': 'message',
   'profile_verified': 'system',
-  'trust_score_updated': 'system'
+  'trust_score_updated': 'system',
+  'payment_released': 'payment',
+  'payment_refunded': 'payment',
+  'account_suspended': 'system',
+  'account_reactivated': 'system'
 };
 
 const createNotificationFromTemplate = async (userId, templateType, data, options = {}) => {

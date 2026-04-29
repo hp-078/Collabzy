@@ -1,36 +1,23 @@
-// backend/routes/payment.routes.js
-// Payment routes for Razorpay integration
-
 const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/payment.controller');
 const { requireAuth, requireBrand, requireAdmin } = require('../middleware/auth.middleware');
 
-// Webhook endpoint (no auth - verified by signature)
+// Webhook (public endpoint verified by signature)
 router.post('/webhook', paymentController.handleWebhook);
 
-// All other routes require authentication
-router.use(requireAuth);
+// Escrow endpoints (internal simulated escrow)
+router.post('/escrow', requireAuth, paymentController.createEscrow);
+router.post('/release', requireAuth, requireAdmin, paymentController.releaseEscrow);
 
-// Create payment order (brand only)
-router.post('/create-order', requireBrand, paymentController.createOrder);
-
-// Verify payment (brand only)
-router.post('/verify', requireBrand, paymentController.verifyPayment);
-
-// Get payment by deal ID
-router.get('/deal/:dealId', paymentController.getPaymentByDeal);
-
-// Release payment to influencer (brand or admin)
-router.patch('/release/:dealId', paymentController.releasePayment);
-
-// Refund payment (admin only)
-router.post('/refund/:dealId', requireAdmin, paymentController.refundPayment);
-
-// Get my payment history
-router.get('/my-payments', paymentController.getMyPayments);
-
-// Platform statistics (admin only)
-router.get('/platform-stats', requireAdmin, paymentController.getPlatformStats);
+// Razorpay / Deal payment endpoints
+router.post('/create-order', requireAuth, requireBrand, paymentController.createOrder);
+router.post('/verify', requireAuth, requireBrand, paymentController.verifyPayment);
+router.get('/deal/:dealId', requireAuth, paymentController.getPaymentByDeal);
+router.patch('/release/:dealId', requireAuth, paymentController.releasePayment);
+router.post('/refund/:dealId', requireAuth, requireAdmin, paymentController.refundPayment);
+router.get('/my-payments', requireAuth, paymentController.getMyPayments);
+router.get('/platform-stats', requireAuth, requireAdmin, paymentController.getPlatformStats);
+router.get('/admin/overview', requireAuth, requireAdmin, paymentController.getAdminWalletOverview);
 
 module.exports = router;
