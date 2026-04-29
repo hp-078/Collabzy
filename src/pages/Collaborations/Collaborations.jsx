@@ -129,6 +129,9 @@ const Collaborations = () => {
     sortBy: 'newest',
   });
 
+  // === Pending payment payment state ===
+  const [pendingPaymentDealForPayment, setPendingPaymentDealForPayment] = useState(null);
+
   const NICHES = ['Fashion', 'Beauty', 'Tech', 'Gaming', 'Fitness', 'Food', 'Travel', 'Lifestyle', 'Education', 'Entertainment', 'Business', 'Sports'];
 
   const getProfilePlatformLabel = (profile = {}) => {
@@ -849,6 +852,99 @@ const Collaborations = () => {
     });
   };
 
+  // Handle payment for pending payment deals
+  const handlePendingPaymentDealPayment = async (deal) => {
+    if (!deal?._id || !deal?.paymentId) {
+      toast.error('Invalid deal or missing payment information');
+      return;
+    }
+
+    if (!razorpayLoaded) {
+      toast.error('Payment gateway not loaded. Please refresh and try again.');
+      return;
+    }
+
+    setPaymentProcessing(true);
+
+    try {
+      // Fetch the payment details to get the Razorpay order ID
+      const paymentResponse = await paymentService.getPaymentByDeal(deal._id);
+      
+      if (!paymentResponse.success || !paymentResponse.data) {
+        toast.error('Failed to fetch payment details');
+        setPaymentProcessing(false);
+        return;
+      }
+
+      const { payment, orderId, amount: orderAmount, currency, key } = paymentResponse.data;
+
+      // If no Razorpay order ID, return error
+      if (!orderId) {
+        toast.error('Payment order not found. Please contact support.');
+        setPaymentProcessing(false);
+        return;
+      }
+
+      // Initiate Razorpay checkout
+      return new Promise((resolve) => {
+        paymentService.initiateRazorpayCheckout(
+          {
+            orderId: orderId,
+            amount: orderAmount || deal.agreedRate,
+            currency: currency || 'INR',
+            key: key || process.env.REACT_APP_RAZORPAY_KEY_ID,
+            brandName: user?.name,
+            brandEmail: user?.email
+          },
+          async (response) => {
+            try {
+              const verifyResult = await paymentService.verifyPayment({
+                orderId: response.orderId,
+                paymentId: response.paymentId,
+                signature: response.signature,
+                dealId: deal._id
+              });
+
+              if (!verifyResult.success) {
+                toast.error('Payment verification failed.');
+                resolve({ success: false });
+                return;
+              }
+
+              toast.success('Payment completed successfully! Deal is now active.');
+              setPendingPaymentDealForPayment(null);
+              
+              // Refresh deals
+              const dealsData = await fetchMyDeals(true);
+              setMyDeals(dealsData || []);
+              
+              // Switch to deals tab
+              switchTab('deals');
+              
+              resolve({ success: true });
+            } catch (verifyErr) {
+              console.error('Payment verification error:', verifyErr);
+              toast.error('Payment verification failed.');
+              resolve({ success: false });
+            } finally {
+              setPaymentProcessing(false);
+            }
+          },
+          (error) => {
+            console.error('Payment error:', error);
+            toast.error(error?.message || 'Payment failed or was cancelled.');
+            setPaymentProcessing(false);
+            resolve({ success: false });
+          }
+        );
+      });
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      toast.error('Failed to initiate payment');
+      setPaymentProcessing(false);
+    }
+  };
+
   const handleBulkCreateDeals = async () => {
     if (selectedApplications.length === 0) {
       toast.error('Select at least one influencer first');
@@ -869,8 +965,7 @@ const Collaborations = () => {
 
     setBulkProcessing(true);
     try {
-      let paidCount = 0;
-      let cancelledCount = 0;
+      let createdCount = 0;
       let failedCount = 0;
 
       for (const app of withValidRate) {
@@ -885,28 +980,13 @@ const Collaborations = () => {
           continue;
         }
 
-        const createdDeal = createResult.data?.deal;
-        const paymentOrder = createResult.data?.paymentOrder;
-        const paymentResult = await processDealPaymentAtCreation(createdDeal, paymentOrder);
-
-        if (paymentResult.success) {
-          paidCount += 1;
-          continue;
-        }
-
-        if (createdDeal?._id) {
-          await updateDealStatus(createdDeal._id, { status: 'cancelled' });
-        }
-        cancelledCount += 1;
+        // Deals are created in pending_payment status - no automatic payment
+        createdCount += 1;
       }
 
-      if (paidCount > 0) {
-        toast.success(`Created and paid ${paidCount} deal${paidCount > 1 ? 's' : ''}.`);
-        switchTab('deals');
-      }
-
-      if (cancelledCount > 0) {
-        toast.error(`${cancelledCount} deal${cancelledCount > 1 ? 's were' : ' was'} cancelled because payment was not completed during creation.`);
+      if (createdCount > 0) {
+        toast.success(`Created ${createdCount} deal${createdCount > 1 ? 's' : ''}. Go to Pending Payment tab to complete payments.`);
+        switchTab('pending_payment');
       }
 
       if (failedCount > 0) {
@@ -1655,7 +1735,17 @@ const Collaborations = () => {
 
                 <td>
                   <div className="inf-action-btns brand-deal-actions">
-                    {needsPayment && <span className="inf-act-hint">Payment required during deal creation</span>}
+                    {needsPayment && (
+                      <>
+                        <button
+                          className="inf-act-btn inf-act-accept"
+                          onClick={() => handlePendingPaymentDealPayment(deal)}
+                          disabled={paymentProcessing}
+                        >
+                          <CreditCard size={13} /> <span>{paymentProcessing ? 'Processing...' : 'Make Payment'}</span>
+                        </button>
+                      </>
+                    )}
 
                     {deal.status === 'pending_review' && (
                       <>
@@ -2162,24 +2252,12 @@ const Collaborations = () => {
         deadline: dealForm.deadline
       });
       if (result.success) {
-        const createdDeal = result.data?.deal;
-        const paymentOrder = result.data?.paymentOrder;
-        const paymentResult = await processDealPaymentAtCreation(createdDeal, paymentOrder);
-
-        if (!paymentResult.success) {
-          if (createdDeal?._id) {
-            await updateDealStatus(createdDeal._id, { status: 'cancelled' });
-          }
-          toast.error(paymentResult.error || 'Payment was not completed. Deal was cancelled.');
-          setShowCreateDealModal(null);
-          await refreshBrandApplicationAndDealData();
-          return;
-        }
-
-        toast.success('Deal created and payment completed.');
+        // Deal created and is in pending_payment status - no automatic payment
+        toast.success('Deal created successfully! Go to Pending Payment tab to complete payment.');
         setShowCreateDealModal(null);
-        switchTab('deals');
-        // Refresh deals and applications to keep a single-stage display.
+        // Switch to pending_payment tab so brand can see the new deal
+        switchTab('pending_payment');
+        // Refresh deals and applications
         const dealsData = await fetchMyDeals(true);
         setMyDeals(dealsData || []);
         if (isInfluencer) {

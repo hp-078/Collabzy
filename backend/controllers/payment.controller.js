@@ -151,9 +151,16 @@ exports.getPaymentByDeal = async (req, res) => {
             });
         }
 
+        // Include public Razorpay key and basic order info so frontend can initiate checkout
         return res.json({
             success: true,
-            data: payment
+            data: {
+                payment,
+                orderId: payment.razorpayOrderId,
+                amount: payment.totalAmount,
+                currency: payment.currency,
+                key: process.env.RAZORPAY_KEY_ID || null
+            }
         });
     } catch (error) {
         console.error('Get payment error:', error);
