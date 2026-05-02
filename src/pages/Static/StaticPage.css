@@ -1,0 +1,227 @@
+.static-page {
+  position: relative;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 5rem;
+  overflow: hidden;
+}
+
+.static-page__orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(8px);
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.static-page__orb--one {
+  width: 220px;
+  height: 220px;
+  top: 1rem;
+  right: -40px;
+  background: radial-gradient(circle, rgba(255, 181, 186, 0.45) 0%, rgba(255, 181, 186, 0) 72%);
+}
+
+.static-page__orb--two {
+  width: 260px;
+  height: 260px;
+  left: -70px;
+  bottom: 4rem;
+  background: radial-gradient(circle, rgba(188, 224, 190, 0.4) 0%, rgba(188, 224, 190, 0) 72%);
+}
+
+.static-page__hero {
+  position: relative;
+  padding: 3rem;
+  display: grid;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 248, 0.92));
+}
+
+.static-page__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 181, 186, 0.16);
+  color: var(--dark-text);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.static-page__hero h1 {
+  margin: 0;
+  color: var(--dark-text);
+  font-family: var(--heading-font);
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+  max-width: 11ch;
+}
+
+.static-page__intro {
+  margin: 0;
+  max-width: 64ch;
+  color: var(--light-text);
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.static-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.static-page__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 48px;
+  padding: 0.85rem 1.2rem;
+  border-radius: 16px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.static-page__button:hover {
+  transform: translateY(-2px);
+}
+
+.static-page__button--primary {
+  background: var(--dark-text);
+  color: #fff;
+  box-shadow: var(--clay-shadow-button);
+}
+
+.static-page__button--primary:hover {
+  box-shadow: var(--clay-shadow-button-hover);
+}
+
+.static-page__button--secondary {
+  background: rgba(255, 181, 186, 0.18);
+  color: var(--dark-text);
+}
+
+.static-page__highlights,
+.static-page__sections {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.static-page__highlight,
+.static-page__section,
+.static-page__footer {
+  position: relative;
+  z-index: 1;
+}
+
+.static-page__highlight,
+.static-page__section {
+  padding: 1.4rem;
+  min-height: 100%;
+}
+
+.static-page__highlight-label {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 0.85rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(152, 216, 170, 0.18);
+  color: var(--dark-text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.static-page__highlight h2,
+.static-page__section h2 {
+  margin: 0 0 0.65rem;
+  color: var(--dark-text);
+  font-family: var(--heading-font);
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.static-page__highlight p,
+.static-page__section p {
+  margin: 0;
+  color: var(--light-text);
+  line-height: 1.7;
+}
+
+.static-page__sections {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 1.25rem;
+}
+
+.static-page__points {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.static-page__points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  color: var(--dark-text);
+  line-height: 1.5;
+}
+
+.static-page__points svg {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--accent-coral);
+}
+
+.static-page__footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  color: var(--light-text);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.static-page__footer p {
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .static-page__highlights {
+    grid-template-columns: 1fr;
+  }
+
+  .static-page__sections {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .static-page {
+    padding: 2.5rem 1rem 4rem;
+  }
+
+  .static-page__hero {
+    padding: 2rem 1.25rem;
+  }
+
+  .static-page__hero h1 {
+    max-width: none;
+  }
+}

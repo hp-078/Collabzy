@@ -29,6 +29,8 @@ import CampaignDetail from './pages/CampaignDetail/CampaignDetail';
 import Analytics from './pages/Analytics/Analytics';
 import AdminPanel from './pages/Admin/AdminPanel';
 import Brands from './pages/Brands/Brands';
+import StaticPage from './pages/Static/StaticPage';
+import { staticPages } from './pages/Static/staticPageContent';
 
 import './App.css';
 
@@ -81,6 +83,15 @@ function AppRoutes() {
       <Route path="/influencers" element={<Layout><Influencers /></Layout>} />
       <Route path="/influencer/:id" element={<Layout><InfluencerDetail /></Layout>} />
       <Route path="/brand/:id" element={<Layout><BrandDetail /></Layout>} />
+      <Route path="/pricing" element={<Layout><StaticPage page={staticPages.pricing} /></Layout>} />
+      <Route path="/about" element={<Layout><StaticPage page={staticPages.about} /></Layout>} />
+      <Route path="/blog" element={<Layout><StaticPage page={staticPages.blog} /></Layout>} />
+      <Route path="/careers" element={<Layout><StaticPage page={staticPages.careers} /></Layout>} />
+      <Route path="/press-kit" element={<Layout><StaticPage page={staticPages.pressKit} /></Layout>} />
+      <Route path="/help-center" element={<Layout><StaticPage page={staticPages.helpCenter} /></Layout>} />
+      <Route path="/terms" element={<Layout><StaticPage page={staticPages.terms} /></Layout>} />
+      <Route path="/privacy" element={<Layout><StaticPage page={staticPages.privacy} /></Layout>} />
+      <Route path="/contact" element={<Layout><StaticPage page={staticPages.contact} /></Layout>} />
 
       {/* Protected Routes */}
       <Route path="/dashboard" element={

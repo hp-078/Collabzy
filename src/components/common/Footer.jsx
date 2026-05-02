@@ -48,27 +48,27 @@ const Footer = () => {
                               <li><Link to="/influencers">Find Influencers</Link></li>
                               <li><Link to="/register">Become an Influencer</Link></li>
                               <li><Link to="/register">For Brands</Link></li>
-                              <li><Link to="/">Pricing</Link></li>
+                              <li><Link to="/pricing">Pricing</Link></li>
                           </ul>
                       </div>
 
                       <div className="footer-links">
                           <h4 className="footer-heading">Company</h4>
                           <ul>
-                              <li><Link to="/">About Us</Link></li>
-                              <li><Link to="/">Blog</Link></li>
-                              <li><Link to="/">Careers</Link></li>
-                              <li><Link to="/">Press Kit</Link></li>
+                              <li><Link to="/about">About Us</Link></li>
+                              <li><Link to="/blog">Blog</Link></li>
+                              <li><Link to="/careers">Careers</Link></li>
+                              <li><Link to="/press-kit">Press Kit</Link></li>
                           </ul>
                       </div>
 
                       <div className="footer-links">
                           <h4 className="footer-heading">Support</h4>
                           <ul>
-                              <li><Link to="/">Help Center</Link></li>
-                              <li><Link to="/">Terms of Service</Link></li>
-                              <li><Link to="/">Privacy Policy</Link></li>
-                              <li><Link to="/">Contact Us</Link></li>
+                              <li><Link to="/help-center">Help Center</Link></li>
+                              <li><Link to="/terms">Terms of Service</Link></li>
+                              <li><Link to="/privacy">Privacy Policy</Link></li>
+                              <li><Link to="/contact">Contact Us</Link></li>
                           </ul>
                       </div>
 
@@ -76,15 +76,15 @@ const Footer = () => {
                           <h4 className="footer-heading">Contact</h4>
                           <div className="footer-contact-item">
                               <Mail size={16} />
-                              <span>hello@collabzy.com</span>
+                              <span>help@collabzy.com</span>
                           </div>
                           <div className="footer-contact-item">
                               <Phone size={16} />
-                              <span>+1 (555) 123-4567</span>
+                              <span>+91 9712055549</span>
                           </div>
                           <div className="footer-contact-item">
                               <MapPin size={16} />
-                              <span>San Francisco, CA</span>
+                              <span>Surat, Gujarat, India.</span>
                           </div>
                       </div>
                   </div>
