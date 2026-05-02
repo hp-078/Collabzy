@@ -1,14 +1,20 @@
 # Collabzy
 
-Collabzy is an influencer and brand collaboration platform where creators and businesses can discover each other, create campaigns, apply for deals, chat in real time, and track collaborations from one place.
+Collabzy is a platform that helps Brands and Influencers work together easily.
 
-## Live Product Vision
+Brands can create campaigns and find the right creators.
+Influencers can explore campaigns, apply, and chat with brands.
+Everything is managed in one place.
 
-- Influencers showcase profiles, social metrics, and collaboration history
-- Brands discover creators and launch campaign opportunities
-- Structured workflow: campaign -> application -> deal -> delivery
-- Real-time messaging and notifications for faster coordination
-- Role-based dashboards for Influencer, Brand, and Admin users
+## What You Can Do
+
+- Sign up and log in as Brand or Influencer
+- Create and manage campaigns
+- Discover influencers and brands
+- Apply for collaborations
+- Chat in real time
+- Get notifications and updates
+- Track deals and payment-related flows
 
 ## Website Preview
 
@@ -16,13 +22,25 @@ Collabzy is an influencer and brand collaboration platform where creators and bu
 
 ![Collabzy Home](public/readme/home.png)
 
-### Influencers Discovery
+### Discover Influencers
 
-![Influencers Page](public/readme/influencers.png)
+![Discover Influencer](public/readme/discover_influencer.png)
 
-### Brands Discovery
+### Top Brands
 
-![Brands Page](public/readme/brands.png)
+![Top Brands](public/readme/topbrand.png)
+
+### Top Influencers
+
+![Top Influencers](public/readme/topinflu.png)
+
+### Campaigns
+
+![Campaigns](public/readme/campaigns.png)
+
+### Collaboration
+
+![Collaboration](public/readme/collobration.png)
 
 ### Login Page
 
@@ -72,9 +90,10 @@ Collabzy/
 
 ### Authentication and Access
 
-- User authentication with JWT
-- OTP based auth flow (enhanced routes)
-- Role-aware route protection
+- Login and register system
+- JWT based authentication
+- OTP based auth support
+- Role-based access control
 
 ### Campaign and Collaboration
 
@@ -124,7 +143,7 @@ Health check:
 
 ## Local Setup
 
-### 1. Clone and install frontend
+### 1. Install frontend dependencies
 
 ```bash
 npm install
@@ -154,7 +173,7 @@ Update `backend/.env` with your values:
 
 ### 4. Optional frontend environment
 
-Frontend defaults already work with local backend. If needed, set:
+Frontend works with default local backend settings. If needed, set:
 
 - `VITE_API_URL=http://localhost:5000/api`
 - `VITE_SOCKET_URL=http://localhost:5000`
@@ -190,7 +209,7 @@ Open the app at `http://localhost:5173`.
 - `npm start` - Start backend in normal mode
 - `npm test` - Run backend smoke tests
 
-## Current Status
+## Current Project Status
 
 - Backend APIs implemented with major platform modules
 - Frontend pages and flows available
