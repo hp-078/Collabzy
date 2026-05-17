@@ -16,7 +16,7 @@ Everything is managed in one place.
 - Get notifications and updates
 - Track deals and payment-related flows
 
-## Website Preview
+## Website Previews
 
 ### Home Page
 
